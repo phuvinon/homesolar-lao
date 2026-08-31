@@ -208,7 +208,7 @@
 <!-- ═══ top bar ═══ -->
 <div class="top">
   <div class="wrap">
-    <span class="logochip"><img loading="lazy" decoding="async" src="img/4183c1e430.png" alt="Home Solar"></span>
+    <span class="logochip"><img src="img/4183c1e430.png" alt="Home Solar"></span>
     <span class="brand">ໂຮມ ໂຊລ່າ<small>HOME SOLAR · ວຽງຈັນ</small></span>
     <a class="cta" href="https://wa.me/8562055949459?text=%E0%BA%AA%E0%BA%B0%E0%BA%9A%E0%BA%B2%E0%BA%8D%E0%BA%94%E0%BA%B5%20%E0%BA%AA%E0%BA%BB%E0%BA%99%E0%BA%83%E0%BA%88%E0%BA%94%E0%BA%AD%E0%BA%81%E0%BB%84%E0%BA%9F%E0%BB%82%E0%BA%8A%E0%BA%A5%E0%BB%88%E0%BA%B2" target="_blank" rel="noopener">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.7 14.9L2 22l5.3-1.4A10 10 0 1 0 12 2Zm5.5 14.1c-.2.7-1.3 1.3-1.9 1.4-.5.1-1.1.2-3.5-.7-3-1.2-4.9-4.2-5-4.4-.2-.2-1.2-1.6-1.2-3s.7-2.1 1-2.4c.2-.3.5-.4.7-.4h.5c.2 0 .4 0 .6.4.2.5.8 1.9.8 2 .1.2.1.4 0 .5-.1.2-.2.4-.3.5l-.5.5c-.2.2-.3.4-.1.7.2.3.8 1.4 1.8 2.2 1.2 1.1 2.3 1.4 2.6 1.6.3.1.5.1.7-.1l.9-1c.2-.3.4-.2.7-.1l2 .9c.3.2.5.3.6.4 0 .2 0 .7-.2 1Z"/></svg>
@@ -250,7 +250,7 @@
         </a>
       </div>
     </div>
-    <div class="heroimg"><img loading="lazy" decoding="async" src="img/b39133d9f5.png" alt="ດອກໄຟສາດໂຊລ່າ MJ-BW1200 ພ້ອມແຜງໂຊລ່າ"></div>
+    <div class="heroimg"><img src="img/b39133d9f5.png" alt="ດອກໄຟສາດໂຊລ່າ MJ-BW1200 ພ້ອມແຜງໂຊລ່າ"></div>
   </div>
   <div class="trustrow">
     <div class="wrap">
@@ -699,7 +699,7 @@ window.HS_SETS=[
 ;
 window.HS_EXTRAIMG={"ໄຟແທ່ງ ຄອກລົດ/ຊາຍຄາ":"img/a7d5dafc3a.jpg"};
 /* ຮູບໝວດເຊັດ — ວາງໄຟລ໌ໃນ SET_IMAGES/ ແລ້ວແລ່ນ rebuild.sh ຮູບຂຶ້ນເອງ */
-window.HS_SETIMG={BANNER:'img/b1d863d31f.jpg',ALL:'img/586b2e6015.jpg',TRY:'',HOME:'',GARDEN:'',POLE:'',WARE:'',PRO:''};
+window.HS_SETIMG={BANNER:'img/b1d863d31f.jpg',ALL:'img/586b2e6015.jpg',TRY:'',HOME:'',GARDEN:'',POLE:'',WARE:'',PRO:'',PROMO_SOLARO:'',PREMIUM:'',ALLSOLAR:''};
 </script>
 <!-- ══════════════════════════════════════════════════════════════
      WAVE 0 · ເພີ່ມ LIGHT SWORD ເປັນສິນຄ້າຫຼັກ
@@ -1170,7 +1170,7 @@ function paintCart(){
     var p=CATALOG[id]; if(!p) return;
     var row=document.createElement('div'); row.className='hs-li';
     row.innerHTML=
-      '<img loading="lazy" decoding="async" src="'+p.img+'" alt="">'+
+      '<img src="'+p.img+'" alt="">'+
       '<div class="n"><b>'+p.name+'</b><span>'+kip(p.price)+'</span>'+
       '<div class="hs-qty"><button data-d="-1">−</button><i>'+cart[id]+'</i>'+
       '<button data-d="1">+</button>'+
@@ -1223,7 +1223,7 @@ function paintForm(){
   var box=$('#hsFormItems'), html='<label class="hs-lab">ລາຍການ</label>';
   Object.keys(cart).forEach(function(id){
     var p=CATALOG[id]; if(!p) return;
-    html+='<div class="hs-li"><img loading="lazy" decoding="async" src="'+p.img+'" alt=""><div class="n"><b>'+p.name+
+    html+='<div class="hs-li"><img src="'+p.img+'" alt=""><div class="n"><b>'+p.name+
           '</b><span>x'+cart[id]+' · '+kip(p.price*cart[id])+'</span></div></div>';
   });
   box.innerHTML=html;
@@ -1255,7 +1255,7 @@ $('#hsConfirm').addEventListener('click',function(){
   $('#hsPayAmt').textContent = cur==='LAK' ? kip(total) : baht(total);
   $('#hsPayAmt2').textContent = cur==='LAK' ? baht(total) : kip(total);
   $('#hsQrBox').innerHTML = CFG.qr
-    ? '<div class="hs-qr"><img loading="lazy" decoding="async" src="'+CFG.qr+'" alt="QR ຮ້ານ Home solar"></div>'
+    ? '<div class="hs-qr"><img src="'+CFG.qr+'" alt="QR ຮ້ານ Home solar"></div>'
     : '<div class="hs-qr-none">⚠️ ຍັງບໍ່ທັນໃສ່ຮູບ QR<br>ໃສ່ທີ່ <code>CFG.qr</code> ໃນບລັອກ WAVE 1<br>(ຮູບ LAO QR ຊື່ “ຮ້ານ Home solar (Phuvinon)”)</div>';
   open_('#hsPay');
 });
@@ -1655,7 +1655,7 @@ function openDetail(id){
   curDetail={id:id,name:name,price:now};
 
   $('#hsDBody').innerHTML=
-    '<img loading="lazy" decoding="async" class="hs-d-img" src="'+(img?img.getAttribute('src'):'')+'" alt="'+esc(name)+'">'+
+    '<img class="hs-d-img" src="'+(img?img.getAttribute('src'):'')+'" alt="'+esc(name)+'">'+
     '<div class="hs-d-name">'+esc(name)+'</div>'+
     '<div class="hs-d-sub">'+esc(sp.sub||desc)+'</div>'+
     (sp.code?'<div class="hs-d-code">ລະຫັດ '+esc(sp.code)+'</div>':'')+
@@ -2093,7 +2093,7 @@ document.addEventListener('keydown',function(e){
   gate.innerHTML=
     '<div class="picwrap" style="position:relative">'+
       (IMG.BANNER
-        ? '<div class="pic"><img loading="lazy" decoding="async" src="'+esc(IMG.BANNER)+'" alt="ເຊັດແນະນຳ"></div>'
+        ? '<div class="pic"><img src="'+esc(IMG.BANNER)+'" alt="ເຊັດແນະນຳ"></div>'
         : '<div class="pic"><div class="ph"><b>📦</b>ບ່ອນໃສ່ຮູບປ້າຍເຊັດ<br>1600×700</div></div>')+
       '<div class="flag">🔥 ເຊັດສຸດຄຸ້ມ</div>'+
       '<div class="fade"></div>'+
@@ -2131,3 +2131,208 @@ route();
 })();
 </script>
 <!-- ══════════ ຈົບ WAVE 4 ══════════ -->
+<!-- ══════════════════════════════════════════════════════════════
+     WAVE 5 · ໜ້າຫຼັກເປັນ "ໜ້າລວມ" 3 ແຖວ
+       ແຖວ 1  [ ເຊັດສຸດຄຸ້ມ ]                    ເຕັມແຖວ
+       ແຖວ 2  [ ເຊັດໂປຣໂມຊັນ SOLARO ][ SOLAR ພີມ້ຽມ ]   2 ອັນ (ແມ່ແບບ)
+       ແຖວ 3  [ ໂຊລ່າເຊວທັງໝົດ ]                ເຕັມແຖວ → ເປີດໜ້າສິນຄ້າ
+     ສິນຄ້າ 22 ຮຸ່ນ ຍ້າຍໄປຢູ່ໜ້າຕ່າງຫາກ (#products) ໜ້າຫຼັກຈຶ່ງສັ້ນ
+     ⚠️ ຕ້ອງວາງຫຼັງ wave4_sets.html
+     ══════════════════════════════════════════════════════════════ -->
+<style>
+/* ---------- ຈັດຊັ້ນທັບກັນໃໝ່ ໃຫ້ກະຕ່າ ແລະ ຕົວກອງ ຢູ່ເທິງໜ້າຍ່ອຍ ---------- */
+.hs-page{z-index:210}
+.hs-fab{z-index:220}
+.hs-filterbar{z-index:240}
+.hs-sheet{z-index:300}
+#hsManual{z-index:320}
+
+/* ---------- ໜ້າລວມ ---------- */
+.hs-hub{display:grid;gap:12px;margin-top:14px}
+.hs-hub .row2{display:grid;gap:12px;grid-template-columns:1fr 1fr}
+
+/* ແຜ່ນກົດໄດ້ — ໃຊ້ຮ່ວມກັນທຸກແຖວ */
+.hs-tile{position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  background:var(--card);cursor:pointer;width:100%;padding:0;font:inherit;color:var(--tx);
+  text-align:left;display:flex;flex-direction:column;
+  transition:transform .16s,box-shadow .16s,border-color .16s}
+.hs-tile:hover{transform:translateY(-3px);border-color:var(--gold-dim);
+  box-shadow:0 10px 26px rgba(0,0,0,.34)}
+.hs-tile:active{transform:translateY(0) scale(.995)}
+.hs-tile .pic{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--surface),var(--card));
+  display:grid;place-items:center}
+.hs-tile .pic img{width:100%;height:100%;object-fit:cover;display:block}
+.hs-tile .ph{text-align:center;color:var(--mut);font-size:11.5px;line-height:1.85;padding:14px}
+.hs-tile .ph b{display:block;font-size:32px;margin-bottom:5px;opacity:.5}
+.hs-tile .fade{position:absolute;left:0;right:0;bottom:0;height:62%;z-index:2;
+  background:linear-gradient(to top,var(--card) 5%,rgba(19,34,59,.82) 45%,transparent)}
+.hs-tile .flag{position:absolute;top:10px;right:10px;z-index:3;border-radius:999px;
+  padding:5px 12px;font-size:11.5px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,.35)}
+.hs-tile .bar{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.hs-tile .bar .tx{flex:1;min-width:0}
+.hs-tile .bar .tx b{display:block;font-family:var(--disp);font-size:16px;line-height:1.45}
+.hs-tile .bar .tx span{display:block;color:var(--mut);font-size:11.5px;line-height:1.65;margin-top:2px}
+.hs-tile .bar .arw{flex:none;width:30px;height:30px;border-radius:50%;background:rgba(246,196,83,.16);
+  color:var(--gold);display:grid;place-items:center;font-size:16px}
+.hs-tile:hover .bar .arw{background:var(--gold);color:#0A1322}
+
+/* ຂະໜາດຮູບຕໍ່ແຖວ */
+.hs-tile.wideimg .pic{aspect-ratio:16/7}
+.hs-tile.sqimg   .pic{aspect-ratio:4/3}
+
+/* ແຖບ "ຍັງບໍ່ທັນມີຂໍ້ມູນ" ສຳລັບແມ່ແບບ */
+.hs-tile.tpl{border-style:dashed;border-color:var(--gold-dim)}
+.hs-tile.tpl .bar .tx b{color:var(--gold)}
+.hs-tile .soon{position:absolute;top:10px;left:10px;z-index:3;background:rgba(10,19,34,.8);
+  border:1px solid var(--gold-dim);color:var(--gold);border-radius:999px;padding:4px 10px;
+  font-size:10.5px;font-weight:700}
+
+/* ແຖວ 3 ໃຫ້ເດັ່ນ */
+.hs-tile.main{border:2px solid var(--gold);box-shadow:0 6px 24px rgba(246,196,83,.12)}
+.hs-tile.main .bar{padding:14px 16px}
+.hs-tile.main .bar .tx b{font-size:17.5px}
+.hs-tile.main .bar .arw{width:34px;height:34px;background:var(--gold);color:#0A1322;font-size:18px}
+.hs-tile .stats{position:absolute;left:0;right:0;bottom:10px;z-index:3;display:flex;
+  gap:6px;padding:0 12px;flex-wrap:wrap}
+.hs-tile .stats span{background:rgba(10,19,34,.72);border:1px solid rgba(246,196,83,.36);
+  color:var(--gold);border-radius:999px;padding:4px 10px;font-size:11px;font-weight:700;
+  backdrop-filter:blur(4px);white-space:nowrap}
+
+@media(max-width:400px){
+  .hs-hub .row2{grid-template-columns:1fr}
+  .hs-tile.sqimg .pic{aspect-ratio:16/7}
+}
+/* ໜ້າສິນຄ້າ: ໃຫ້ໝວດຂ້າງໃນຊິດຂອບໜ້ອຍລົງ */
+#hsProdBody section{margin-top:26px}
+#hsProdBody section:first-child{margin-top:4px}
+#hsProdBody .wrap{padding:0}
+</style>
+
+<div class="hs-page" id="hsProdPage">
+  <div class="hs-page-top"><button data-pback>‹</button><h3>ໂຊລ່າເຊວທັງໝົດ</h3></div>
+  <div class="hs-page-body" id="hsProdBody"></div>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c] }) }
+
+var IMG = window.HS_SETIMG || {};
+
+/* ══════════ 1. ຍ້າຍສິນຄ້າທັງໝົດເຂົ້າໜ້າຕ່າງຫາກ ══════════ */
+var PROD_IDS=['solaro','lightsword','floodlight','street','allinone','garden','pillar'];
+var body=$('#hsProdBody');
+var find=$('.hs-find');
+if(find) body.appendChild(find);                 /* ຊ່ອງຄົ້ນຫາຕາມໄປນຳ */
+PROD_IDS.forEach(function(id){
+  var sec=document.getElementById(id);
+  if(sec) body.appendChild(sec);
+});
+var cardCount=$$('.card',body).length;
+
+/* ══════════ 2. ສ້າງໜ້າລວມ 3 ແຖວ ══════════ */
+var hub=document.createElement('section');
+hub.id='hub';
+var hubBox=document.createElement('div');
+hubBox.className='hs-hub';
+
+/* ── ແຖວ 1: ເຊັດສຸດຄຸ້ມ (ຍ້າຍປ້າຍເດີມມາ) ── */
+var gate=$('.hs-gate');
+var setsHost=$('#sets');
+if(gate) hubBox.appendChild(gate);
+
+/* ── ແຖວ 2: 2 ແມ່ແບບ ── */
+function tile(o){
+  var b=document.createElement('button');
+  b.type='button';
+  b.className='hs-tile '+(o.wide?'wideimg':'sqimg')+(o.tpl?' tpl':'')+(o.main?' main':'');
+  b.innerHTML=
+    '<div class="pic">'+
+      (o.img ? '<img src="'+esc(o.img)+'" alt="'+esc(o.title)+'" loading="lazy">'
+             : '<div class="ph"><b>'+o.icon+'</b>ບ່ອນໃສ່ຮູບ<br>'+esc(o.title)+'<br>'+o.size+'</div>')+
+      (o.flag?'<div class="flag" style="background:'+o.flagBg+';color:#fff">'+o.flag+'</div>':'')+
+      (o.tpl?'<div class="soon">ແມ່ແບບ · ລໍຂໍ້ມູນ</div>':'')+
+      (o.stats?'<div class="fade"></div><div class="stats">'+
+        o.stats.map(function(s){return '<span>'+s+'</span>'}).join('')+'</div>':'')+
+    '</div>'+
+    '<div class="bar"><div class="tx"><b>'+esc(o.title)+'</b><span>'+esc(o.sub)+'</span></div>'+
+    '<div class="arw">›</div></div>';
+  b.addEventListener('click',o.go);
+  return b;
+}
+function goSets(hash){ return function(){ location.hash=hash } }
+
+var row2=document.createElement('div');
+row2.className='row2';
+row2.appendChild(tile({
+  title:'ເຊັດໂປຣໂມຊັນ SOLARO', sub:'ໂປຣພິເສດ ສະເພາະແບຣນ SOLARO',
+  icon:'⭐', size:'1200×900', img:IMG.PROMO_SOLARO||'', tpl:!IMG.PROMO_SOLARO,
+  flag:'ໂປຣ', flagBg:'var(--sale)', go:goSets('#sets/ALL')
+}));
+row2.appendChild(tile({
+  title:'SOLAR ພີມ້ຽມ', sub:'ໂປຣໂມຊັນ ໂຊລ່າຮຸ່ນພີມ້ຽມ',
+  icon:'💎', size:'1200×900', img:IMG.PREMIUM||'', tpl:!IMG.PREMIUM,
+  flag:'ພີມ້ຽມ', flagBg:'var(--gold-dim)', go:goSets('#sets/ALL')
+}));
+hubBox.appendChild(row2);
+
+/* ── ແຖວ 3: ໂຊລ່າເຊວທັງໝົດ ── */
+hubBox.appendChild(tile({
+  title:'ໂຊລ່າເຊວທັງໝົດ', sub:'ເບິ່ງດອກໄຟທຸກຮຸ່ນ ພ້ອມສະເປັກເຕັມ ແລະ ລາຄາ',
+  icon:'☀️', size:'1600×700', img:IMG.ALLSOLAR||'', wide:true, main:true,
+  stats:['☀️ '+cardCount+' ຮຸ່ນ','🛡️ ຮັບປະກັນ 2 ປີ','📲 ສະແກນຈ່າຍ 24 ຊມ'],
+  go:function(){ location.hash='#products' }
+}));
+
+hub.appendChild(hubBox);
+if(setsHost&&setsHost.parentNode) setsHost.parentNode.replaceChild(hub,setsHost);
+
+/* ໜ້າລວມຕ້ອງຢູ່ເທິງສຸດ — ກ່ອນ "ຜົນງານຕິດຕັ້ງ" */
+var works=$('#works');
+if(works&&works.parentNode&&hub.parentNode) works.parentNode.insertBefore(hub,works);
+
+/* ══════════ 3. ນຳທາງໜ້າສິນຄ້າ ══════════ */
+var page=$('#hsProdPage');
+function showProd(on){
+  page.classList.toggle('on',on);
+  if(on) document.body.style.overflow='hidden';
+  else if(!$('.hs-page.on')&&!$('.hs-sheet.on')) document.body.style.overflow='';
+}
+function routeProd(){
+  var h=location.hash||'';
+  var m=h.match(/^#products(?:\/([a-z\-]+))?$/);
+  if(!m){ showProd(false); return }
+  showProd(true);
+  if(m[1]){
+    var t=document.getElementById(m[1]);
+    if(t) setTimeout(function(){ t.scrollIntoView({behavior:'smooth',block:'start'}) },120);
+  } else body.scrollTop=0;
+}
+window.addEventListener('hashchange',routeProd);
+$('#hsProdPage [data-pback]').addEventListener('click',function(){
+  history.replaceState(null,'',location.pathname+location.search);
+  routeProd();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'&&page.classList.contains('on')&&!$('.hs-sheet.on')){
+    history.replaceState(null,'',location.pathname+location.search); routeProd();
+  }
+});
+
+/* ══════════ 4. ປຸ່ມນຳທາງເທິງ → ເປີດໜ້າສິນຄ້າ ══════════ */
+$$('.chips a').forEach(function(a){
+  var href=a.getAttribute('href')||'';
+  var id=href.replace('#','');
+  if(PROD_IDS.indexOf(id)<0) return;
+  a.setAttribute('href','#products/'+id);
+});
+
+routeProd();
+window.HS_HUB={products:cardCount,moved:PROD_IDS.length};
+})();
+</script>
+<!-- ══════════ ຈົບ WAVE 5 ══════════ -->
