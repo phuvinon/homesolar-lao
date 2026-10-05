@@ -903,9 +903,11 @@ function deepLink(cb) {
     cb(p);
   }
 }
-busy(true);
 deepLink(function (p) {
   if (p.job && p.k) LINK = { job: p.job, k: p.k };
+  // ບໍ່ມີລິ້ງ ແລະ ບໍ່ແມ່ນເຈົ້າຂອງ → ຂຶ້ນ 🔒 ທັນທີ ບໍ່ຕ້ອງລໍເຊີບເວີ
+  if (!LINK && !isOwnerMe()) { UI.loaded = true; render(); return; }
+  $('app').innerHTML = '<div class="who"><div class="spin" style="margin:30px auto 14px"></div><p>ກຳລັງໂຫຼດວຽກ...<br>ຄັ້ງທຳອິດຂອງມື້ອາດໃຊ້ 10-30 ວິນາທີ</p></div>';
   call('api_getAll').then(function (d) {
     busy(false); UI.loaded = true; apply(d);
     if (p.job && isOwnerMe() && jobById(p.job)) openJob(p.job);
@@ -913,7 +915,7 @@ deepLink(function (p) {
 });
 // ດຶງຂໍ້ມູນໃໝ່ທຸກ 60 ວິນາທີ ເວລາເປີດແອບຢູ່ (ເຫັນທີ່ຄົນອື່ນອັບເດດ)
 setInterval(function () {
-  if (document.visibilityState === 'visible' && ME && !$('loading').classList.contains('on') && !$('sheet').classList.contains('on')) {
+  if (document.visibilityState === 'visible' && UI.loaded && (LINK ? ME : isOwnerMe()) && !$('loading').classList.contains('on') && !$('sheet').classList.contains('on')) {
     call('api_getAll').then(apply).catch(function () {});
   }
 }, 60000);
