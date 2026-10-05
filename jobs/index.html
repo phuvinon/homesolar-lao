@@ -589,12 +589,7 @@ function detailHtml(j, page) {
       '<span class="k">💵</span><span>ມັດຈຳ: <b>' + money(j.deposit) + '</b> · ເກັບໜ້າງານແລ້ວ: <b>' + money(j.collected) + '</b></span>' +
       '<span class="k">⏳</span><span>ຄ້າງເກັບ: <b style="color:' + (j.due > 0 ? '#dc2626' : '#12a150') + '">' + money(j.due) + ' ກີບ</b></span></div>' +
       (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') + '</div>';
-  } else if (j.due > 0) {
-    h += '<div class="card" style="background:#fff8e6;border-color:#f6d98a"><h3>💰 ເກັບເງິນໜ້າງານ: ' + money(j.due) + ' ກີບ</h3>' +
-      '<button class="btn gold full" onclick="recordPay(\'' + esc(j.id) + '\')">✓ ບັນທຶກເງິນທີ່ເກັບໄດ້</button></div>';
-  } else {
-    h += '<div class="card" style="background:#ecfdf3;border-color:#abefc6"><h3 style="margin:0">💰 ບໍ່ຕ້ອງເກັບເງິນໜ້າງານ</h3></div>';
-  }
+  } // ຊ່າງ: ບໍ່ສະແດງເງິນໃດໆ
 
   // ອຸປະກອນ
   if (j.equipment.length) {
@@ -672,8 +667,7 @@ function waLink(j) {
     '\n👷 ' + (j.techIds.map(techName).join(', ') || '-') +
     (j.title ? '\n📝 ' + j.title : '') +
     (j.equipment.length ? '\n🔧 ອຸປະກອນ:\n' + j.equipment.map(function (e) { return '  • ' + e.t; }).join('\n') : '') +
-    (j.due > 0 ? '\n💰 ເກັບໜ້າງານ: ' + money(j.due) + ' ກີບ' : '') +
-    (j.note ? '\n💬 ' + j.note : '');
+    (j.note ? '\n💬 ' + j.note : ''); // ບໍ່ໃສ່ເງິນ — ຂໍ້ຄວາມນີ້ມັກສົ່ງຫາຊ່າງ
   return 'https://wa.me/?text=' + encodeURIComponent(t);
 }
 
@@ -840,7 +834,7 @@ var MOCK = (function () {
   function all(c) {
     save(); var o = isOwner(c);
     var jobs = o ? db.jobs : db.jobs.filter(function (j) { return c.jobId && j.id === c.jobId && c.key && c.key === j.shareKey; });
-    var logs = {}; jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id]; });
+    var logs = {}; jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id].filter(function (l) { return o || l.action !== 'pay'; }); });
     var ids = {}; jobs.forEach(function (j) { j.techIds.forEach(function (t) { ids[t] = 1; }); });
     return JSON.stringify({
       owner: !!o, types: db.types, reminders: db.reminders, logs: logs, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
@@ -848,7 +842,7 @@ var MOCK = (function () {
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
         x.due = j.status === 'cancelled' ? 0 : Math.max(0, j.price - j.deposit - j.collected);
-        if (!o) { delete x.price; delete x.deposit; delete x.collected; delete x.shareKey; }
+        if (!o) { delete x.price; delete x.deposit; delete x.collected; delete x.due; delete x.shareKey; }
         return x;
       })
     });
@@ -873,7 +867,7 @@ var MOCK = (function () {
     },
     api_addNote: function (c, id, t) { find(id, c); log(id, c, 'note', t); return all(c); },
     api_toggleEquip: function (c, id, i, done) { var j = find(id, c); j.equipment[i].done = done; log(id, c, 'equip', (done ? '☑ ' : '☐ ') + j.equipment[i].t); return all(c); },
-    api_recordPay: function (c, id, n) { var j = find(id, c); j.collected += n; log(id, c, 'pay', 'ເກັບເງິນໄດ້ ' + money(n) + ' ກີບ'); return all(c); },
+    api_recordPay: function (c, id, n) { need(c); var j = find(id); j.collected += n; log(id, c, 'pay', 'ເກັບເງິນໄດ້ ' + money(n) + ' ກີບ'); return all(c); },
     api_shareLink: function (c, id, reset) { need(c); var j = find(id); if (!j.shareKey || reset) j.shareKey = newKey(); if (reset) log(id, c, 'share', 'ປ່ຽນລິ້ງແຊໃໝ່ (ລິ້ງເກົ່າໃຊ້ບໍ່ໄດ້)'); return all(c); },
     api_uploadPhoto: function (c, id, kind, data) {
       var j = find(id, c); (kind === 'before' ? j.photosBefore : j.photosAfter).push(data);
