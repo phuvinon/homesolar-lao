@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ຕາຕະລາງວຽກ · HOME SOLAR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f4f7; --card:#fff; --ink:#151a23; --muted:#667085; --line:#e4e7ec;
+  --navy:#0A1322; --gold:#F6C453; --gold-d:#a16207;
+  --green:#12a150; --red:#dc2626; --blue:#2563eb; --amber:#d97706; --purple:#7c3aed; --gray:#6b7280;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{font-family:'Noto Sans Lao','Phetsarath OT','Saysettha OT',system-ui,sans-serif;color:var(--ink);
+  font-size:15px;line-height:1.5;padding-bottom:84px;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:inherit}
+header{background:var(--navy);color:#fff;padding:12px 16px 10px;position:sticky;top:0;z-index:40}
+.hrow{display:flex;align-items:center;gap:8px;max-width:860px;margin:0 auto}
+.brand{flex:1;min-width:0}
+.brand b{display:block;font-size:17px;font-weight:800;letter-spacing:.2px}
+.brand small{color:var(--gold);font-size:12px}
+.chip{background:#1f2a3d;color:#fff;border:0;border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.chip.gold{background:var(--gold);color:var(--navy);font-weight:700}
+.demo{background:#fff7d6;color:#7a5a00;font-size:12.5px;text-align:center;padding:6px 12px;border-bottom:1px solid #f1e3a6}
+main{max-width:860px;margin:0 auto;padding:14px 14px 0}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:45;
+  padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;padding:8px 2px 10px;font-size:11.5px;color:var(--muted);cursor:pointer}
+nav.tabs button i{display:block;font-style:normal;font-size:20px;line-height:1.3}
+nav.tabs button.on{color:var(--navy);font-weight:800}
+nav.tabs button.on i{transform:scale(1.1)}
+.fab{position:fixed;right:16px;bottom:84px;width:58px;height:58px;border-radius:50%;border:0;background:var(--gold);
+  color:var(--navy);font-size:30px;font-weight:800;box-shadow:0 6px 18px rgba(10,19,34,.3);cursor:pointer;z-index:44}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;cursor:pointer}
+.kpi .n{font-size:24px;font-weight:800;line-height:1.2}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.kpi.red .n{color:var(--red)} .kpi.blue .n{color:var(--blue)} .kpi.amber .n{color:var(--amber)}
+.sec{display:flex;align-items:center;gap:8px;margin:16px 2px 8px;font-weight:800;font-size:15px}
+.sec .cnt{background:var(--navy);color:#fff;border-radius:99px;font-size:11.5px;padding:1px 8px}
+.sec.red{color:var(--red)} .sec.red .cnt{background:var(--red)}
+.empty{color:var(--muted);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:14px;text-align:center}
+.job{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--tc,#94a3b8);border-radius:12px;
+  padding:10px 12px;margin-bottom:8px;cursor:pointer;position:relative}
+.job:active{background:#f8fafc}
+.job.done{opacity:.62}
+.job .top{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+.job .top .t{font-weight:700;color:var(--ink)}
+.job .nm{font-weight:700;font-size:15.5px;margin:2px 0}
+.job .m{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badge{display:inline-block;font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:99px;white-space:nowrap}
+.sp{flex:1}
+.due{display:inline-block;margin-top:4px;background:#fff4dc;color:#8a5a00;font-size:12.5px;font-weight:700;border-radius:8px;padding:2px 8px}
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.toolbar h2{flex:1;font-size:16.5px;text-align:center;min-width:140px}
+.nb{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 14px;cursor:pointer;font-weight:700}
+.toggle{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none}
+.toggle input{width:18px;height:18px;accent-color:var(--navy)}
+.day{margin-bottom:6px}
+.dayh{display:flex;align-items:baseline;gap:8px;padding:8px 2px 6px;font-weight:800}
+.dayh small{color:var(--muted);font-weight:400}
+.dayh.today{color:var(--blue)}
+.dayh .cnt{margin-left:auto;font-size:12px;color:var(--muted);font-weight:600}
+.mgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:12px}
+.mgrid .wd{font-size:11.5px;color:var(--muted);text-align:center;padding:2px 0}
+.cell{background:#fff;border:1px solid var(--line);border-radius:10px;min-height:62px;padding:4px;cursor:pointer;overflow:hidden}
+.cell.out{opacity:.35}
+.cell.tdy{border:2px solid var(--blue)}
+.cell.sel{background:#eef4ff;border-color:var(--blue)}
+.cell .d{font-size:12.5px;font-weight:700}
+.cell .dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
+.cell .dot{width:8px;height:8px;border-radius:50%}
+.cell .more{font-size:10.5px;color:var(--muted);font-weight:700}
+.search{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;margin-bottom:8px}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:6px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.fchip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font-size:13px;white-space:nowrap;cursor:pointer}
+.fchip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:15px;margin-bottom:8px}
+.money3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.money3 .kpi{cursor:default}
+.money3 .kpi .n{font-size:17px}
+/* sheet (detail / form) */
+.ov{position:fixed;inset:0;background:rgba(10,19,34,.55);z-index:60;display:none}
+.ov.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:94vh;overflow-y:auto;background:var(--bg);z-index:61;
+  border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .22s ease;max-width:860px;margin:0 auto}
+.sheet.on{transform:none}
+.shd{position:sticky;top:0;background:var(--navy);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:8px;z-index:2;border-radius:18px 18px 0 0}
+.shd b{flex:1;font-size:16px}
+.x{background:#1f2a3d;border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.sbody{padding:14px 14px 40px}
+.info{display:grid;grid-template-columns:28px 1fr;row-gap:6px;font-size:14.5px;align-items:start}
+.info .k{font-size:16px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.abtn{display:flex;flex-direction:column;align-items:center;gap:2px;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:9px 4px;font-size:12.5px;font-weight:700;cursor:pointer;text-decoration:none;color:var(--ink)}
+.abtn i{font-style:normal;font-size:20px}
+.stgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.stbtn{border:2px solid transparent;border-radius:10px;padding:8px 4px;font-weight:700;font-size:13px;cursor:pointer}
+.stbtn.on{border-color:var(--ink)}
+.eq{display:flex;align-items:center;gap:10px;padding:7px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.eq:last-child{border-bottom:0}
+.eq input{width:20px;height:20px;accent-color:var(--green);flex:none}
+.eq.ok span{text-decoration:line-through;color:var(--muted)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.ph{position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:#e5e7eb;cursor:pointer}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph .del{position:absolute;top:4px;right:4px;background:rgba(0,0,0,.6);color:#fff;border:0;border-radius:50%;width:26px;height:26px;cursor:pointer}
+.addph{aspect-ratio:1;border:2px dashed #cbd5e1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  color:var(--muted);font-size:12px;cursor:pointer;background:#fff;text-align:center}
+.addph i{font-style:normal;font-size:24px}
+.tl{border-left:2px solid var(--line);margin-left:6px;padding-left:12px}
+.tl .it{position:relative;padding:4px 0 8px;font-size:13.5px}
+.tl .it:before{content:'';position:absolute;left:-18px;top:10px;width:10px;height:10px;border-radius:50%;background:#cbd5e1}
+.tl .it.note:before{background:var(--gold)}
+.tl .it small{color:var(--muted);display:block;font-size:11.5px}
+.row{display:flex;gap:8px}
+.row>*{flex:1;min-width:0}
+label.f{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:10px 0 4px}
+.inp{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:10px 11px;background:#fff}
+textarea.inp{min-height:76px;resize:vertical}
+.inp:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.tpick{display:flex;flex-wrap:wrap;gap:6px}
+.tpick label{display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font-size:13.5px;cursor:pointer}
+.tpick input{accent-color:var(--navy)}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;font-size:15px}
+.btn.pri{background:var(--navy);color:#fff}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.ghost{background:#fff;border:1px solid var(--line)}
+.btn.danger{background:#fff;color:var(--red);border:1px solid #fecaca}
+.btn.full{width:100%}
+.btns{display:flex;gap:8px;margin-top:14px}
+.btns .btn{flex:1}
+.dlg{position:fixed;inset:0;background:rgba(10,19,34,.6);z-index:85;display:none;align-items:center;justify-content:center;padding:16px}
+.dlg.on{display:flex}
+.dlgc{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:360px;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.dlgc b{display:block;font-size:17px}
+.dlgc p{color:var(--muted);font-size:14px;margin-top:6px}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;
+  font-size:14px;z-index:90;display:none;max-width:90vw;text-align:center;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.err{background:var(--red)}
+.loading{position:fixed;inset:0;background:rgba(243,244,247,.6);z-index:80;display:none;align-items:center;justify-content:center}
+.loading.on{display:flex}
+.spin{width:38px;height:38px;border:4px solid #d0d5dd;border-top-color:var(--navy);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.who{max-width:420px;margin:30px auto;text-align:center}
+.who h2{font-size:20px;margin-bottom:4px}
+.who p{color:var(--muted);font-size:13.5px;margin-bottom:16px}
+.who .btn{display:block;width:100%;margin-bottom:8px;text-align:left}
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:95;display:none;align-items:center;justify-content:center}
+.lb.on{display:flex}
+.lb img{max-width:96vw;max-height:88vh;border-radius:8px}
+.tech-row{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tech-row .wide{grid-column:1/-1;display:flex;gap:6px}
+.tech-row .wide input{flex:1}
+.muted{color:var(--muted);font-size:13px}
+@media (max-width:420px){ .kpi .n{font-size:21px} .kpi .l{font-size:10.5px} }
+@media (min-width:700px){ .acts{grid-template-columns:repeat(6,1fr)} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hrow">
+    <div class="brand"><b>📋 ຕາຕະລາງວຽກ</b><small>HOME SOLAR · ຕິດຕັ້ງດອກໄຟ · ຮົ້ວ</small></div>
+    <button class="chip" onclick="refresh(true)" title="ໂຫຼດໃໝ່">⟳</button>
+    <button class="chip" id="meChip" onclick="logout()"></button>
+  </div>
+</header>
+<div class="demo" id="demoBar" style="display:none">🧪 ໂໝດທົດລອງ — ຂໍ້ມູນຕົວຢ່າງ ເກັບໄວ້ໃນເຄື່ອງນີ້ເທົ່ານັ້ນ · PIN ເຈົ້າຂອງ = 1234</div>
+
+<main id="app"></main>
+
+<button class="fab" id="fab" style="display:none" onclick="openForm()">＋</button>
+<nav class="tabs" id="tabs"></nav>
+
+<div class="ov" id="ov" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="dlg" id="dlg"></div>
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="spin"></div></div>
+<div class="lb" id="lb" onclick="this.classList.remove('on')"><img id="lbImg" alt=""></div>
+<input type="file" id="fileIn" accept="image/*" multiple style="display:none">
+
+<script>
+/* ================= ພື້ນຖານ ================= */
+var IS_GAS = typeof google !== 'undefined' && google.script && google.script.run;
+// ໂໝດ: gas = ເປີດຜ່ານລິ້ງ /exec · api = ເປີດຈາກ GitHub Pages ແລ້ວເອີ້ນ Apps Script ຜ່ານ POST · demo = ເປີດໄຟລ໌ໃນເຄື່ອງ
+var API_URL = 'https://script.google.com/macros/s/AKfycbyY3gxcSZyVjwKXitjdOJkUrsV3YjSzh8NiHuM-FuZjI1ZA-9gFD03JYqMwO_xOPyGr4w/exec';
+var MODE = IS_GAS ? 'gas' : (/^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'api' : 'demo');
+var LS = {
+  get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+  set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+  del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+};
+var ME = null; try { ME = JSON.parse(LS.get('js_me') || 'null'); } catch (e) { ME = null; }
+var S = { owner: false, jobs: [], techs: [], types: [], logs: {}, reminders: [] };
+var UI = { view: 'today', cursor: new Date(), mine: true, openId: null, sel: null, q: '', fs: '', ft: '', moneyCur: new Date(), loaded: false };
+
+var STATUS = {
+  pending:   { l: 'ລໍຖ້ານັດ', c: '#475467', bg: '#eaecf0' },
+  scheduled: { l: 'ນັດແລ້ວ',  c: '#1d4ed8', bg: '#dbe7ff' },
+  progress:  { l: 'ກຳລັງເຮັດ', c: '#a15c00', bg: '#fdecc8' },
+  done:      { l: 'ສຳເລັດ',   c: '#067647', bg: '#d1fadf' },
+  postponed: { l: 'ເລື່ອນ',    c: '#6d28d9', bg: '#ece4ff' },
+  cancelled: { l: 'ຍົກເລີກ',   c: '#b42318', bg: '#fee4e2' }
+};
+var TCOL = ['#F59E0B', '#0EA5E9', '#8B5CF6', '#EF4444', '#10B981', '#64748B', '#EC4899', '#14B8A6'];
+var DOW = ['ອາທິດ', 'ຈັນ', 'ອັງຄານ', 'ພຸດ', 'ພະຫັດ', 'ສຸກ', 'ເສົາ'];
+var DOW_S = ['ອາ', 'ຈ', 'ອ', 'ພ', 'ພຫ', 'ສ', 'ສ'];
+var MON = ['ມັງກອນ', 'ກຸມພາ', 'ມີນາ', 'ເມສາ', 'ພຶດສະພາ', 'ມິຖຸນາ', 'ກໍລະກົດ', 'ສິງຫາ', 'ກັນຍາ', 'ຕຸລາ', 'ພະຈິກ', 'ທັນວາ'];
+var REM_OPTS = [[2880, 'ກ່ອນ 2 ມື້'], [1440, 'ກ່ອນ 1 ມື້'], [180, 'ກ່ອນ 3 ຊົ່ວໂມງ'], [60, 'ກ່ອນ 1 ຊົ່ວໂມງ'], [30, 'ກ່ອນ 30 ນາທີ']];
+
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function money(n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function pad(n) { return (n < 10 ? '0' : '') + n; }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function parseYmd(s) { var p = s.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function today() { return ymd(new Date()); }
+function dLabel(s) { if (!s) return 'ຍັງບໍ່ນັດວັນ'; var d = parseYmd(s); return DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()]; }
+function relDay(s) {
+  if (!s) return ''; var t = today();
+  if (s === t) return 'ມື້ນີ້'; if (s === ymd(addDays(new Date(), 1))) return 'ມື້ອື່ນ'; if (s === ymd(addDays(new Date(), -1))) return 'ມື້ວານ';
+  return '';
+}
+function typeColor(t) { var i = S.types.indexOf(t); return i < 0 ? '#94a3b8' : TCOL[i % TCOL.length]; }
+function techName(id) { var t = S.techs.filter(function (x) { return x.id === id; })[0]; return t ? t.name : '(ລຶບແລ້ວ)'; }
+function activeTechs() { return S.techs.filter(function (t) { return t.active !== false; }); }
+function jobById(id) { return S.jobs.filter(function (j) { return j.id === id; })[0]; }
+function isOpen(j) { return j.status !== 'done' && j.status !== 'cancelled'; }
+function isOverdue(j) { return j.date && j.date < today() && (j.status === 'scheduled' || j.status === 'progress'); }
+function byTime(a, b) { return (a.date || '9999').localeCompare(b.date || '9999') || (a.start || '99').localeCompare(b.start || '99'); }
+function visibleJobs() {
+  if (S.owner || !UI.mine || !ME || ME.role !== 'tech') return S.jobs;
+  return S.jobs.filter(function (j) { return j.techIds.indexOf(ME.id) >= 0; });
+}
+function mapLink(j) { return j.mapUrl || (j.location ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(j.location) : ''); }
+function photoUrl(p, big) { return String(p).indexOf('data:') === 0 ? p : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(p) + '&sz=w' + (big ? 1600 : 500); }
+
+function toast(msg, err) {
+  var t = $('toast'); t.textContent = msg; t.className = 'toast' + (err ? ' err' : ''); t.style.display = 'block';
+  clearTimeout(toast._t); toast._t = setTimeout(function () { t.style.display = 'none'; }, err ? 4500 : 2200);
+}
+function busy(on) { $('loading').classList.toggle('on', !!on); }
+
+/* ================= ເອີ້ນເຊີບເວີ (ຫຼື ໂໝດທົດລອງ) ================= */
+var LINK = null; // ລິ້ງວຽກທີ່ເຈົ້າຂອງແຊໃຫ້ຊ່າງ: { job, k } ຈາກ ?job=..&k=..
+function isOwnerMe() { return !!(ME && ME.role === 'owner'); }
+function ctx() {
+  return { pin: isOwnerMe() ? ME.pin : '', who: ME ? ME.name : '?', jobId: LINK ? LINK.job : '', key: LINK ? LINK.k : '' };
+}
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (res, rej) {
+    var done = function (r) { res(typeof r === 'string' ? JSON.parse(r) : r); };
+    if (MODE === 'gas') {
+      var runner = google.script.run.withSuccessHandler(done).withFailureHandler(function (e) { rej(e); });
+      runner[fn].apply(runner, [ctx()].concat(args));
+    } else if (MODE === 'api') {
+      // body ເປັນ text ທຳມະດາ → ບໍ່ມີ CORS preflight
+      fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn: fn, args: [ctx()].concat(args) }) })
+        .then(function (r) { return r.json(); })
+        .then(function (o) { if (o.error) rej(new Error(o.error)); else done(o.result); })
+        .catch(function () { rej(new Error('ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດອິນເຕີເນັດ ແລ້ວກົດ ⟳')); });
+    } else {
+      setTimeout(function () { try { done(MOCK[fn].apply(null, [ctx()].concat(args))); } catch (e) { rej(e); } }, 150);
+    }
+  });
+}
+function apply(d) {
+  S = d;
+  if (ME && ME.role === 'owner' && !d.owner) { ME = null; LS.del('js_me'); toast('PIN ຖືກປ່ຽນ — ກະລຸນາເຂົ້າໃໝ່', true); }
+  if (d.warn) toast(d.warn, true);
+  render();
+}
+function act(fn) {
+  var args = arguments; busy(true);
+  return call.apply(null, args).then(function (d) { busy(false); apply(d); return d; })
+    .catch(function (e) { busy(false); toast('⚠️ ' + (e && e.message ? e.message : e), true); throw e; });
+}
+function refresh(show) {
+  if (show) busy(true);
+  return call('api_getAll').then(function (d) { busy(false); UI.loaded = true; apply(d); if (show) toast('ອັບເດດແລ້ວ ✓'); })
+    .catch(function (e) { busy(false); toast('⚠️ ໂຫຼດບໍ່ໄດ້: ' + (e && e.message ? e.message : e), true); });
+}
+
+/* ================= ຜູ້ໃຊ້ ================= */
+function bare() { $('tabs').innerHTML = ''; $('fab').style.display = 'none'; }
+// ຊ່າງເຫັນໄດ້ສະເພາະວຽກໃນລິ້ງທີ່ເຈົ້າຂອງແຊໃຫ້ — ບໍ່ມີລາຍການ/ອາທິດ/ເດືອນ
+function renderTech() {
+  bare(); closeSheet();
+  var j = LINK ? jobById(LINK.job) : null;
+  var chip = $('meChip');
+  if (!j) {
+    chip.style.display = 'none';
+    $('app').innerHTML = '<div class="who"><h2>🔒 ເປີດໄດ້ສະເພາະລິ້ງວຽກ</h2><p>' +
+      (LINK ? 'ລິ້ງນີ້ໃຊ້ບໍ່ໄດ້ແລ້ວ — ວຽກອາດຖືກລຶບ ຫຼື ເຈົ້າຂອງປ່ຽນລິ້ງໃໝ່. ກະລຸນາຂໍລິ້ງໃໝ່ຈາກເຈົ້າຂອງ' : 'ແອບນີ້ເປີດໄດ້ສະເພາະລິ້ງວຽກທີ່ເຈົ້າຂອງສົ່ງໃຫ້ທາງ WhatsApp') +
+      '</p><button class="btn ghost" style="text-align:center;margin-top:30px" onclick="ownerLogin()">👑 ເຈົ້າຂອງ (ໃສ່ PIN)</button></div>';
+    return;
+  }
+  if (!ME) {
+    chip.style.display = 'none';
+    var h = '<div class="who"><h2>👋 ເຈົ້າແມ່ນໃຜ?</h2><p>ເລືອກຊື່ຕົນເອງ — ເຄື່ອງນີ້ຈະຈື່ໄວ້</p>';
+    S.techs.forEach(function (t, i) { h += '<button class="btn ghost" onclick="pickTech(S.techs[' + i + '].name)">👷 ' + esc(t.name) + '</button>'; });
+    h += '<button class="btn ghost" onclick="pickOther()">✍️ ຄົນອື່ນ (ພິມຊື່)</button></div>';
+    $('app').innerHTML = h;
+    return;
+  }
+  chip.style.display = ''; chip.className = 'chip'; chip.textContent = '👷 ' + ME.name;
+  $('app').innerHTML = '<div class="card" style="padding:0;overflow:hidden">' + detailHtml(j, true) + '</div>';
+}
+function pickTech(name) { ME = { role: 'tech', name: name }; LS.set('js_me', JSON.stringify(ME)); render(); }
+function pickOther() { ask({ title: 'ພິມຊື່ຂອງເຈົ້າ', input: 'text', ok: 'ຕົກລົງ' }).then(function (v) { if (v) pickTech(v); }); }
+function ownerLogin() {
+  ask({ title: '👑 ໃສ່ PIN ເຈົ້າຂອງ', input: 'pin', ok: 'ເຂົ້າສູ່ລະບົບ' }).then(function (pin) { if (pin) doOwnerLogin(pin); });
+}
+function doOwnerLogin(pin) {
+  busy(true);
+  call('api_checkPin', pin).then(function (ok) {
+    if (!ok) { busy(false); toast('PIN ບໍ່ຖືກຕ້ອງ', true); return; }
+    ME = { role: 'owner', name: 'ເຈົ້າຂອງ', pin: pin }; LS.set('js_me', JSON.stringify(ME)); UI.mine = false;
+    refresh();
+  }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); });
+}
+function logout() {
+  ask({ title: 'ປ່ຽນຜູ້ໃຊ້?', msg: 'ຕອນນີ້ເຂົ້າເປັນ: ' + ME.name, ok: 'ປ່ຽນຜູ້ໃຊ້' }).then(function (y) {
+    if (!y) return;
+    closeSheet(); ME = null; LS.del('js_me'); UI.view = 'today'; LINK = null; refresh();
+  });
+}
+
+/* ກ່ອງຖາມ/ຢືນຢັນຂອງແອບເອງ (ແທນ confirm/prompt ທີ່ບາງ browser/ມືຖືບລັອກ)
+   opts: {title, msg, input:'pin'|'money'|undefined, value, ok, danger} → Promise(ຄ່າທີ່ພິມ | true | null) */
+function ask(opts) {
+  return new Promise(function (res) {
+    var box = $('dlg');
+    var inp = opts.input ? '<input class="inp" id="dlgIn" ' + (opts.input === 'pin' ? 'type="password" inputmode="numeric" autocomplete="off"' : opts.input === 'text' ? 'type="text"' : 'inputmode="numeric" oninput="fmtNum(this)"') +
+      ' value="' + esc(opts.value || '') + '" style="margin-top:10px;font-size:18px;text-align:center">' : '';
+    box.innerHTML = '<div class="dlgc"><b>' + esc(opts.title) + '</b>' + (opts.msg ? '<p>' + esc(opts.msg).replace(/\n/g, '<br>') + '</p>' : '') + inp +
+      '<div class="btns"><button class="btn ghost" id="dlgNo">ຍົກເລີກ</button><button class="btn ' + (opts.danger ? 'danger' : 'pri') + '" id="dlgYes">' + esc(opts.ok || 'ຕົກລົງ') + '</button></div></div>';
+    box.classList.add('on');
+    var fin = function (v) { box.classList.remove('on'); box.innerHTML = ''; res(v); };
+    $('dlgNo').onclick = function () { fin(null); };
+    $('dlgYes').onclick = function () { fin(opts.input ? $('dlgIn').value.trim() : true); };
+    box.onclick = function (e) { if (e.target === box) fin(null); };
+    var i = $('dlgIn');
+    if (i) { setTimeout(function () { i.focus(); i.select(); }, 50); i.onkeydown = function (e) { if (e.key === 'Enter') $('dlgYes').click(); }; }
+  });
+}
+
+/* ================= ໂຄງໜ້າຈໍ ================= */
+function render() {
+  if (!UI.loaded) return;
+  if (!isOwnerMe()) return renderTech();
+  var chip = $('meChip'); chip.style.display = '';
+  chip.className = 'chip' + (S.owner ? ' gold' : ''); chip.textContent = (S.owner ? '👑 ' : '👷 ') + ME.name;
+  var tabs = [['today', '🏠', 'ມື້ນີ້'], ['week', '🗓️', 'ອາທິດ'], ['month', '📅', 'ເດືອນ'], ['list', '🔎', 'ທັງໝົດ']];
+  if (S.owner) tabs.push(['money', '💰', 'ເງິນ'], ['settings', '⚙️', 'ຕັ້ງຄ່າ']);
+  if (!S.owner && (UI.view === 'money' || UI.view === 'settings')) UI.view = 'today';
+  $('tabs').innerHTML = tabs.map(function (t) {
+    return '<button class="' + (UI.view === t[0] ? 'on' : '') + '" onclick="go(\'' + t[0] + '\')"><i>' + t[1] + '</i>' + t[2] + '</button>';
+  }).join('');
+  $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
+  var v = { today: vToday, week: vWeek, month: vMonth, list: vList, money: vMoney, settings: vSettings }[UI.view] || vToday;
+  $('app').innerHTML = v();
+  if (UI.openId) { if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
+}
+function go(v) { UI.view = v; window.scrollTo(0, 0); render(); }
+function mineToggle() {
+  if (S.owner || !ME || ME.role !== 'tech') return '';
+  return '<label class="toggle"><input type="checkbox" ' + (UI.mine ? 'checked' : '') + ' onchange="UI.mine=this.checked;render()"> ສະເພາະວຽກຂອງຂ້ອຍ</label>';
+}
+
+function card(j, showDate) {
+  var st = STATUS[j.status] || STATUS.pending;
+  var time = j.start ? j.start + (j.end ? '–' + j.end : '') : 'ບໍ່ລະບຸເວລາ';
+  var when = showDate ? (j.date ? (relDay(j.date) || dLabel(j.date)) + ' · ' + time : 'ຍັງບໍ່ນັດວັນ') : time;
+  var techs = j.techIds.map(techName).join(', ');
+  return '<div class="job' + (j.status === 'done' || j.status === 'cancelled' ? ' done' : '') + '" style="--tc:' + typeColor(j.type) + '" onclick="openJob(\'' + esc(j.id) + '\')">' +
+    '<div class="top"><span class="t">' + esc(when) + '</span>' + (isOverdue(j) ? '<span class="badge" style="background:#fee4e2;color:#b42318">ເລີຍກຳນົດ</span>' : '') +
+    '<span class="sp"></span><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span></div>' +
+    '<div class="nm">' + esc(j.type) + ' · ' + esc(j.customer) + '</div>' +
+    (j.title ? '<div class="m">📝 ' + esc(j.title) + '</div>' : '') +
+    (j.location ? '<div class="m">📍 ' + esc(j.location) + '</div>' : '') +
+    '<div class="m">👷 ' + (techs ? esc(techs) : '<span style="color:#dc2626">ຍັງບໍ່ມອບໝາຍຊ່າງ</span>') + '</div>' +
+    (j.due > 0 && j.status !== 'cancelled' ? '<span class="due">💰 ເກັບໜ້າງານ ' + money(j.due) + ' ກີບ</span>' : '') +
+    '</div>';
+}
+function section(title, list, cls, showDate) {
+  var h = '<div class="sec ' + (cls || '') + '">' + title + ' <span class="cnt">' + list.length + '</span></div>';
+  if (!list.length) return h + '<div class="empty">ບໍ່ມີວຽກ</div>';
+  return h + list.map(function (j) { return card(j, showDate); }).join('');
+}
+
+/* ---------- ມື້ນີ້ ---------- */
+function vToday() {
+  var js = visibleJobs(), t = today(), tm = ymd(addDays(new Date(), 1));
+  var over = js.filter(isOverdue).sort(byTime);
+  var tdy = js.filter(function (j) { return j.date === t && j.status !== 'cancelled'; }).sort(byTime);
+  var tmr = js.filter(function (j) { return j.date === tm && j.status !== 'cancelled'; }).sort(byTime);
+  var wait = js.filter(function (j) { return j.status === 'pending' || j.status === 'postponed' || (!j.date && isOpen(j)); }).sort(byTime);
+  var wk = js.filter(function (j) { return j.date > tm && j.date <= ymd(addDays(new Date(), 7)) && isOpen(j); }).sort(byTime);
+  var d = new Date();
+  return '<div class="toolbar"><div style="flex:1"><b style="font-size:17px">' + DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + '</b></div>' + mineToggle() + '</div>' +
+    '<div class="kpis">' +
+    '<div class="kpi blue" onclick="document.getElementById(\'s-t\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + tdy.length + '</div><div class="l">ວຽກມື້ນີ້</div></div>' +
+    '<div class="kpi" onclick="document.getElementById(\'s-m\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + tmr.length + '</div><div class="l">ມື້ອື່ນ</div></div>' +
+    '<div class="kpi red" onclick="document.getElementById(\'s-o\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + over.length + '</div><div class="l">ເລີຍກຳນົດ</div></div>' +
+    '<div class="kpi amber" onclick="document.getElementById(\'s-w\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + wait.length + '</div><div class="l">ລໍຖ້ານັດ/ເລື່ອນ</div></div></div>' +
+    (over.length ? '<div id="s-o">' + section('⚠️ ເລີຍກຳນົດ — ຍັງບໍ່ປິດວຽກ', over, 'red', true) + '</div>' : '<div id="s-o"></div>') +
+    '<div id="s-t">' + section('☀️ ມື້ນີ້', tdy) + '</div>' +
+    '<div id="s-m">' + section('🌙 ມື້ອື່ນ', tmr) + '</div>' +
+    (wk.length ? section('📆 7 ມື້ຂ້າງໜ້າ', wk, '', true) : '') +
+    '<div id="s-w">' + section('⏳ ລໍຖ້ານັດວັນ / ເລື່ອນ', wait, '', true) + '</div>';
+}
+
+/* ---------- ອາທິດ ---------- */
+function weekStart(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); var k = (x.getDay() + 6) % 7; return addDays(x, -k); }
+function vWeek() {
+  var s = weekStart(UI.cursor), e = addDays(s, 6), js = visibleJobs(), t = today();
+  var title = s.getDate() + ' ' + MON[s.getMonth()] + ' – ' + e.getDate() + ' ' + MON[e.getMonth()];
+  var h = '<div class="toolbar"><button class="nb" onclick="shift(-7)">‹</button><h2>' + title + '</h2><button class="nb" onclick="shift(7)">›</button></div>' +
+    '<div class="toolbar"><button class="nb" onclick="UI.cursor=new Date();render()">ອາທິດນີ້</button><span class="sp"></span>' + mineToggle() + '</div>';
+  var total = 0;
+  for (var i = 0; i < 7; i++) {
+    var d = addDays(s, i), ds = ymd(d);
+    var list = js.filter(function (j) { return j.date === ds && j.status !== 'cancelled'; }).sort(byTime);
+    total += list.length;
+    h += '<div class="day"><div class="dayh' + (ds === t ? ' today' : '') + '">' + DOW[d.getDay()] + ' <small>' + d.getDate() + ' ' + MON[d.getMonth()] + (ds === t ? ' · ມື້ນີ້' : '') + '</small><span class="cnt">' + (list.length ? list.length + ' ວຽກ' : '') + '</span></div>' +
+      (list.length ? list.map(function (j) { return card(j); }).join('') : '<div class="empty" style="padding:8px">ວ່າງ</div>') + '</div>';
+  }
+  return h;
+}
+function shift(n) { UI.cursor = addDays(UI.cursor, n); render(); }
+
+/* ---------- ເດືອນ ---------- */
+function vMonth() {
+  var c = UI.cursor, y = c.getFullYear(), m = c.getMonth(), js = visibleJobs(), t = today();
+  var first = new Date(y, m, 1), start = addDays(first, -((first.getDay() + 6) % 7));
+  var h = '<div class="toolbar"><button class="nb" onclick="shiftM(-1)">‹</button><h2>' + MON[m] + ' ' + y + '</h2><button class="nb" onclick="shiftM(1)">›</button></div>' +
+    '<div class="toolbar"><button class="nb" onclick="UI.cursor=new Date();UI.sel=today();render()">ເດືອນນີ້</button><span class="sp"></span>' + mineToggle() + '</div>';
+  h += '<div class="mgrid">' + ['ຈັນ', 'ອັງຄານ', 'ພຸດ', 'ພະຫັດ', 'ສຸກ', 'ເສົາ', 'ອາທິດ'].map(function (x) { return '<div class="wd">' + x + '</div>'; }).join('');
+  var monthCount = 0;
+  for (var i = 0; i < 42; i++) {
+    var d = addDays(start, i), ds = ymd(d);
+    if (i === 35 && d.getMonth() !== m) break;
+    var list = js.filter(function (j) { return j.date === ds && j.status !== 'cancelled'; });
+    if (d.getMonth() === m) monthCount += list.length;
+    var dots = list.slice(0, 6).map(function (j) { return '<span class="dot" style="background:' + typeColor(j.type) + (j.status === 'done' ? ';opacity:.35' : '') + '"></span>'; }).join('');
+    h += '<div class="cell' + (d.getMonth() !== m ? ' out' : '') + (ds === t ? ' tdy' : '') + (ds === UI.sel ? ' sel' : '') + '" onclick="UI.sel=\'' + ds + '\';render()">' +
+      '<div class="d">' + d.getDate() + '</div><div class="dots">' + dots + '</div>' + (list.length > 6 ? '<div class="more">+' + (list.length - 6) + '</div>' : (list.length ? '<div class="more">' + list.length + '</div>' : '')) + '</div>';
+  }
+  h += '</div>';
+  h += '<div class="filters">' + S.types.map(function (tp) { return '<span class="fchip" style="cursor:default"><span class="dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;background:' + typeColor(tp) + '"></span> ' + esc(tp) + '</span>'; }).join('') + '</div>';
+  var sel = UI.sel || t;
+  var sl = js.filter(function (j) { return j.date === sel && j.status !== 'cancelled'; }).sort(byTime);
+  h += section('📌 ' + dLabel(sel), sl);
+  h += '<p class="muted" style="margin-top:10px;text-align:center">ເດືອນນີ້ມີທັງໝົດ ' + monthCount + ' ວຽກ</p>';
+  return h;
+}
+function shiftM(n) { var c = UI.cursor; UI.cursor = new Date(c.getFullYear(), c.getMonth() + n, 1); UI.sel = null; render(); }
+
+/* ---------- ທັງໝົດ / ຄົ້ນຫາ ---------- */
+function vList() {
+  var q = UI.q.toLowerCase();
+  var list = visibleJobs().filter(function (j) {
+    if (UI.fs && j.status !== UI.fs) return false;
+    if (UI.ft && j.type !== UI.ft) return false;
+    if (!q) return true;
+    return [j.customer, j.phone, j.location, j.title, j.note, j.type, j.techIds.map(techName).join(' ')].join(' ').toLowerCase().indexOf(q) >= 0;
+  }).sort(function (a, b) { return (b.date || '9999').localeCompare(a.date || '9999') || (b.start || '').localeCompare(a.start || ''); });
+  var h = '<input class="search" id="qIn" placeholder="🔎 ຄົ້ນຫາ ຊື່ລູກຄ້າ / ເບີໂທ / ບ້ານ / ຊ່າງ..." value="' + esc(UI.q) + '" oninput="UI.q=this.value;reList()">';
+  h += '<div class="filters"><span class="fchip' + (!UI.fs ? ' on' : '') + '" onclick="UI.fs=\'\';render()">ທຸກສະຖານະ</span>' +
+    Object.keys(STATUS).map(function (k) { return '<span class="fchip' + (UI.fs === k ? ' on' : '') + '" onclick="UI.fs=\'' + k + '\';render()">' + STATUS[k].l + '</span>'; }).join('') + '</div>';
+  h += '<div class="filters"><span class="fchip' + (!UI.ft ? ' on' : '') + '" onclick="UI.ft=\'\';render()">ທຸກປະເພດ</span>' +
+    S.types.map(function (tp, i) { return '<span class="fchip' + (UI.ft === tp ? ' on' : '') + '" onclick="UI.ft=S.types[' + i + '];render()">' + esc(tp) + '</span>'; }).join('') + '</div>';
+  h += '<div class="toolbar"><span class="muted">ພົບ ' + list.length + ' ວຽກ</span><span class="sp"></span>' + mineToggle() + '</div>';
+  h += '<div id="listBox">' + (list.length ? list.map(function (j) { return card(j, true); }).join('') : '<div class="empty">ບໍ່ພົບວຽກ</div>') + '</div>';
+  return h;
+}
+function reList() {
+  var pos = $('qIn').selectionStart; render(); var i = $('qIn'); if (i) { i.focus(); i.setSelectionRange(pos, pos); }
+}
+
+/* ---------- ເງິນ (ເຈົ້າຂອງ) ---------- */
+function vMoney() {
+  var c = UI.moneyCur, y = c.getFullYear(), m = c.getMonth(), pre = y + '-' + pad(m + 1);
+  var mj = S.jobs.filter(function (j) { return j.date && j.date.indexOf(pre) === 0 && j.status !== 'cancelled'; });
+  var val = 0, got = 0, due = 0;
+  mj.forEach(function (j) { val += j.price; got += j.deposit + j.collected; due += j.due; });
+  var allDue = S.jobs.filter(function (j) { return j.due > 0 && j.status !== 'cancelled'; }).sort(byTime);
+  var sumAll = allDue.reduce(function (a, j) { return a + j.due; }, 0);
+  var doneDue = allDue.filter(function (j) { return j.status === 'done'; });
+  var h = '<div class="toolbar"><button class="nb" onclick="shiftMoney(-1)">‹</button><h2>💰 ' + MON[m] + ' ' + y + '</h2><button class="nb" onclick="shiftMoney(1)">›</button></div>';
+  h += '<div class="money3"><div class="kpi"><div class="n">' + money(val) + '</div><div class="l">ມູນຄ່າວຽກ (' + mj.length + ' ວຽກ)</div></div>' +
+    '<div class="kpi" style="color:var(--green)"><div class="n">' + money(got) + '</div><div class="l">ເກັບແລ້ວ (ມັດຈຳ+ໜ້າງານ)</div></div>' +
+    '<div class="kpi red"><div class="n">' + money(due) + '</div><div class="l">ຍັງຄ້າງເກັບ</div></div></div>';
+  h += '<p class="muted" style="margin:-4px 2px 8px">ໜ່ວຍ: ກີບ · ນັບຕາມວັນນັດຕິດຕັ້ງ · ບໍ່ລວມວຽກຍົກເລີກ</p>';
+  if (doneDue.length) h += section('🚨 ວຽກສຳເລັດແລ້ວ ແຕ່ຍັງບໍ່ໄດ້ເງິນຄົບ', doneDue, 'red', true);
+  h += '<div class="sec">📋 ຄ້າງເກັບທັງໝົດ <span class="cnt">' + allDue.length + '</span><span class="sp"></span><span style="font-size:13px;color:var(--red)">' + money(sumAll) + ' ກີບ</span></div>';
+  h += allDue.length ? allDue.map(function (j) { return card(j, true); }).join('') : '<div class="empty">ບໍ່ມີຍອດຄ້າງ 🎉</div>';
+  return h;
+}
+function shiftMoney(n) { var c = UI.moneyCur; UI.moneyCur = new Date(c.getFullYear(), c.getMonth() + n, 1); render(); }
+
+/* ---------- ຕັ້ງຄ່າ (ເຈົ້າຂອງ) ---------- */
+var DRAFT_TECHS = null;
+function vSettings() {
+  if (!DRAFT_TECHS) DRAFT_TECHS = S.techs.filter(function (t) { return t.active !== false; }).map(function (t) { return { id: t.id, name: t.name, phone: t.phone, email: t.email }; });
+  var h = '<div class="card"><h3>👷 ລາຍຊື່ຊ່າງ / ພະນັກງານ</h3><p class="muted">ໃສ່ Gmail ຂອງຊ່າງ → ເວລາມອບວຽກ ຊ່າງຈະໄດ້ນັດໃນ Google Calendar ແລະ ມືຖືເດ້ງເຕືອນ</p>';
+  DRAFT_TECHS.forEach(function (t, i) {
+    h += '<div class="tech-row"><input class="inp" placeholder="ຊື່" value="' + esc(t.name) + '" oninput="DRAFT_TECHS[' + i + '].name=this.value">' +
+      '<input class="inp" placeholder="ເບີໂທ" inputmode="tel" value="' + esc(t.phone) + '" oninput="DRAFT_TECHS[' + i + '].phone=this.value">' +
+      '<div class="wide"><input class="inp" placeholder="Gmail (ສຳລັບແຈ້ງເຕືອນ)" inputmode="email" value="' + esc(t.email) + '" oninput="DRAFT_TECHS[' + i + '].email=this.value">' +
+      '<button class="btn danger" onclick="DRAFT_TECHS.splice(' + i + ',1);render()">ລຶບ</button></div></div>';
+  });
+  h += '<button class="btn ghost full" style="margin-top:10px" onclick="DRAFT_TECHS.push({name:\'\',phone:\'\',email:\'\'});render()">＋ ເພີ່ມຊ່າງ</button></div>';
+  h += '<div class="card"><h3>🏷️ ປະເພດວຽກ</h3><p class="muted">1 ແຖວ = 1 ປະເພດ (ໃສ່ emoji ນຳໜ້າໄດ້)</p><textarea class="inp" id="setTypes" style="min-height:140px">' + esc(S.types.join('\n')) + '</textarea></div>';
+  h += '<div class="card"><h3>🔔 ແຈ້ງເຕືອນໃນ Google Calendar</h3><div class="tpick">' + REM_OPTS.map(function (o) {
+    return '<label><input type="checkbox" class="remCb" value="' + o[0] + '" ' + (S.reminders.indexOf(o[0]) >= 0 ? 'checked' : '') + '> ' + o[1] + '</label>';
+  }).join('') + '</div><p class="muted" style="margin-top:8px">ມີຜົນກັບວຽກທີ່ບັນທຶກ/ອັບເດດຫຼັງຈາກນີ້</p></div>';
+  h += '<div class="card"><h3>🔑 ປ່ຽນ PIN ເຈົ້າຂອງ</h3><input class="inp" id="setPin" inputmode="numeric" placeholder="PIN ໃໝ່ (ຕົວເລກ 4-8 ໂຕ) — ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ"></div>';
+  h += '<button class="btn pri full" onclick="saveSettings()">💾 ບັນທຶກການຕັ້ງຄ່າ</button>';
+  if (S.calendarId) h += '<p class="muted" style="margin-top:12px;word-break:break-all">📅 Calendar ID (ໃຊ້ແຊໃຫ້ຊ່າງເບິ່ງປະຕິທິນທັງໝົດ): ' + esc(S.calendarId) + '</p>';
+  return h;
+}
+function saveSettings() {
+  var types = $('setTypes').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  var rem = Array.prototype.slice.call(document.querySelectorAll('.remCb')).filter(function (c) { return c.checked; }).map(function (c) { return +c.value; });
+  var pin = $('setPin').value.trim();
+  if (pin && !/^\d{4,8}$/.test(pin)) return toast('PIN ຕ້ອງເປັນຕົວເລກ 4-8 ໂຕ', true);
+  var keep = DRAFT_TECHS.filter(function (t) { return String(t.name).trim(); });
+  var ids = keep.map(function (t) { return t.id; });
+  var removed = S.techs.filter(function (t) { return ids.indexOf(t.id) < 0; }).map(function (t) { return { id: t.id, name: t.name, phone: t.phone, email: t.email, active: false }; });
+  act('api_saveSettings', { techs: keep.concat(removed), types: types, reminders: rem, newPin: pin }).then(function () {
+    if (pin) { ME.pin = pin; LS.set('js_me', JSON.stringify(ME)); }
+    DRAFT_TECHS = null; render(); toast('ບັນທຶກແລ້ວ ✓');
+  });
+}
+
+/* ================= ລາຍລະອຽດວຽກ ================= */
+function openSheet() { $('ov').classList.add('on'); $('sheet').classList.add('on'); document.body.style.overflow = 'hidden'; }
+function closeSheet() { $('ov').classList.remove('on'); $('sheet').classList.remove('on'); document.body.style.overflow = ''; UI.openId = null; }
+function openJob(id) { UI.openId = id; renderDetail(); openSheet(); $('sheet').scrollTop = 0; }
+
+function renderDetail() {
+  var j = jobById(UI.openId); if (!j) return;
+  $('sheet').innerHTML = detailHtml(j, false);
+}
+// page = true → ສະແດງເປັນໜ້າເຕັມ (ຊ່າງເປີດຈາກລິ້ງ) ບໍ່ມີປຸ່ມປິດ
+function detailHtml(j, page) {
+  var st = STATUS[j.status] || STATUS.pending, logs = (S.logs[j.id] || []).slice().reverse();
+  var h = '<div class="shd" style="border-top:5px solid ' + typeColor(j.type) + (page ? ';position:static;border-radius:0' : '') + '"><b>' + esc(j.type) + '</b><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span>' +
+    (page ? '' : '<button class="x" onclick="closeSheet()">✕</button>') + '</div><div class="sbody">';
+  if (S.owner) h += '<button class="btn gold full" style="margin-bottom:12px" onclick="shareJob(\'' + esc(j.id) + '\')">🔗 ແຊລິ້ງວຽກນີ້ໃຫ້ຊ່າງ</button>';
+  h += '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + esc(j.customer) + '</div>';
+  h += '<div class="info">' +
+    '<span class="k">📅</span><span><b>' + esc(j.date ? dLabel(j.date) + ' ' + parseYmd(j.date).getFullYear() : 'ຍັງບໍ່ນັດວັນ') + '</b>' + (j.start ? ' · ' + esc(j.start) + (j.end ? '–' + esc(j.end) : '') : '') + (relDay(j.date) ? ' <span class="badge" style="background:#dbe7ff;color:#1d4ed8">' + relDay(j.date) + '</span>' : '') + (isOverdue(j) ? ' <span class="badge" style="background:#fee4e2;color:#b42318">ເລີຍກຳນົດ</span>' : '') + '</span>' +
+    (j.phone ? '<span class="k">📞</span><span>' + esc(j.phone) + '</span>' : '') +
+    (j.location ? '<span class="k">📍</span><span>' + esc(j.location) + '</span>' : '') +
+    '<span class="k">👷</span><span>' + (j.techIds.length ? esc(j.techIds.map(techName).join(', ')) : '<span style="color:#dc2626">ຍັງບໍ່ມອບໝາຍຊ່າງ</span>') + '</span>' +
+    (j.title ? '<span class="k">📝</span><span style="white-space:pre-wrap">' + esc(j.title) + '</span>' : '') +
+    (j.note ? '<span class="k">💬</span><span style="white-space:pre-wrap">' + esc(j.note) + '</span>' : '') +
+    '</div>';
+  var ml = mapLink(j);
+  h += '<div class="acts">' +
+    (j.phone ? '<a class="abtn" target="_top" href="tel:' + esc(j.phone.replace(/[^\d+]/g, '')) + '"><i>📞</i>ໂທ</a>' : '<span class="abtn" style="opacity:.4"><i>📞</i>ໂທ</span>') +
+    (ml ? '<a class="abtn" href="' + esc(ml) + '" target="_blank" rel="noopener"><i>🗺️</i>ນຳທາງ</a>' : '<span class="abtn" style="opacity:.4"><i>🗺️</i>ນຳທາງ</span>') +
+    '<a class="abtn" href="' + esc(waLink(j)) + '" target="_blank" rel="noopener"><i>💬</i>ແຊ WhatsApp</a>' +
+    (S.owner ? '<span class="abtn" onclick="openForm(\'' + esc(j.id) + '\')"><i>✏️</i>ແກ້ໄຂ</span><span class="abtn" onclick="dupJob(\'' + esc(j.id) + '\')"><i>📄</i>ສຳເນົາ</span><span class="abtn" onclick="delJob(\'' + esc(j.id) + '\')" style="color:#dc2626"><i>🗑️</i>ລຶບ</span>' : '') +
+    '</div>';
+
+  // ສະຖານະ
+  h += '<div class="card"><h3>📌 ອັບເດດສະຖານະ</h3><div class="stgrid">' + Object.keys(STATUS).filter(function (k) { return S.owner || k !== 'cancelled'; }).map(function (k) {
+    return '<button class="stbtn' + (j.status === k ? ' on' : '') + '" style="background:' + STATUS[k].bg + ';color:' + STATUS[k].c + '" onclick="setStatus(\'' + esc(j.id) + '\',\'' + k + '\')">' + STATUS[k].l + '</button>';
+  }).join('') + '</div></div>';
+
+  // ເງິນ
+  if (S.owner) {
+    h += '<div class="card"><h3>💰 ເງິນ</h3><div class="info">' +
+      '<span class="k">🏷️</span><span>ມູນຄ່າວຽກ: <b>' + money(j.price) + '</b> ກີບ</span>' +
+      '<span class="k">💵</span><span>ມັດຈຳ: <b>' + money(j.deposit) + '</b> · ເກັບໜ້າງານແລ້ວ: <b>' + money(j.collected) + '</b></span>' +
+      '<span class="k">⏳</span><span>ຄ້າງເກັບ: <b style="color:' + (j.due > 0 ? '#dc2626' : '#12a150') + '">' + money(j.due) + ' ກີບ</b></span></div>' +
+      (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') + '</div>';
+  } else if (j.due > 0) {
+    h += '<div class="card" style="background:#fff8e6;border-color:#f6d98a"><h3>💰 ເກັບເງິນໜ້າງານ: ' + money(j.due) + ' ກີບ</h3>' +
+      '<button class="btn gold full" onclick="recordPay(\'' + esc(j.id) + '\')">✓ ບັນທຶກເງິນທີ່ເກັບໄດ້</button></div>';
+  } else {
+    h += '<div class="card" style="background:#ecfdf3;border-color:#abefc6"><h3 style="margin:0">💰 ບໍ່ຕ້ອງເກັບເງິນໜ້າງານ</h3></div>';
+  }
+
+  // ອຸປະກອນ
+  if (j.equipment.length) {
+    var ok = j.equipment.filter(function (e) { return e.done; }).length;
+    h += '<div class="card"><h3>🔧 ອຸປະກອນທີ່ຕ້ອງເອົາໄປ <span class="muted">(' + ok + '/' + j.equipment.length + ')</span></h3>' +
+      j.equipment.map(function (e, i) {
+        return '<label class="eq' + (e.done ? ' ok' : '') + '"><input type="checkbox" ' + (e.done ? 'checked' : '') + ' onchange="toggleEq(\'' + esc(j.id) + '\',' + i + ',this.checked)"><span>' + esc(e.t) + '</span></label>';
+      }).join('') + '</div>';
+  }
+
+  // ຮູບ
+  h += '<div class="card"><h3>📷 ຮູບກ່ອນຕິດຕັ້ງ <span class="muted">(' + j.photosBefore.length + ')</span></h3>' + photoGrid(j, 'before') + '</div>';
+  h += '<div class="card"><h3>✨ ຮູບຫຼັງຕິດຕັ້ງ <span class="muted">(' + j.photosAfter.length + ')</span></h3>' + photoGrid(j, 'after') + '</div>';
+
+  // ບັນທຶກ + ປະຫວັດ
+  h += '<div class="card"><h3>🗒️ ບັນທຶກ / ປະຫວັດວຽກ</h3>' +
+    '<div class="row"><input class="inp" id="noteIn" placeholder="ຂຽນບັນທຶກ ເຊັ່ນ: ລູກຄ້າຂໍເລື່ອນ 30 ນາທີ"><button class="btn pri" style="flex:none" onclick="addNote(\'' + esc(j.id) + '\')">ສົ່ງ</button></div>' +
+    '<div class="tl" style="margin-top:12px">' + (logs.length ? logs.map(function (l) {
+      return '<div class="it' + (l.action === 'note' ? ' note' : '') + '"><small>' + esc(l.time) + ' · ' + esc(l.who) + '</small>' + esc(l.detail) + '</div>';
+    }).join('') : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div></div>';
+  h += '<p class="muted" style="text-align:center">ລະຫັດວຽກ ' + esc(j.id) + (j.updatedAt ? ' · ອັບເດດລ່າສຸດ ' + esc(j.updatedAt) : '') + '</p></div>';
+  return h;
+}
+
+/* ---------- ແຊລິ້ງວຽກໃຫ້ຊ່າງ (ເຈົ້າຂອງ) ---------- */
+function jobLink(j) {
+  var base = MODE === 'api' ? location.origin + location.pathname : (S.appUrl || (location.origin + location.pathname));
+  return base + '?job=' + encodeURIComponent(j.id) + '&k=' + encodeURIComponent(j.shareKey);
+}
+function shareJob(id, reset) {
+  var j = jobById(id);
+  if (!j.shareKey || reset) {
+    return act('api_shareLink', id, !!reset).then(function () { shareJob(id); if (reset) toast('ປ່ຽນລິ້ງແລ້ວ — ລິ້ງເກົ່າໃຊ້ບໍ່ໄດ້ອີກ ✓'); });
+  }
+  var url = jobLink(j);
+  var msg = '📋 ວຽກ: ' + j.type + ' · ' + j.customer +
+    '\n📅 ' + (j.date ? dLabel(j.date) + (j.start ? ' ' + j.start + (j.end ? '–' + j.end : '') : '') : 'ຍັງບໍ່ນັດວັນ') +
+    (j.location ? '\n📍 ' + j.location : '') + '\n\n👉 ກົດເປີດລາຍລະອຽດວຽກ + ອັບເດດສະຖານະ:\n' + url;
+  var box = $('dlg');
+  box.innerHTML = '<div class="dlgc"><b>🔗 ລິ້ງວຽກ: ' + esc(j.customer) + '</b>' +
+    '<p>ຄົນທີ່ມີລິ້ງນີ້ ເຫັນໄດ້<b style="display:inline;font-size:inherit"> ສະເພາະວຽກນີ້</b> (ບໍ່ເຫັນມູນຄ່າວຽກ ແລະ ວຽກອື່ນ)</p>' +
+    '<input class="inp" id="shUrl" readonly value="' + esc(url) + '" style="margin-top:10px;font-size:12.5px" onfocus="this.select()">' +
+    '<div class="btns"><button class="btn ghost" id="shCopy">📋 ສຳເນົາ</button><a class="btn gold" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="' +
+    esc('https://wa.me/?text=' + encodeURIComponent(msg)) + '">💬 WhatsApp</a></div>' +
+    '<div class="btns" style="margin-top:8px"><button class="btn danger" id="shReset">🔄 ປ່ຽນລິ້ງໃໝ່</button><button class="btn ghost" id="shClose">ປິດ</button></div></div>';
+  box.classList.add('on');
+  var fin = function () { box.classList.remove('on'); box.innerHTML = ''; };
+  $('shClose').onclick = fin;
+  box.onclick = function (e) { if (e.target === box) fin(); };
+  $('shCopy').onclick = function () {
+    var i = $('shUrl'); i.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    if (navigator.clipboard) navigator.clipboard.writeText(url).then(function () { toast('ສຳເນົາແລ້ວ ✓'); }, function () { toast(ok ? 'ສຳເນົາແລ້ວ ✓' : 'ກົດຄ້າງທີ່ລິ້ງເພື່ອສຳເນົາ', !ok); });
+    else toast(ok ? 'ສຳເນົາແລ້ວ ✓' : 'ກົດຄ້າງທີ່ລິ້ງເພື່ອສຳເນົາ', !ok);
+  };
+  $('shReset').onclick = function () {
+    fin();
+    ask({ title: 'ປ່ຽນລິ້ງໃໝ່?', msg: 'ລິ້ງເກົ່າທີ່ສົ່ງໄປແລ້ວ ຈະເປີດບໍ່ໄດ້ອີກ (ໃຊ້ເມື່ອສົ່ງຜິດຄົນ)', ok: 'ປ່ຽນລິ້ງ', danger: true }).then(function (y) { if (y) shareJob(id, true); });
+  };
+}
+function photoGrid(j, kind) {
+  var arr = kind === 'before' ? j.photosBefore : j.photosAfter;
+  return '<div class="photos">' + arr.map(function (p) {
+    return '<div class="ph" onclick="viewPhoto(\'' + esc(p.length > 200 ? '' : p) + '\',this)"><img loading="lazy" src="' + esc(photoUrl(p)) + '" alt="">' +
+      (S.owner ? '<button class="del" onclick="event.stopPropagation();delPhoto(\'' + esc(j.id) + '\',\'' + kind + '\',' + arr.indexOf(p) + ')">✕</button>' : '') + '</div>';
+  }).join('') + '<div class="addph" onclick="pickPhoto(\'' + esc(j.id) + '\',\'' + kind + '\')"><i>📷</i>ຖ່າຍ/ເລືອກຮູບ</div></div>';
+}
+function viewPhoto(id, el) {
+  $('lbImg').src = id ? photoUrl(id, true) : el.querySelector('img').src; $('lb').classList.add('on');
+}
+function waLink(j) {
+  var t = '📋 *' + j.type + '*\n👤 ' + j.customer + (j.phone ? ' · 📞 ' + j.phone : '') +
+    '\n📅 ' + (j.date ? dLabel(j.date) + (j.start ? ' ' + j.start + (j.end ? '–' + j.end : '') : '') : 'ຍັງບໍ່ນັດວັນ') +
+    (j.location ? '\n📍 ' + j.location : '') + (mapLink(j) ? '\n🗺️ ' + mapLink(j) : '') +
+    '\n👷 ' + (j.techIds.map(techName).join(', ') || '-') +
+    (j.title ? '\n📝 ' + j.title : '') +
+    (j.equipment.length ? '\n🔧 ອຸປະກອນ:\n' + j.equipment.map(function (e) { return '  • ' + e.t; }).join('\n') : '') +
+    (j.due > 0 ? '\n💰 ເກັບໜ້າງານ: ' + money(j.due) + ' ກີບ' : '') +
+    (j.note ? '\n💬 ' + j.note : '');
+  return 'https://wa.me/?text=' + encodeURIComponent(t);
+}
+
+/* ---------- ການກະທຳ ---------- */
+function setStatus(id, s) {
+  var j = jobById(id); if (j.status === s) return;
+  var go = function () { act('api_setStatus', id, s).then(function () { toast('ອັບເດດ: ' + STATUS[s].l + ' ✓'); }); };
+  if (s === 'done' && j.due > 0) return ask({ title: 'ປິດວຽກເລີຍບໍ່?', msg: 'ວຽກນີ້ຍັງຄ້າງເກັບເງິນ ' + money(j.due) + ' ກີບ\n(ບັນທຶກເງິນໄດ້ພາຍຫຼັງ)', ok: 'ປິດວຽກ' }).then(function (y) { if (y) go(); });
+  if (s === 'cancelled') return ask({ title: 'ຍົກເລີກວຽກນີ້?', msg: 'ຈະລຶບອອກຈາກ Google Calendar', ok: 'ຍົກເລີກວຽກ', danger: true }).then(function (y) { if (y) go(); });
+  go();
+}
+function addNote(id) {
+  var v = $('noteIn').value.trim(); if (!v) return;
+  act('api_addNote', id, v).then(function () { toast('ບັນທຶກແລ້ວ ✓'); });
+}
+function toggleEq(id, i, done) { act('api_toggleEquip', id, i, done); }
+function recordPay(id) {
+  var j = jobById(id);
+  ask({ title: '💰 ເກັບເງິນໄດ້ຈັກກີບ?', msg: 'ຍອດຄ້າງ ' + money(j.due) + ' ກີບ', input: 'money', value: money(j.due), ok: 'ບັນທຶກ' }).then(function (v) {
+    if (v == null) return; var n = Number(String(v).replace(/[^\d]/g, ''));
+    if (!n) return toast('ໃສ່ຈຳນວນເງິນໃຫ້ຖືກ', true);
+    act('api_recordPay', id, n).then(function () { toast('ບັນທຶກເງິນ ' + money(n) + ' ກີບ ✓'); });
+  });
+}
+function delJob(id) {
+  var j = jobById(id);
+  ask({ title: 'ລຶບວຽກ "' + j.customer + '" ຖາວອນ?', msg: 'ຖ້າແຄ່ບໍ່ເຮັດແລ້ວ ໃຫ້ກົດສະຖານະ "ຍົກເລີກ" ແທນ — ປະຫວັດຍັງຢູ່', ok: 'ລຶບຖາວອນ', danger: true }).then(function (y) {
+    if (y) act('api_deleteJob', id).then(function () { closeSheet(); toast('ລຶບແລ້ວ'); });
+  });
+}
+function delPhoto(id, kind, idx) {
+  var j = jobById(id), arr = kind === 'before' ? j.photosBefore : j.photosAfter;
+  ask({ title: 'ລຶບຮູບນີ້?', ok: 'ລຶບ', danger: true }).then(function (y) { if (y) act('api_delPhoto', id, kind, arr[idx]); });
+}
+var PHOTO_TARGET = null;
+function pickPhoto(id, kind) { PHOTO_TARGET = { id: id, kind: kind }; $('fileIn').value = ''; $('fileIn').click(); }
+$('fileIn').addEventListener('change', function () {
+  var files = Array.prototype.slice.call(this.files || []); if (!files.length || !PHOTO_TARGET) return;
+  var tg = PHOTO_TARGET, n = 0; busy(true);
+  (function next() {
+    if (n >= files.length) { busy(false); toast('ອັບໂຫຼດ ' + files.length + ' ຮູບ ✓'); return; }
+    compress(files[n]).then(function (data) { return call('api_uploadPhoto', tg.id, tg.kind, data); })
+      .then(function (d) { apply(d); n++; next(); })
+      .catch(function (e) { busy(false); toast('⚠️ ອັບໂຫຼດບໍ່ໄດ້: ' + (e && e.message ? e.message : e), true); });
+  })();
+});
+function compress(file) {
+  return new Promise(function (res, rej) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () {
+      var k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      res(c.toDataURL('image/jpeg', 0.78));
+    };
+    img.onerror = function () { rej(new Error('ອ່ານຮູບບໍ່ໄດ້')); };
+    img.src = url;
+  });
+}
+
+/* ================= ຟອມ ເພີ່ມ/ແກ້ວຽກ (ເຈົ້າຂອງ) ================= */
+function openForm(id, copyFrom) {
+  var j = id ? jobById(id) : null, src = j || (copyFrom ? jobById(copyFrom) : null);
+  var v = function (k, def) { return src && src[k] != null ? src[k] : (def || ''); };
+  var date = j ? j.date : (copyFrom ? '' : (UI.view === 'month' && UI.sel ? UI.sel : today()));
+  var techIds = src ? src.techIds : [];
+  var h = '<div class="shd"><b>' + (j ? '✏️ ແກ້ໄຂວຽກ' : '＋ ວຽກໃໝ່') + '</b><button class="x" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
+  h += '<label class="f">ປະເພດວຽກ *</label><select class="inp" id="fType">' + S.types.map(function (t) { return '<option' + (v('type') === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>';
+  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="fCustomer" value="' + esc(v('customer')) + '"></div>' +
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '"></div></div>';
+  h += '<label class="f">ລາຍລະອຽດວຽກ</label><textarea class="inp" id="fTitle" placeholder="ເຊັ່ນ: ຕິດໄຟສາດ 600W 4 ດວງ ອ້ອມເຮືອນ + ໄຟທາງເຂົ້າ">' + esc(v('title')) + '</textarea>';
+  h += '<label class="f">ສະຖານທີ່</label><input class="inp" id="fLocation" placeholder="ບ້ານ / ເມືອງ / ແຂວງ" value="' + esc(v('location')) + '">';
+  h += '<label class="f">ລິ້ງ Google Maps</label><input class="inp" id="fMap" inputmode="url" placeholder="ວາງລິ້ງທີ່ລູກຄ້າສົ່ງມາ" value="' + esc(v('mapUrl')) + '">';
+  h += '<div class="row"><div><label class="f">ວັນທີ (ວ່າງ = ຍັງບໍ່ນັດ)</label><input class="inp" type="date" id="fDate" value="' + esc(date) + '"></div></div>';
+  h += '<div class="row"><div><label class="f">ເລີ່ມ</label><input class="inp" type="time" id="fStart" value="' + esc(v('start', '08:00')) + '"></div>' +
+    '<div><label class="f">ຮອດ</label><input class="inp" type="time" id="fEnd" value="' + esc(v('end', '12:00')) + '"></div></div>';
+  h += '<label class="f">ຊ່າງຜູ້ຮັບຜິດຊອບ</label><div class="tpick">' + activeTechs().map(function (t) {
+    return '<label><input type="checkbox" class="fTech" value="' + esc(t.id) + '"' + (techIds.indexOf(t.id) >= 0 ? ' checked' : '') + '> ' + esc(t.name) + '</label>';
+  }).join('') + '</div>';
+  h += '<label class="f">ອຸປະກອນທີ່ຕ້ອງເອົາໄປ (1 ແຖວ = 1 ລາຍການ)</label><textarea class="inp" id="fEquip" placeholder="ດອກໄຟສາດ 600W × 4\nເສົາ 6 ແມັດ × 2\nສາຍໄຟ 50 ແມັດ">' +
+    esc((src ? src.equipment : []).map(function (e) { return e.t; }).join('\n')) + '</textarea>';
+  h += '<div class="row"><div><label class="f">ມູນຄ່າວຽກ (ກີບ)</label><input class="inp" id="fPrice" inputmode="numeric" value="' + (src && src.price ? money(src.price) : '') + '" oninput="fmtNum(this)"></div>' +
+    '<div><label class="f">ມັດຈຳແລ້ວ (ກີບ)</label><input class="inp" id="fDeposit" inputmode="numeric" value="' + (j && j.deposit ? money(j.deposit) : '') + '" oninput="fmtNum(this)"></div></div>';
+  if (j) h += '<label class="f">ເກັບໜ້າງານແລ້ວ (ກີບ)</label><input class="inp" id="fCollected" inputmode="numeric" value="' + (j.collected ? money(j.collected) : '') + '" oninput="fmtNum(this)">';
+  h += '<label class="f">ໝາຍເຫດ</label><textarea class="inp" id="fNote" placeholder="ເຊັ່ນ: ໝາດຸ, ໂທກ່ອນໄປ 30 ນາທີ">' + esc(v('note')) + '</textarea>';
+  if (j) h += '<label class="f">ສະຖານະ</label><select class="inp" id="fStatus">' + Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (j.status === k ? ' selected' : '') + '>' + STATUS[k].l + '</option>'; }).join('') + '</select>';
+  h += '<div class="btns"><button class="btn ghost" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">ຍົກເລີກ</button><button class="btn pri" onclick="saveForm(\'' + (j ? esc(j.id) : '') + '\')">💾 ບັນທຶກ</button></div>';
+  h += '<p class="muted" style="margin-top:10px">🔔 ບັນທຶກແລ້ວ ລະບົບຈະລົງ Google Calendar ແລະ ສົ່ງນັດໃຫ້ຊ່າງທີ່ມີ Gmail ອັດຕະໂນມັດ</p></div>';
+  UI.openId = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function dupJob(id) { openForm(null, id); }
+function fmtNum(el) { var n = el.value.replace(/[^\d]/g, ''); el.value = n ? Number(n).toLocaleString('en-US') : ''; }
+function num(id) { var e = $(id); return e ? Number(e.value.replace(/[^\d]/g, '')) || 0 : undefined; }
+function saveForm(id) {
+  var old = id ? jobById(id) : null;
+  var lines = $('fEquip').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  var equipment = lines.map(function (t) {
+    var prev = old && old.equipment.filter(function (e) { return e.t === t; })[0];
+    return { t: t, done: !!(prev && prev.done) };
+  });
+  var data = {
+    id: id || '', type: $('fType').value, customer: $('fCustomer').value.trim(), phone: $('fPhone').value.trim(),
+    title: $('fTitle').value.trim(), location: $('fLocation').value.trim(), mapUrl: $('fMap').value.trim(),
+    date: $('fDate').value, start: $('fStart').value, end: $('fEnd').value,
+    techIds: Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; }),
+    equipment: equipment, price: num('fPrice'), deposit: num('fDeposit'), note: $('fNote').value.trim()
+  };
+  if ($('fCollected')) data.collected = num('fCollected');
+  data.status = $('fStatus') ? $('fStatus').value : (data.date ? 'scheduled' : 'pending');
+  if (!data.customer) return toast('ກະລຸນາໃສ່ຊື່ລູກຄ້າ', true);
+  if (data.start && data.end && data.end <= data.start) return toast('ເວລາ "ຮອດ" ຕ້ອງຫຼັງເວລາ "ເລີ່ມ"', true);
+  if (data.price && data.deposit > data.price) return toast('ມັດຈຳຫຼາຍກວ່າມູນຄ່າວຽກ', true);
+  var before = S.jobs.map(function (x) { return x.id; });
+  act('api_saveJob', data).then(function (d) {
+    var nid = id || (d.jobs.filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
+    toast(id ? 'ແກ້ໄຂແລ້ວ ✓' : 'ເພີ່ມວຽກແລ້ວ ✓');
+    if (nid) openJob(nid); else closeSheet();
+  });
+}
+
+/* ================= ໂໝດທົດລອງ (ເປີດໄຟລ໌ນອກ Google) ================= */
+var MOCK = (function () {
+  var KEY = 'js_demo_db_v1';
+  function seed() {
+    var t = new Date(), d = function (n) { return ymd(addDays(t, n)); };
+    var types = ['💡 ຕິດຕັ້ງດອກໄຟ', '🧱 ຕິດຕັ້ງຮົ້ວ', '🔍 ສຳຫຼວດໜ້າງານ', '🔧 ສ້ອມແປງ/ຮັບປະກັນ', '📦 ສົ່ງເຄື່ອງ', '📌 ອື່ນໆ'];
+    var J = function (o) {
+      return Object.assign({ title: '', phone: '', location: '', mapUrl: '', start: '08:00', end: '11:00', techIds: ['t1'], status: 'scheduled', equipment: [],
+        price: 0, deposit: 0, collected: 0, note: '', photosBefore: [], photosAfter: [], calEventId: '', createdAt: d(-3) + ' 09:00', updatedAt: d(-1) + ' 17:00' }, o);
+    };
+    return {
+      pin: '1234', reminders: [1440, 60], types: types,
+      techs: [{ id: 't1', name: 'ຊ່າງ A (ຕົວຢ່າງ)', phone: '020 5555 1111', email: '', active: true },
+              { id: 't2', name: 'ຊ່າງ B (ຕົວຢ່າງ)', phone: '020 5555 2222', email: '', active: true }],
+      jobs: [
+        J({ id: 'J-DEMO1', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 1', phone: '020 1234 5678', title: 'ຕິດໄຟສາດ 600W 4 ດວງ ອ້ອມເຮືອນ', location: 'ບ້ານໂພນຕ້ອງ, ຈັນທະບູລີ', date: d(0), start: '08:30', end: '11:30', techIds: ['t1', 't2'],
+            equipment: [{ t: 'ດອກໄຟສາດ 600W × 4', done: true }, { t: 'ເສົາ 6 ແມັດ × 2', done: false }, { t: 'ສະກູ + ພຸກ 1 ຖົງ', done: false }], price: 4200000, deposit: 1000000 }),
+        J({ id: 'J-DEMO2', type: types[1], customer: 'ລູກຄ້າຕົວຢ່າງ 2', phone: '020 9876 5432', title: 'ຮົ້ວຕາໜ່າງ 40 ແມັດ + ປະຕູ 1 ບານ', location: 'ບ້ານດົງໂດກ, ໄຊທານີ', date: d(0), start: '13:30', end: '17:00', techIds: ['t2'],
+            equipment: [{ t: 'ຕາໜ່າງ 40 ແມັດ', done: false }, { t: 'ເສົາເຫຼັກ × 14', done: false }], price: 6500000, deposit: 3000000, status: 'progress' }),
+        J({ id: 'J-DEMO3', type: types[2], customer: 'ລູກຄ້າຕົວຢ່າງ 3', title: 'ໄປວັດໜ້າງານ ໄຟຖະໜົນໃນຊອຍ 8 ຕົ້ນ', location: 'ບ້ານສີໄຄ, ສີໂຄດຕະບອງ', date: d(1), start: '09:00', end: '10:00' }),
+        J({ id: 'J-DEMO4', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 4', title: 'ໄຟຖະໜົນ 800W × 3', location: 'ບ້ານນາໄຊ, ນາຊາຍທອງ', date: d(3), techIds: ['t1'], price: 5400000, deposit: 2000000 }),
+        J({ id: 'J-DEMO5', type: types[3], customer: 'ລູກຄ້າຕົວຢ່າງ 5', title: 'ໄຟບໍ່ຕິດ 1 ດວງ (ຮັບປະກັນ)', location: 'ບ້ານໜອງບົງ', date: d(-2), techIds: ['t2'] }),
+        J({ id: 'J-DEMO6', type: types[1], customer: 'ລູກຄ້າຕົວຢ່າງ 6', title: 'ຮົ້ວລວດໜາມ 120 ແມັດ (ລໍຖ້າລູກຄ້າເລືອກມື້)', location: 'ເມືອງປາກງື່ມ', date: '', status: 'pending', techIds: [], price: 9000000 }),
+        J({ id: 'J-DEMO7', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 7', title: 'All-in-One 300W × 2', location: 'ບ້ານໂພນສະອາດ', date: d(-4), status: 'done', price: 1980000, deposit: 1000000, collected: 500000 })
+      ],
+      logs: { 'J-DEMO1': [{ time: d(-1) + ' 17:00', who: 'ເຈົ້າຂອງ', action: 'note', detail: 'ລູກຄ້າຂໍໃຫ້ໂທກ່ອນໄປ 30 ນາທີ' }] }
+    };
+  }
+  var db; try { db = JSON.parse(LS.get(KEY) || 'null'); } catch (e) { db = null; }
+  if (!db) db = seed();
+  function save() { LS.set(KEY, JSON.stringify(db)); }
+  function isOwner(c) { return c && c.pin && String(c.pin) === db.pin; }
+  function need(c) { if (!isOwner(c)) throw new Error('ຕ້ອງເປັນເຈົ້າຂອງ (PIN) ຈຶ່ງເຮັດໄດ້'); }
+  function nowF() { var d = new Date(); return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function log(id, c, a, det) { (db.logs[id] = db.logs[id] || []).push({ time: nowF(), who: c.who || '?', action: a, detail: det }); }
+  function find(id, c) {
+    var j = db.jobs.filter(function (x) { return x.id === id; })[0]; if (!j) throw new Error('ບໍ່ພົບວຽກ');
+    if (c && !isOwner(c) && !(c.key && j.shareKey && c.key === j.shareKey)) throw new Error('ລິ້ງນີ້ໃຊ້ບໍ່ໄດ້ແລ້ວ — ກະລຸນາຂໍລິ້ງໃໝ່ຈາກເຈົ້າຂອງ');
+    return j;
+  }
+  function newKey() { return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12); }
+  db.jobs.forEach(function (j) { if (!j.shareKey) j.shareKey = newKey(); });
+  function all(c) {
+    save(); var o = isOwner(c);
+    var jobs = o ? db.jobs : db.jobs.filter(function (j) { return c.jobId && j.id === c.jobId && c.key && c.key === j.shareKey; });
+    var logs = {}; jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id]; });
+    var ids = {}; jobs.forEach(function (j) { j.techIds.forEach(function (t) { ids[t] = 1; }); });
+    return JSON.stringify({
+      owner: !!o, types: db.types, reminders: db.reminders, logs: logs, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
+      jobs: jobs.map(function (j) {
+        var x = JSON.parse(JSON.stringify(j));
+        x.due = j.status === 'cancelled' ? 0 : Math.max(0, j.price - j.deposit - j.collected);
+        if (!o) { delete x.price; delete x.deposit; delete x.collected; delete x.shareKey; }
+        return x;
+      })
+    });
+  }
+  var LO = { pending: 'ລໍຖ້ານັດ', scheduled: 'ນັດແລ້ວ', progress: 'ກຳລັງເຮັດ', done: 'ສຳເລັດ', postponed: 'ເລື່ອນ', cancelled: 'ຍົກເລີກ' };
+  return {
+    api_getAll: all,
+    api_checkPin: function (c, p) { return String(p) === db.pin; },
+    api_saveJob: function (c, d) {
+      need(c); var isNew = !d.id;
+      var j = isNew ? { id: 'J' + Date.now().toString(36).toUpperCase(), photosBefore: [], photosAfter: [], collected: 0, createdAt: nowF(), shareKey: newKey() } : find(d.id);
+      ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
+      ['price', 'deposit', 'collected'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
+      if (j.status === 'pending' && j.date) j.status = 'scheduled';
+      j.updatedAt = nowF(); if (isNew) db.jobs.push(j);
+      log(j.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງວຽກໃໝ່' : 'ແກ້ໄຂຂໍ້ມູນວຽກ'); return all(c);
+    },
+    api_deleteJob: function (c, id) { need(c); db.jobs = db.jobs.filter(function (x) { return x.id !== id; }); return all(c); },
+    api_setStatus: function (c, id, s) {
+      if (s === 'cancelled') need(c);
+      var j = find(id, c), o = j.status; j.status = s; j.updatedAt = nowF(); log(id, c, 'status', LO[o] + ' → ' + LO[s]); return all(c);
+    },
+    api_addNote: function (c, id, t) { find(id, c); log(id, c, 'note', t); return all(c); },
+    api_toggleEquip: function (c, id, i, done) { var j = find(id, c); j.equipment[i].done = done; log(id, c, 'equip', (done ? '☑ ' : '☐ ') + j.equipment[i].t); return all(c); },
+    api_recordPay: function (c, id, n) { var j = find(id, c); j.collected += n; log(id, c, 'pay', 'ເກັບເງິນໄດ້ ' + money(n) + ' ກີບ'); return all(c); },
+    api_shareLink: function (c, id, reset) { need(c); var j = find(id); if (!j.shareKey || reset) j.shareKey = newKey(); if (reset) log(id, c, 'share', 'ປ່ຽນລິ້ງແຊໃໝ່ (ລິ້ງເກົ່າໃຊ້ບໍ່ໄດ້)'); return all(c); },
+    api_uploadPhoto: function (c, id, kind, data) {
+      var j = find(id, c); (kind === 'before' ? j.photosBefore : j.photosAfter).push(data);
+      log(id, c, 'photo', 'ໃສ່ຮູບ' + (kind === 'before' ? 'ກ່ອນ' : 'ຫຼັງ') + 'ຕິດຕັ້ງ'); return all(c);
+    },
+    api_delPhoto: function (c, id, kind, p) {
+      need(c); var j = find(id), k = kind === 'before' ? 'photosBefore' : 'photosAfter';
+      j[k] = j[k].filter(function (x) { return x !== p; }); return all(c);
+    },
+    api_saveSettings: function (c, o) {
+      need(c);
+      if (o.types && o.types.length) db.types = o.types;
+      if (o.reminders) db.reminders = o.reminders;
+      if (o.techs) db.techs = o.techs.map(function (t) { return { id: t.id || ('t' + Date.now() + Math.floor(Math.random() * 999)), name: t.name, phone: t.phone || '', email: t.email || '', active: t.active !== false }; });
+      if (o.newPin) db.pin = String(o.newPin);
+      return all({ pin: o.newPin || c.pin, who: c.who });
+    }
+  };
+})();
+
+/* ================= ເລີ່ມ ================= */
+if (MODE === 'demo') $('demoBar').style.display = '';
+function deepLink(cb) {
+  if (MODE === 'gas' && google.script.url) google.script.url.getLocation(function (l) { cb(l.parameter || {}); });
+  else {
+    var p = {}; location.search.replace(/[?&]([^=&]+)=([^&]*)/g, function (_, k, v) { p[k] = decodeURIComponent(v); });
+    cb(p);
+  }
+}
+busy(true);
+deepLink(function (p) {
+  if (p.job && p.k) LINK = { job: p.job, k: p.k };
+  call('api_getAll').then(function (d) {
+    busy(false); UI.loaded = true; apply(d);
+    if (p.job && isOwnerMe() && jobById(p.job)) openJob(p.job);
+  }).catch(function (e) { busy(false); $('app').innerHTML = '<div class="empty">⚠️ ໂຫຼດຂໍ້ມູນບໍ່ໄດ້: ' + esc(e && e.message ? e.message : e) + '</div>'; });
+});
+// ດຶງຂໍ້ມູນໃໝ່ທຸກ 60 ວິນາທີ ເວລາເປີດແອບຢູ່ (ເຫັນທີ່ຄົນອື່ນອັບເດດ)
+setInterval(function () {
+  if (document.visibilityState === 'visible' && ME && !$('loading').classList.contains('on') && !$('sheet').classList.contains('on')) {
+    call('api_getAll').then(apply).catch(function () {});
+  }
+}, 60000);
+</script>
+</body>
+</html>
