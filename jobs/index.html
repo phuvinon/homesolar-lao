@@ -176,7 +176,7 @@ textarea.inp{min-height:76px;resize:vertical}
 
 <main id="app"></main>
 
-<button class="fab" id="fab" style="display:none" onclick="openForm()">＋</button>
+<button class="fab" id="fab" style="display:none" onclick="fabClick()">＋</button>
 <nav class="tabs" id="tabs"></nav>
 
 <div class="ov" id="ov" onclick="closeSheet()"></div>
@@ -362,15 +362,16 @@ function render() {
   var chip = $('meChip'); chip.style.display = '';
   chip.className = 'chip' + (S.owner ? ' gold' : ''); chip.textContent = (S.owner ? '👑 ' : '👷 ') + ME.name;
   var tabs = [['today', '🏠', 'ມື້ນີ້'], ['week', '🗓️', 'ອາທິດ'], ['month', '📅', 'ເດືອນ'], ['list', '🔎', 'ທັງໝົດ']];
-  if (S.owner) tabs.push(['money', '💰', 'ເງິນ'], ['settings', '⚙️', 'ຕັ້ງຄ່າ']);
-  if (!S.owner && (UI.view === 'money' || UI.view === 'settings')) UI.view = 'today';
+  if (S.owner) tabs.push(['notes', '📝', 'ໂນດ'], ['money', '💰', 'ເງິນ'], ['settings', '⚙️', 'ຕັ້ງຄ່າ']);
+  if (!S.owner && (UI.view === 'money' || UI.view === 'settings' || UI.view === 'notes')) UI.view = 'today';
   $('tabs').innerHTML = tabs.map(function (t) {
     return '<button class="' + (UI.view === t[0] ? 'on' : '') + '" onclick="go(\'' + t[0] + '\')"><i>' + t[1] + '</i>' + t[2] + '</button>';
   }).join('');
   $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
-  var v = { today: vToday, week: vWeek, month: vMonth, list: vList, money: vMoney, settings: vSettings }[UI.view] || vToday;
+  var v = { today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, money: vMoney, settings: vSettings }[UI.view] || vToday;
   $('app').innerHTML = v();
   if (UI.openId) { if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
+  else if (UI.openNote) { if (noteById(UI.openNote)) renderNoteDetail(); else closeSheet(); }
 }
 function go(v) { UI.view = v; window.scrollTo(0, 0); render(); }
 function mineToggle() {
@@ -414,11 +415,20 @@ function vToday() {
     '<div class="kpi" onclick="document.getElementById(\'s-m\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + tmr.length + '</div><div class="l">ມື້ອື່ນ</div></div>' +
     '<div class="kpi red" onclick="document.getElementById(\'s-o\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + over.length + '</div><div class="l">ເລີຍກຳນົດ</div></div>' +
     '<div class="kpi amber" onclick="document.getElementById(\'s-w\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + wait.length + '</div><div class="l">ລໍຖ້ານັດ/ເລື່ອນ</div></div></div>' +
+    notesDueSection() +
     (over.length ? '<div id="s-o">' + section('⚠️ ເລີຍກຳນົດ — ຍັງບໍ່ປິດວຽກ', over, 'red', true) + '</div>' : '<div id="s-o"></div>') +
     '<div id="s-t">' + section('☀️ ມື້ນີ້', tdy) + '</div>' +
     '<div id="s-m">' + section('🌙 ມື້ອື່ນ', tmr) + '</div>' +
     (wk.length ? section('📆 7 ມື້ຂ້າງໜ້າ', wk, '', true) : '') +
     '<div id="s-w">' + section('⏳ ລໍຖ້ານັດວັນ / ເລື່ອນ', wait, '', true) + '</div>';
+}
+
+// ໂນດທີ່ຮອດ/ເລີຍວັນເຕືອນ — ຂຶ້ນເທິງສຸດຂອງໜ້າມື້ນີ້ (ເຈົ້າຂອງ)
+function notesDueSection() {
+  if (!S.owner) return '';
+  var due = (S.notes || []).filter(noteDue).sort(byRemind);
+  if (!due.length) return '';
+  return '<div class="sec" style="color:#c2410c">📞 ໂນດ / Follow ຮອດກຳນົດ <span class="cnt" style="background:#c2410c">' + due.length + '</span></div>' + due.map(noteCard).join('');
 }
 
 /* ---------- ອາທິດ ---------- */
@@ -547,8 +557,8 @@ function saveSettings() {
 
 /* ================= ລາຍລະອຽດວຽກ ================= */
 function openSheet() { $('ov').classList.add('on'); $('sheet').classList.add('on'); document.body.style.overflow = 'hidden'; }
-function closeSheet() { $('ov').classList.remove('on'); $('sheet').classList.remove('on'); document.body.style.overflow = ''; UI.openId = null; }
-function openJob(id) { UI.openId = id; renderDetail(); openSheet(); $('sheet').scrollTop = 0; }
+function closeSheet() { $('ov').classList.remove('on'); $('sheet').classList.remove('on'); document.body.style.overflow = ''; UI.openId = null; UI.openNote = null; }
+function openJob(id) { UI.openNote = null; UI.openId = id; renderDetail(); openSheet(); $('sheet').scrollTop = 0; }
 
 function renderDetail() {
   var j = jobById(UI.openId); if (!j) return;
@@ -728,13 +738,163 @@ function compress(file) {
   });
 }
 
+/* ================= ໂນດ (ເຈົ້າຂອງ): ຕິດຕາມລູກຄ້າ / ລໍຖ້າຕິດຕັ້ງ / ສຳຄັນ / ອື່ນໆ ================= */
+var NCAT = {
+  follow:    { l: '📞 ຕິດຕາມລູກຄ້າ', s: '📞 ຕິດຕາມ', c: '#c2410c', bg: '#ffedd5' },
+  install:   { l: '🔧 ລໍຖ້າຕິດຕັ້ງ', s: '🔧 ລໍຕິດຕັ້ງ', c: '#1d4ed8', bg: '#dbe7ff' },
+  important: { l: '⭐ ສຳຄັນ', s: '⭐ ສຳຄັນ', c: '#b42318', bg: '#fee4e2' },
+  other:     { l: '📌 ອື່ນໆ', s: '📌 ອື່ນໆ', c: '#475467', bg: '#eaecf0' }
+};
+var NST = {
+  open: { l: 'ເປີດຢູ່', c: '#1d4ed8', bg: '#dbe7ff' }, done: { l: 'ສຳເລັດ', c: '#067647', bg: '#d1fadf' },
+  won: { l: '✅ ປິດການຂາຍໄດ້', c: '#067647', bg: '#d1fadf' }, lost: { l: '❌ ບໍ່ຊື້', c: '#b42318', bg: '#fee4e2' }
+};
+function noteById(id) { return (S.notes || []).filter(function (n) { return n.id === id; })[0]; }
+function noteDue(n) { return n.status === 'open' && n.remindDate && n.remindDate <= today(); }
+function byRemind(a, b) {
+  return (a.remindDate || '9999').localeCompare(b.remindDate || '9999') || (a.remindTime || '99').localeCompare(b.remindTime || '99') || (b.createdAt || '').localeCompare(a.createdAt || '');
+}
+function noteCard(n) {
+  var c = NCAT[n.cat] || NCAT.other, st = NST[n.status] || NST.open, t = today();
+  var when = '';
+  if (n.remindDate) {
+    var late = n.status === 'open' && n.remindDate < t;
+    when = '<span class="badge" style="background:' + (late ? '#fee4e2;color:#b42318' : n.remindDate === t ? '#fdecc8;color:#a15c00' : '#eaecf0;color:#475467') + '">⏰ ' +
+      (late ? 'ເລີຍກຳນົດ · ' : '') + esc(relDay(n.remindDate) || dLabel(n.remindDate)) + (n.remindTime ? ' ' + esc(n.remindTime) : '') + '</span>';
+  }
+  return '<div class="job' + (n.status !== 'open' ? ' done' : '') + '" style="--tc:' + c.c + '" onclick="openNote(\'' + esc(n.id) + '\')">' +
+    '<div class="top"><span class="badge" style="background:' + c.bg + ';color:' + c.c + '">' + c.s + '</span>' + when +
+    '<span class="sp"></span>' + (n.status !== 'open' ? '<span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span>' : '') + '</div>' +
+    '<div class="nm">' + esc(n.title) + '</div>' +
+    (n.customer || n.phone ? '<div class="m">👤 ' + esc(n.customer) + (n.phone ? ' · 📞 ' + esc(n.phone) : '') + '</div>' : '') +
+    (n.detail ? '<div class="m">' + esc(n.detail) + '</div>' : '') +
+    (n.value ? '<span class="due" style="background:#ecfdf3;color:#067647">💰 ຄາດ ' + money(n.value) + ' ກີບ</span>' : '') + '</div>';
+}
+function vNotes() {
+  var all = S.notes || [], f = UI.nf || '', showClosed = !!UI.nClosed;
+  var open = all.filter(function (n) { return n.status === 'open'; });
+  var cnt = function (cat) { return open.filter(function (n) { return n.cat === cat; }).length; };
+  var dueN = open.filter(noteDue).length;
+  var pipe = open.filter(function (n) { return n.cat === 'follow'; }).reduce(function (a, n) { return a + (n.value || 0); }, 0);
+  var h = '<div class="kpis">' +
+    '<div class="kpi red" onclick="UI.nf=\'due\';render()"><div class="n">' + dueN + '</div><div class="l">ຮອດກຳນົດ</div></div>' +
+    '<div class="kpi amber" onclick="UI.nf=\'follow\';render()"><div class="n">' + cnt('follow') + '</div><div class="l">ຕິດຕາມລູກຄ້າ</div></div>' +
+    '<div class="kpi blue" onclick="UI.nf=\'install\';render()"><div class="n">' + cnt('install') + '</div><div class="l">ລໍຖ້າຕິດຕັ້ງ</div></div>' +
+    '<div class="kpi" onclick="UI.nf=\'important\';render()"><div class="n">' + cnt('important') + '</div><div class="l">ສຳຄັນ</div></div></div>';
+  if (pipe) h += '<p class="muted" style="margin:-6px 2px 10px">💰 ລູກຄ້າທີ່ກຳລັງຕິດຕາມ ມູນຄ່າຄາດລວມ <b>' + money(pipe) + '</b> ກີບ</p>';
+  h += '<div class="filters">' + [['', 'ທັງໝົດ'], ['due', '⏰ ຮອດກຳນົດ'], ['follow', NCAT.follow.s], ['install', NCAT.install.s], ['important', NCAT.important.s], ['other', NCAT.other.s]].map(function (x) {
+    return '<span class="fchip' + (f === x[0] ? ' on' : '') + '" onclick="UI.nf=\'' + x[0] + '\';render()">' + x[1] + '</span>';
+  }).join('') + '</div>';
+  var list = all.filter(function (n) {
+    if (!showClosed && n.status !== 'open') return false;
+    if (f === 'due') return noteDue(n);
+    return !f || n.cat === f;
+  });
+  var o = list.filter(function (n) { return n.status === 'open'; }).sort(byRemind);
+  var c = list.filter(function (n) { return n.status !== 'open'; }).sort(function (a, b) { return (b.updatedAt || '').localeCompare(a.updatedAt || ''); });
+  h += '<div class="toolbar"><span class="muted">' + o.length + ' ໂນດເປີດຢູ່</span><span class="sp"></span><label class="toggle"><input type="checkbox" ' + (showClosed ? 'checked' : '') +
+    ' onchange="UI.nClosed=this.checked;render()"> ສະແດງທີ່ປິດແລ້ວ</label></div>';
+  h += o.length ? o.map(noteCard).join('') : '<div class="empty">ບໍ່ມີໂນດ — ກົດ ＋ ເພື່ອເພີ່ມ</div>';
+  if (showClosed && c.length) h += '<div class="sec">ປິດແລ້ວ <span class="cnt">' + c.length + '</span></div>' + c.map(noteCard).join('');
+  return h;
+}
+function openNote(id) { UI.openId = null; UI.openNote = id; renderNoteDetail(); openSheet(); $('sheet').scrollTop = 0; }
+function renderNoteDetail() {
+  var n = noteById(UI.openNote); if (!n) return;
+  var c = NCAT[n.cat] || NCAT.other, st = NST[n.status] || NST.open, logs = (S.logs[n.id] || []).slice().reverse();
+  var tel = n.phone ? n.phone.replace(/[^\d+]/g, '') : '';
+  var wa = tel ? 'https://wa.me/' + (tel.indexOf('856') === 0 ? tel : '856' + tel.replace(/^0/, '')) : '';
+  var h = '<div class="shd" style="border-top:5px solid ' + c.c + '"><b>' + c.l + '</b><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + esc(n.title) + '</div><div class="info">' +
+    (n.customer ? '<span class="k">👤</span><span>' + esc(n.customer) + '</span>' : '') +
+    (n.phone ? '<span class="k">📞</span><span>' + esc(n.phone) + '</span>' : '') +
+    (n.remindDate ? '<span class="k">⏰</span><span><b>' + esc(dLabel(n.remindDate)) + '</b>' + (n.remindTime ? ' · ' + esc(n.remindTime) : '') + (noteDue(n) ? ' <span class="badge" style="background:#fee4e2;color:#b42318">ຮອດກຳນົດ</span>' : '') + '</span>' : '') +
+    (n.value ? '<span class="k">💰</span><span>ມູນຄ່າຄາດ <b>' + money(n.value) + '</b> ກີບ</span>' : '') +
+    (n.detail ? '<span class="k">📝</span><span style="white-space:pre-wrap">' + esc(n.detail) + '</span>' : '') +
+    (n.jobId ? '<span class="k">🔗</span><span>' + (jobById(n.jobId) ? '<a href="#" onclick="openJob(\'' + esc(n.jobId) + '\');return false">ເປີດວຽກ ' + esc(n.jobId) + '</a>' : 'ວຽກ ' + esc(n.jobId)) + '</span>' : '') +
+    '</div>';
+  h += '<div class="acts">' +
+    (tel ? '<a class="abtn" target="_top" href="tel:' + esc(tel) + '"><i>📞</i>ໂທ</a><a class="abtn" target="_blank" rel="noopener" href="' + esc(wa) + '"><i>💬</i>WhatsApp</a>' : '<span class="abtn" style="opacity:.4"><i>📞</i>ໂທ</span><span class="abtn" style="opacity:.4"><i>💬</i>WhatsApp</span>') +
+    '<span class="abtn" onclick="openNoteForm(\'' + esc(n.id) + '\')"><i>✏️</i>ແກ້ໄຂ</span>' +
+    '<span class="abtn" onclick="noteToJob(\'' + esc(n.id) + '\')"><i>🔧</i>ເປັນວຽກ</span>' +
+    '<span class="abtn" onclick="delNote(\'' + esc(n.id) + '\')" style="color:#dc2626"><i>🗑️</i>ລຶບ</span></div>';
+  if (n.status === 'open') {
+    h += '<div class="card"><h3>⏰ ເລື່ອນເຕືອນ</h3><div class="stgrid">' + [[1, '+1 ມື້'], [3, '+3 ມື້'], [7, '+1 ອາທິດ']].map(function (x) {
+      return '<button class="stbtn" style="background:#eaecf0" onclick="snoozeNote(\'' + esc(n.id) + '\',' + x[0] + ')">' + x[1] + '</button>';
+    }).join('') + '</div></div>';
+  }
+  var sts = n.cat === 'follow' ? ['open', 'won', 'lost'] : ['open', 'done'];
+  h += '<div class="card"><h3>📌 ສະຖານະ</h3><div class="stgrid">' + sts.map(function (k) {
+    return '<button class="stbtn' + (n.status === k ? ' on' : '') + '" style="background:' + NST[k].bg + ';color:' + NST[k].c + '" onclick="setNoteStatus(\'' + esc(n.id) + '\',\'' + k + '\')">' + NST[k].l + '</button>';
+  }).join('') + '</div></div>';
+  h += '<div class="card"><h3>🗒️ ປະຫວັດ / ບັນທຶກການຕິດຕາມ</h3>' +
+    '<div class="row"><input class="inp" id="noteIn" placeholder="ເຊັ່ນ: ໂທແລ້ວ ລູກຄ້າຂໍຄິດເບິ່ງອີກ 3 ມື້"><button class="btn pri" style="flex:none" onclick="addNote(\'' + esc(n.id) + '\')">ສົ່ງ</button></div>' +
+    '<div class="tl" style="margin-top:12px">' + (logs.length ? logs.map(function (l) {
+      return '<div class="it' + (l.action === 'note' ? ' note' : '') + '"><small>' + esc(l.time) + ' · ' + esc(l.who) + '</small>' + esc(l.detail) + '</div>';
+    }).join('') : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div></div>';
+  h += '<p class="muted" style="text-align:center">ລະຫັດໂນດ ' + esc(n.id) + (n.updatedAt ? ' · ອັບເດດ ' + esc(n.updatedAt) : '') + '</p></div>';
+  $('sheet').innerHTML = h;
+}
+function openNoteForm(id) {
+  var n = id ? noteById(id) : null, v = function (k) { return n && n[k] != null ? n[k] : ''; };
+  var cat = n ? n.cat : (UI.nf && NCAT[UI.nf] ? UI.nf : 'follow');
+  var h = '<div class="shd"><b>' + (n ? '✏️ ແກ້ໄຂໂນດ' : '＋ ໂນດໃໝ່') + '</b><button class="x" onclick="' + (n ? 'openNote(\'' + esc(n.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
+  h += '<label class="f">ປະເພດ</label><div class="tpick">' + Object.keys(NCAT).map(function (k) {
+    return '<label><input type="radio" name="nCat" value="' + k + '"' + (cat === k ? ' checked' : '') + '> ' + NCAT[k].l + '</label>';
+  }).join('') + '</div>';
+  h += '<label class="f">ຫົວຂໍ້ *</label><input class="inp" id="nTitle" placeholder="ເຊັ່ນ: ສົນໃຈຊຸດໂຊລ່າ 3000W ຂໍໃບສະເໜີລາຄາ" value="' + esc(v('title')) + '">';
+  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ</label><input class="inp" id="nCustomer" value="' + esc(v('customer')) + '"></div>' +
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="nPhone" inputmode="tel" value="' + esc(v('phone')) + '"></div></div>';
+  h += '<label class="f">ລາຍລະອຽດ</label><textarea class="inp" id="nDetail" placeholder="ລູກຄ້າຢາກໄດ້ຫຍັງ, ລໍຖ້າຫຍັງ, ຕ້ອງເຮັດຫຍັງຕໍ່">' + esc(v('detail')) + '</textarea>';
+  h += '<div class="row"><div><label class="f">⏰ ວັນເຕືອນ</label><input class="inp" type="date" id="nDate" value="' + esc(n ? n.remindDate : '') + '"></div>' +
+    '<div><label class="f">ເວລາ</label><input class="inp" type="time" id="nTime" value="' + esc(n && n.remindTime ? n.remindTime : '09:00') + '"></div></div>';
+  h += '<div class="row" style="gap:6px;margin-top:6px">' + [[0, 'ມື້ນີ້'], [1, 'ມື້ອື່ນ'], [3, '+3 ມື້'], [7, '+1 ອາທິດ']].map(function (x) {
+    return '<button class="btn ghost" style="padding:7px 4px;font-size:13px" onclick="$(\'nDate\').value=\'' + ymd(addDays(new Date(), x[0])) + '\'">' + x[1] + '</button>';
+  }).join('') + '</div>';
+  h += '<label class="f">💰 ມູນຄ່າຄາດ (ກີບ) — ຖ້າມີ</label><input class="inp" id="nValue" inputmode="numeric" value="' + (n && n.value ? money(n.value) : '') + '" oninput="fmtNum(this)">';
+  h += '<div class="btns"><button class="btn ghost" onclick="' + (n ? 'openNote(\'' + esc(n.id) + '\')' : 'closeSheet()') + '">ຍົກເລີກ</button><button class="btn pri" onclick="saveNote(\'' + (n ? esc(n.id) : '') + '\')">💾 ບັນທຶກ</button></div>';
+  h += '<p class="muted" style="margin-top:10px">🔔 ມີວັນເຕືອນ → ລົງ Google Calendar ເດ້ງໃນມືຖືເຈົ້າຂອງ (ຊ່າງບໍ່ເຫັນໂນດ)</p></div>';
+  UI.openId = null; UI.openNote = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function saveNote(id) {
+  var cat = (document.querySelector('input[name=nCat]:checked') || {}).value || 'other';
+  var data = { id: id || '', cat: cat, title: $('nTitle').value.trim(), customer: $('nCustomer').value.trim(), phone: $('nPhone').value.trim(),
+    detail: $('nDetail').value.trim(), remindDate: $('nDate').value, remindTime: $('nTime').value, value: num('nValue') };
+  if (!data.title) return toast('ກະລຸນາໃສ່ຫົວຂໍ້ໂນດ', true);
+  var before = (S.notes || []).map(function (x) { return x.id; });
+  act('api_saveNote', data).then(function (d) {
+    var nid = id || ((d.notes || []).filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
+    toast(id ? 'ແກ້ໄຂແລ້ວ ✓' : 'ເພີ່ມໂນດແລ້ວ ✓');
+    if (nid) openNote(nid); else closeSheet();
+  });
+}
+function setNoteStatus(id, s) {
+  var n = noteById(id); if (n.status === s) return;
+  act('api_setNoteStatus', id, s).then(function () { toast(NST[s].l + ' ✓'); });
+}
+function snoozeNote(id, days) { act('api_snoozeNote', id, days).then(function () { toast('ເລື່ອນເຕືອນແລ້ວ ✓'); }); }
+function delNote(id) {
+  var n = noteById(id);
+  ask({ title: 'ລຶບໂນດ "' + n.title + '"?', msg: 'ຖ້າແຄ່ເຮັດແລ້ວ ໃຫ້ກົດສະຖານະ "ສຳເລັດ" ແທນ — ປະຫວັດຍັງຢູ່', ok: 'ລຶບຖາວອນ', danger: true }).then(function (y) {
+    if (y) act('api_deleteNote', id).then(function () { closeSheet(); toast('ລຶບແລ້ວ'); });
+  });
+}
+function noteToJob(id) {
+  var n = noteById(id);
+  openForm(null, null, { customer: n.customer, phone: n.phone, title: n.title + (n.detail ? '\n' + n.detail : ''), price: n.value || 0, fromNote: n.id });
+}
+function fabClick() { if (UI.view === 'notes') openNoteForm(); else openForm(); }
+
 /* ================= ຟອມ ເພີ່ມ/ແກ້ວຽກ (ເຈົ້າຂອງ) ================= */
-function openForm(id, copyFrom) {
-  var j = id ? jobById(id) : null, src = j || (copyFrom ? jobById(copyFrom) : null);
+// prefill = {customer, phone, title, price, fromNote} ເມື່ອປ່ຽນໂນດເປັນວຽກ
+function openForm(id, copyFrom, prefill) {
+  var j = id ? jobById(id) : null, src = j || (copyFrom ? jobById(copyFrom) : null) || prefill || null;
+  UI.fromNote = !j && prefill ? prefill.fromNote : null;
   var v = function (k, def) { return src && src[k] != null ? src[k] : (def || ''); };
-  var date = j ? j.date : (copyFrom ? '' : (UI.view === 'month' && UI.sel ? UI.sel : today()));
-  var techIds = src ? src.techIds : [];
-  var h = '<div class="shd"><b>' + (j ? '✏️ ແກ້ໄຂວຽກ' : '＋ ວຽກໃໝ່') + '</b><button class="x" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
+  var date = j ? j.date : (copyFrom || prefill ? '' : (UI.view === 'month' && UI.sel ? UI.sel : today()));
+  var techIds = src && src.techIds ? src.techIds : [];
+  var h = '<div class="shd"><b>' + (j ? '✏️ ແກ້ໄຂວຽກ' : prefill ? '🔧 ປ່ຽນໂນດເປັນວຽກ' : '＋ ວຽກໃໝ່') + '</b><button class="x" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<label class="f">ປະເພດວຽກ *</label><select class="inp" id="fType">' + S.types.map(function (t) { return '<option' + (v('type') === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>';
   h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="fCustomer" value="' + esc(v('customer')) + '"></div>' +
     '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '"></div></div>';
@@ -748,7 +908,7 @@ function openForm(id, copyFrom) {
     return '<label><input type="checkbox" class="fTech" value="' + esc(t.id) + '"' + (techIds.indexOf(t.id) >= 0 ? ' checked' : '') + '> ' + esc(t.name) + '</label>';
   }).join('') + '</div>';
   h += '<label class="f">ອຸປະກອນທີ່ຕ້ອງເອົາໄປ (1 ແຖວ = 1 ລາຍການ)</label><textarea class="inp" id="fEquip" placeholder="ດອກໄຟສາດ 600W × 4\nເສົາ 6 ແມັດ × 2\nສາຍໄຟ 50 ແມັດ">' +
-    esc((src ? src.equipment : []).map(function (e) { return e.t; }).join('\n')) + '</textarea>';
+    esc((src && src.equipment ? src.equipment : []).map(function (e) { return e.t; }).join('\n')) + '</textarea>';
   h += '<div class="row"><div><label class="f">ມູນຄ່າວຽກ (ກີບ)</label><input class="inp" id="fPrice" inputmode="numeric" value="' + (src && src.price ? money(src.price) : '') + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ມັດຈຳແລ້ວ (ກີບ)</label><input class="inp" id="fDeposit" inputmode="numeric" value="' + (j && j.deposit ? money(j.deposit) : '') + '" oninput="fmtNum(this)"></div></div>';
   if (j) h += '<label class="f">ເກັບໜ້າງານແລ້ວ (ກີບ)</label><input class="inp" id="fCollected" inputmode="numeric" value="' + (j.collected ? money(j.collected) : '') + '" oninput="fmtNum(this)">';
@@ -756,7 +916,7 @@ function openForm(id, copyFrom) {
   if (j) h += '<label class="f">ສະຖານະ</label><select class="inp" id="fStatus">' + Object.keys(STATUS).map(function (k) { return '<option value="' + k + '"' + (j.status === k ? ' selected' : '') + '>' + STATUS[k].l + '</option>'; }).join('') + '</select>';
   h += '<div class="btns"><button class="btn ghost" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">ຍົກເລີກ</button><button class="btn pri" onclick="saveForm(\'' + (j ? esc(j.id) : '') + '\')">💾 ບັນທຶກ</button></div>';
   h += '<p class="muted" style="margin-top:10px">🔔 ບັນທຶກແລ້ວ ລະບົບຈະລົງ Google Calendar ແລະ ສົ່ງນັດໃຫ້ຊ່າງທີ່ມີ Gmail ອັດຕະໂນມັດ</p></div>';
-  UI.openId = null;
+  UI.openId = null; UI.openNote = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
 }
 function dupJob(id) { openForm(null, id); }
@@ -777,6 +937,7 @@ function saveForm(id) {
     equipment: equipment, price: num('fPrice'), deposit: num('fDeposit'), note: $('fNote').value.trim()
   };
   if ($('fCollected')) data.collected = num('fCollected');
+  if (!id && UI.fromNote) data.fromNote = UI.fromNote;
   data.status = $('fStatus') ? $('fStatus').value : (data.date ? 'scheduled' : 'pending');
   if (!data.customer) return toast('ກະລຸນາໃສ່ຊື່ລູກຄ້າ', true);
   if (data.start && data.end && data.end <= data.start) return toast('ເວລາ "ຮອດ" ຕ້ອງຫຼັງເວລາ "ເລີ່ມ"', true);
@@ -831,13 +992,21 @@ var MOCK = (function () {
   }
   function newKey() { return Math.random().toString(36).slice(2, 12) + Math.random().toString(36).slice(2, 12); }
   db.jobs.forEach(function (j) { if (!j.shareKey) j.shareKey = newKey(); });
+  if (!db.notes) db.notes = [
+    { id: 'N-DEMO1', cat: 'follow', title: 'ສົນໃຈຊຸດໂຊລ່າ 3000W ຂໍໃບສະເໜີລາຄາ', customer: 'ລູກຄ້າຕົວຢ່າງ A', phone: '020 2222 3333', detail: 'ສົ່ງລາຄາແລ້ວ ລໍຖ້າຕອບ', value: 12500000, remindDate: today(), remindTime: '10:00', status: 'open', jobId: '', createdAt: today() + ' 08:00', updatedAt: '' },
+    { id: 'N-DEMO2', cat: 'install', title: 'ໄຟຖະໜົນ 5 ຕົ້ນ ລໍຖ້າລູກຄ້າເທພື້ນ', customer: 'ລູກຄ້າຕົວຢ່າງ B', phone: '', detail: '', value: 0, remindDate: ymd(addDays(new Date(), 4)), remindTime: '09:00', status: 'open', jobId: '', createdAt: today() + ' 08:00', updatedAt: '' },
+    { id: 'N-DEMO3', cat: 'important', title: 'ສັ່ງສະຕັອກ 600W ເພີ່ມ 20 ດວງ', customer: '', phone: '', detail: '', value: 0, remindDate: ymd(addDays(new Date(), -1)), remindTime: '', status: 'open', jobId: '', createdAt: today() + ' 08:00', updatedAt: '' }
+  ];
+  function findN(id) { var n = db.notes.filter(function (x) { return x.id === id; })[0]; if (!n) throw new Error('ບໍ່ພົບໂນດ'); return n; }
   function all(c) {
     save(); var o = isOwner(c);
     var jobs = o ? db.jobs : db.jobs.filter(function (j) { return c.jobId && j.id === c.jobId && c.key && c.key === j.shareKey; });
-    var logs = {}; jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id].filter(function (l) { return o || l.action !== 'pay'; }); });
+    var notes = o ? db.notes : [];
+    var logs = {}; notes.forEach(function (n) { if (db.logs[n.id]) logs[n.id] = db.logs[n.id]; });
+    jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id].filter(function (l) { return o || l.action !== 'pay'; }); });
     var ids = {}; jobs.forEach(function (j) { j.techIds.forEach(function (t) { ids[t] = 1; }); });
     return JSON.stringify({
-      owner: !!o, types: db.types, reminders: db.reminders, logs: logs, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      owner: !!o, notes: notes, types: db.types, reminders: db.reminders, logs: logs, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
       techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
@@ -858,14 +1027,30 @@ var MOCK = (function () {
       ['price', 'deposit', 'collected'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
       if (j.status === 'pending' && j.date) j.status = 'scheduled';
       j.updatedAt = nowF(); if (isNew) db.jobs.push(j);
-      log(j.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງວຽກໃໝ່' : 'ແກ້ໄຂຂໍ້ມູນວຽກ'); return all(c);
+      log(j.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງວຽກໃໝ່' : 'ແກ້ໄຂຂໍ້ມູນວຽກ');
+      if (d.fromNote) { var fn = findN(d.fromNote); fn.status = fn.cat === 'follow' ? 'won' : 'done'; fn.jobId = j.id; log(fn.id, c, 'job', 'ປ່ຽນເປັນວຽກ ' + j.id); }
+      return all(c);
     },
     api_deleteJob: function (c, id) { need(c); db.jobs = db.jobs.filter(function (x) { return x.id !== id; }); return all(c); },
     api_setStatus: function (c, id, s) {
       if (s === 'cancelled') need(c);
       var j = find(id, c), o = j.status; j.status = s; j.updatedAt = nowF(); log(id, c, 'status', LO[o] + ' → ' + LO[s]); return all(c);
     },
-    api_addNote: function (c, id, t) { find(id, c); log(id, c, 'note', t); return all(c); },
+    api_addNote: function (c, id, t) { if (id.charAt(0) === 'N') { need(c); findN(id); } else find(id, c); log(id, c, 'note', t); return all(c); },
+    api_saveNote: function (c, d) {
+      need(c); var isNew = !d.id;
+      var n = isNew ? { id: 'N' + Date.now().toString(36).toUpperCase(), status: 'open', jobId: '', createdAt: nowF() } : findN(d.id);
+      ['cat', 'title', 'customer', 'phone', 'detail', 'remindDate', 'remindTime', 'value'].forEach(function (k) { if (d[k] !== undefined) n[k] = d[k]; });
+      if (!n.title) throw new Error('ກະລຸນາໃສ່ຫົວຂໍ້ໂນດ');
+      n.updatedAt = nowF(); if (isNew) db.notes.push(n);
+      log(n.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງໂນດ' : 'ແກ້ໄຂໂນດ'); return all(c);
+    },
+    api_setNoteStatus: function (c, id, s) { need(c); var n = findN(id), o = n.status; n.status = s; n.updatedAt = nowF(); log(id, c, 'status', NST[o].l + ' → ' + NST[s].l); return all(c); },
+    api_snoozeNote: function (c, id, days) {
+      need(c); var n = findN(id), base = n.remindDate && n.remindDate > today() ? parseYmd(n.remindDate) : new Date();
+      n.remindDate = ymd(addDays(base, days)); n.updatedAt = nowF(); log(id, c, 'snooze', 'ເລື່ອນເຕືອນໄປ ' + n.remindDate); return all(c);
+    },
+    api_deleteNote: function (c, id) { need(c); db.notes = db.notes.filter(function (x) { return x.id !== id; }); return all(c); },
     api_toggleEquip: function (c, id, i, done) { var j = find(id, c); j.equipment[i].done = done; log(id, c, 'equip', (done ? '☑ ' : '☐ ') + j.equipment[i].t); return all(c); },
     api_recordPay: function (c, id, n) { need(c); var j = find(id); j.collected += n; log(id, c, 'pay', 'ເກັບເງິນໄດ້ ' + money(n) + ' ກີບ'); return all(c); },
     api_shareLink: function (c, id, reset) { need(c); var j = find(id); if (!j.shareKey || reset) j.shareKey = newKey(); if (reset) log(id, c, 'share', 'ປ່ຽນລິ້ງແຊໃໝ່ (ລິ້ງເກົ່າໃຊ້ບໍ່ໄດ້)'); return all(c); },
