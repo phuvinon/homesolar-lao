@@ -280,8 +280,12 @@ function call(fn) {
       runner[fn].apply(runner, [ctx()].concat(args));
     } else if (MODE === 'api') {
       // body ເປັນ text ທຳມະດາ → ບໍ່ມີ CORS preflight
-      fetch(API_URL, { method: 'POST', body: JSON.stringify({ fn: fn, args: [ctx()].concat(args) }) })
-        .then(function (r) { return r.json(); })
+      // Google ບາງເທື່ອຕອບໜ້າ error ແທນ JSON (ຊົ່ວຄາວ) → ລອງໃໝ່ອັດຕະໂນມັດ 1 ຄັ້ງ
+      // ສະເພາະຄຳສັ່ງອ່ານ — ຄຳສັ່ງຂຽນຫ້າມລອງຊ້ຳ (ເຊັ່ນ ຮັບເຄື່ອງ → ໃບນຳເຂົ້າ Pancake ຊ້ຳ)
+      var body = JSON.stringify({ fn: fn, args: [ctx()].concat(args) });
+      var post = function () { return fetch(API_URL, { method: 'POST', body: body }).then(function (r) { return r.json(); }); };
+      var safe = fn === 'api_getAll' || fn === 'api_checkPin';
+      post().catch(function (e) { if (!safe) throw e; return new Promise(function (ok) { setTimeout(ok, 1200); }).then(post); })
         .then(function (o) { if (o.error) rej(new Error(o.error)); else done(o.result); })
         .catch(function () { rej(new Error('ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດອິນເຕີເນັດ ແລ້ວກົດ ⟳')); });
     } else {
