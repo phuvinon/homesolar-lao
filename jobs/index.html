@@ -304,6 +304,23 @@ function act(fn) {
   return call.apply(null, args).then(function (d) { busy(false); apply(d); return d; })
     .catch(function (e) { busy(false); toast('⚠️ ' + (e && e.message ? e.message : e), true); throw e; });
 }
+/* ອັບເດດໜ້າຈໍທັນທີ ບໍ່ລໍຖ້າເຊີບເວີ (optimistic):
+   mutate() ປ່ຽນຂໍ້ມູນໃນເຄື່ອງ → ສະແດງທັນທີ → ສົ່ງເຊີບເວີຢູ່ເບື້ອງຫຼັງ
+   ຖ້າເຊີບເວີປະຕິເສດ → ແຈ້ງເຕືອນ + ໂຫຼດຂໍ້ມູນຈິງຄືນ */
+var INFLIGHT = 0;
+function nowLocal() { var d = new Date(); return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function addLocalLog(id, action, detail) { (S.logs[id] = S.logs[id] || []).push({ time: nowLocal(), who: ME ? ME.name : '?', action: action, detail: detail }); }
+function optimistic(mutate, okMsg, fn) {
+  var args = Array.prototype.slice.call(arguments, 3);
+  try { mutate(); } catch (e) { return toast('⚠️ ' + e.message, true); }
+  render(); if (okMsg) toast(okMsg);
+  INFLIGHT++;
+  return call.apply(null, [fn].concat(args)).then(function (d) {
+    INFLIGHT--; if (!INFLIGHT) apply(d); // ກົດຫຼາຍອັນຕິດກັນ: ໃຊ້ຂໍ້ມູນຈາກເຊີບເວີເມື່ອສົ່ງຄົບແລ້ວເທົ່ານັ້ນ
+  }).catch(function (e) {
+    INFLIGHT--; toast('⚠️ ບັນທຶກບໍ່ສຳເລັດ: ' + (e && e.message ? e.message : e) + ' — ໂຫຼດຂໍ້ມູນຄືນ', true); refresh();
+  });
+}
 function refresh(show) {
   if (show) busy(true);
   return call('api_getAll').then(function (d) { busy(false); UI.loaded = true; apply(d); if (show) toast('ອັບເດດແລ້ວ ✓'); })
@@ -559,7 +576,8 @@ function vSettings() {
   }).join('') + '</div><p class="muted" style="margin-top:8px">ມີຜົນກັບວຽກທີ່ບັນທຶກ/ອັບເດດຫຼັງຈາກນີ້</p></div>';
   h += '<div class="card"><h3>🔑 ປ່ຽນ PIN ເຈົ້າຂອງ</h3><input class="inp" id="setPin" inputmode="numeric" placeholder="PIN ໃໝ່ (ຕົວເລກ 4-8 ໂຕ) — ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ"></div>';
   h += '<button class="btn pri full" onclick="saveSettings()">💾 ບັນທຶກການຕັ້ງຄ່າ</button>';
-  if (S.calendarId) h += '<p class="muted" style="margin-top:12px;word-break:break-all">📅 Calendar ID (ໃຊ້ແຊໃຫ້ຊ່າງເບິ່ງປະຕິທິນທັງໝົດ): ' + esc(S.calendarId) + '</p>';
+  h += '<p class="muted" style="margin-top:12px">📅 Calendar ອັບເດດຢູ່ເບື້ອງຫຼັງທຸກ 1 ນາທີ · ' + (S.calPending ? '⏳ ລໍອັບເດດ ' + S.calPending + ' ລາຍການ' : '✓ ອັບເດດຄົບແລ້ວ') + '</p>';
+  if (S.calendarId) h += '<p class="muted" style="margin-top:6px;word-break:break-all">📅 Calendar ID (ໃຊ້ແຊໃຫ້ຊ່າງເບິ່ງປະຕິທິນທັງໝົດ): ' + esc(S.calendarId) + '</p>';
   return h;
 }
 function saveSettings() {
@@ -705,22 +723,30 @@ function waLink(j) {
 /* ---------- ການກະທຳ ---------- */
 function setStatus(id, s) {
   var j = jobById(id); if (j.status === s) return;
-  var go = function () { act('api_setStatus', id, s).then(function () { toast('ອັບເດດ: ' + STATUS[s].l + ' ✓'); }); };
+  var go = function () {
+    optimistic(function () { var old = j.status; j.status = s; addLocalLog(id, 'status', STATUS[old].l + ' → ' + STATUS[s].l); }, 'ອັບເດດ: ' + STATUS[s].l + ' ✓', 'api_setStatus', id, s);
+  };
   if (s === 'done' && j.due > 0) return ask({ title: 'ປິດວຽກເລີຍບໍ່?', msg: 'ວຽກນີ້ຍັງຄ້າງເກັບເງິນ ' + money(j.due) + ' ກີບ\n(ບັນທຶກເງິນໄດ້ພາຍຫຼັງ)', ok: 'ປິດວຽກ' }).then(function (y) { if (y) go(); });
   if (s === 'cancelled') return ask({ title: 'ຍົກເລີກວຽກນີ້?', msg: 'ຈະລຶບອອກຈາກ Google Calendar', ok: 'ຍົກເລີກວຽກ', danger: true }).then(function (y) { if (y) go(); });
   go();
 }
 function addNote(id) {
   var v = $('noteIn').value.trim(); if (!v) return;
-  act('api_addNote', id, v).then(function () { toast('ບັນທຶກແລ້ວ ✓'); });
+  optimistic(function () { addLocalLog(id, 'note', v); }, 'ບັນທຶກແລ້ວ ✓', 'api_addNote', id, v);
 }
-function toggleEq(id, i, done) { act('api_toggleEquip', id, i, done); }
+function toggleEq(id, i, done) {
+  var j = jobById(id);
+  optimistic(function () { j.equipment[i].done = done; addLocalLog(id, 'equip', (done ? '☑ ' : '☐ ') + j.equipment[i].t); }, '', 'api_toggleEquip', id, i, done);
+}
 function recordPay(id) {
   var j = jobById(id);
   ask({ title: '💰 ເກັບເງິນໄດ້ຈັກກີບ?', msg: 'ຍອດຄ້າງ ' + money(j.due) + ' ກີບ', input: 'money', value: money(j.due), ok: 'ບັນທຶກ' }).then(function (v) {
     if (v == null) return; var n = Number(String(v).replace(/[^\d]/g, ''));
     if (!n) return toast('ໃສ່ຈຳນວນເງິນໃຫ້ຖືກ', true);
-    act('api_recordPay', id, n).then(function () { toast('ບັນທຶກເງິນ ' + money(n) + ' ກີບ ✓'); });
+    optimistic(function () {
+      j.collected = (j.collected || 0) + n; j.due = Math.max(0, (j.price || 0) - (j.deposit || 0) - j.collected);
+      addLocalLog(id, 'pay', 'ເກັບເງິນໄດ້ ' + money(n) + ' ກີບ');
+    }, 'ບັນທຶກເງິນ ' + money(n) + ' ກີບ ✓', 'api_recordPay', id, n);
   });
 }
 function delJob(id) {
@@ -905,9 +931,13 @@ function saveNote(id) {
 }
 function setNoteStatus(id, s) {
   var n = noteById(id); if (n.status === s) return;
-  act('api_setNoteStatus', id, s).then(function () { toast(NST[s].l + ' ✓'); });
+  optimistic(function () { var old = n.status; n.status = s; addLocalLog(id, 'status', NST[old].l + ' → ' + NST[s].l); }, NST[s].l + ' ✓', 'api_setNoteStatus', id, s);
 }
-function snoozeNote(id, days) { act('api_snoozeNote', id, days).then(function () { toast('ເລື່ອນເຕືອນແລ້ວ ✓'); }); }
+function snoozeNote(id, days) {
+  var n = noteById(id), t = today();
+  var nd = ymd(addDays(n.remindDate && n.remindDate > t ? parseYmd(n.remindDate) : new Date(), days)); // ຄິດແບບດຽວກັບເຊີບເວີ
+  optimistic(function () { n.remindDate = nd; addLocalLog(id, 'snooze', 'ເລື່ອນເຕືອນໄປ ' + nd); }, 'ເລື່ອນເຕືອນໄປ ' + dLabel(nd) + ' ✓', 'api_snoozeNote', id, days);
+}
 function delNote(id) {
   var n = noteById(id);
   ask({ title: 'ລຶບໂນດ "' + n.title + '"?', msg: 'ຖ້າແຄ່ເຮັດແລ້ວ ໃຫ້ກົດສະຖານະ "ສຳເລັດ" ແທນ — ປະຫວັດຍັງຢູ່', ok: 'ລຶບຖາວອນ', danger: true }).then(function (y) {
@@ -1078,7 +1108,9 @@ function poText(p) {
 }
 function setPOStatus(id, s) {
   var p = poById(id); if (p.status === s) return;
-  var go = function () { act('api_setPOStatus', id, s).then(function () { toast(POST[s].l + ' ✓'); }); };
+  var go = function () {
+    optimistic(function () { var old = p.status; p.status = s; addLocalLog(id, 'status', POST[old].l + ' → ' + POST[s].l); }, POST[s].l + ' ✓', 'api_setPOStatus', id, s);
+  };
   if (s === 'cancelled') return ask({ title: 'ຍົກເລີກໃບສັ່ງນີ້?', ok: 'ຍົກເລີກໃບສັ່ງ', danger: true }).then(function (y) { if (y) go(); });
   go();
 }
@@ -1091,7 +1123,8 @@ function receivePO(id) {
 function payPO(id) {
   var p = poById(id), k = poCalc(p);
   ask({ title: '💵 ຈ່າຍໃຫ້ຜູ້ສະໜອງແລ້ວ ລວມທັງໝົດຈັກກີບ?', msg: 'ລວມໃບສັ່ງ ' + money(k.total) + ' ກີບ (ໃສ່ຍອດລວມທີ່ຈ່າຍແລ້ວທັງໝົດ)', input: 'money', value: money(p.paid ? p.paid : k.total), ok: 'ບັນທຶກ' }).then(function (v) {
-    if (v == null) return; act('api_payPO', id, Number(String(v).replace(/[^\d]/g, '')) || 0).then(function () { toast('ບັນທຶກການຈ່າຍແລ້ວ ✓'); });
+    if (v == null) return; var amt = Number(String(v).replace(/[^\d]/g, '')) || 0;
+    optimistic(function () { p.paid = amt; addLocalLog(id, 'pay', 'ຈ່າຍຜູ້ສະໜອງແລ້ວລວມ ' + money(amt) + ' ກີບ'); }, 'ບັນທຶກການຈ່າຍແລ້ວ ✓', 'api_payPO', id, amt);
   });
 }
 function delPO(id) {
@@ -1478,7 +1511,7 @@ deepLink(function (p) {
 });
 // ດຶງຂໍ້ມູນໃໝ່ທຸກ 60 ວິນາທີ ເວລາເປີດແອບຢູ່ (ເຫັນທີ່ຄົນອື່ນອັບເດດ)
 setInterval(function () {
-  if (document.visibilityState === 'visible' && UI.loaded && (LINK ? ME : isOwnerMe()) && !$('loading').classList.contains('on') && !$('sheet').classList.contains('on')) {
+  if (document.visibilityState === 'visible' && UI.loaded && !INFLIGHT && (LINK ? ME : isOwnerMe()) && !$('loading').classList.contains('on') && !$('sheet').classList.contains('on')) {
     call('api_getAll').then(apply).catch(function () {});
   }
 }, 60000);
