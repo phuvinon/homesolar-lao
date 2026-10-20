@@ -273,8 +273,11 @@ function busy(on) { $('loading').classList.toggle('on', !!on); }
 /* ================= ເອີ້ນເຊີບເວີ (ຫຼື ໂໝດທົດລອງ) ================= */
 var LINK = null; // ລິ້ງວຽກທີ່ເຈົ້າຂອງແຊໃຫ້ຊ່າງ: { job, k } ຈາກ ?job=..&k=..
 function isOwnerMe() { return !!(ME && ME.role === 'owner'); }
+var FRESH = false;
 function ctx() {
-  return { pin: isOwnerMe() ? ME.pin : '', who: ME ? ME.name : '?', jobId: LINK ? LINK.job : '', key: LINK ? LINK.k : '' };
+  var c = { pin: isOwnerMe() ? ME.pin : '', who: ME ? ME.name : '?', jobId: LINK ? LINK.job : '', key: LINK ? LINK.k : '' };
+  if (FRESH) { c.fresh = 1; FRESH = false; } // ⟳ = ອ່ານໃໝ່ຈາກ Sheet (ບໍ່ເອົາແຄຊ)
+  return c;
 }
 function call(fn) {
   var args = Array.prototype.slice.call(arguments, 1);
@@ -289,7 +292,7 @@ function call(fn) {
       // ສະເພາະຄຳສັ່ງອ່ານ — ຄຳສັ່ງຂຽນຫ້າມລອງຊ້ຳ (ເຊັ່ນ ຮັບເຄື່ອງ → ໃບນຳເຂົ້າ Pancake ຊ້ຳ)
       var body = JSON.stringify({ fn: fn, args: [ctx()].concat(args) });
       var post = function () { return fetch(API_URL, { method: 'POST', body: body }).then(function (r) { return r.json(); }); };
-      var safe = fn === 'api_getAll' || fn === 'api_checkPin';
+      var safe = fn === 'api_getAll' || fn === 'api_checkPin' || fn === 'api_getProducts';
       post().catch(function (e) { if (!safe) throw e; return new Promise(function (ok) { setTimeout(ok, 1200); }).then(post); })
         .then(function (o) { if (o.error) rej(new Error(o.error)); else done(o.result); })
         .catch(function () { rej(new Error('ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດອິນເຕີເນັດ ແລ້ວກົດ ⟳')); });
@@ -299,10 +302,34 @@ function call(fn) {
   });
 }
 function apply(d) {
+  if (d.delta) { mergeDelta(d); if (d.warn) toast(d.warn, true); render(); return; }
+  if (!d.products && S && S.products && d.owner) d.products = S.products; // ສິນຄ້າໂຫຼດແຍກ — ຮັກສາຂອງເກົ່າໄວ້
   S = d;
   if (ME && ME.role === 'owner' && !d.owner) { ME = null; LS.del('js_me'); toast('PIN ຖືກປ່ຽນ — ກະລຸນາເຂົ້າໃໝ່', true); }
   if (d.warn) toast(d.warn, true);
   render();
+  if (S.owner && !S.products) loadProducts();
+}
+/* ⚡ v12: ຫຼັງບັນທຶກ ເຊີບເວີສົ່ງຄືນສະເພາະວຽກທີ່ປ່ຽນ (delta) → ລວມເຂົ້າກັບຂໍ້ມູນທີ່ມີ ບໍ່ຕ້ອງໂຫຼດທັງໝົດ */
+function mergeDelta(d) {
+  (d.removed || []).forEach(function (id) { S.jobs = S.jobs.filter(function (j) { return j.id !== id; }); delete S.logs[id]; });
+  (d.jobs || []).forEach(function (j) {
+    var i = -1; S.jobs.forEach(function (x, k) { if (x.id === j.id) i = k; });
+    if (i >= 0) S.jobs[i] = j; else S.jobs.push(j);
+    S.logs[j.id] = (S.logs[j.id] || []).filter(function (l) { return !l.local; }); // ເອົາປະຫວັດຊົ່ວຄາວ (optimistic) ອອກ
+  });
+  (d.logs || []).forEach(function (l) { (S.logs[l.id] = S.logs[l.id] || []).push({ time: l.time, who: l.who, action: l.action, detail: l.detail }); });
+  ['receipts', 'nextInvoice', 'fenceDocs'].forEach(function (k) { if (k in d) S[k] = d[k]; });
+}
+/* ສິນຄ້າ Pancake ໂຫຼດຢູ່ເບື້ອງຫຼັງ ຫຼັງເປີດແອບ (ບໍ່ໃຫ້ການເປີດແອບຊ້າ) */
+var PROD_LOADING = false;
+function loadProducts() {
+  if (PROD_LOADING) return; PROD_LOADING = true;
+  call('api_getProducts').then(function (r) {
+    PROD_LOADING = false; S.products = r.products || [];
+    if (!$('sheet').classList.contains('on')) render();
+    else if ($('fEqList') && typeof jobEqRender === 'function') jobEqRender();
+  }).catch(function () { PROD_LOADING = false; });
 }
 function act(fn) {
   var args = arguments; busy(true);
@@ -314,20 +341,21 @@ function act(fn) {
    ຖ້າເຊີບເວີປະຕິເສດ → ແຈ້ງເຕືອນ + ໂຫຼດຂໍ້ມູນຈິງຄືນ */
 var INFLIGHT = 0;
 function nowLocal() { var d = new Date(); return ymd(d) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
-function addLocalLog(id, action, detail) { (S.logs[id] = S.logs[id] || []).push({ time: nowLocal(), who: ME ? ME.name : '?', action: action, detail: detail }); }
+function addLocalLog(id, action, detail) { (S.logs[id] = S.logs[id] || []).push({ time: nowLocal(), who: ME ? ME.name : '?', action: action, detail: detail, local: true }); }
 function optimistic(mutate, okMsg, fn) {
   var args = Array.prototype.slice.call(arguments, 3);
   try { mutate(); } catch (e) { return toast('⚠️ ' + e.message, true); }
   render(); if (okMsg) toast(okMsg);
   INFLIGHT++;
   return call.apply(null, [fn].concat(args)).then(function (d) {
-    INFLIGHT--; if (!INFLIGHT) apply(d); // ກົດຫຼາຍອັນຕິດກັນ: ໃຊ້ຂໍ້ມູນຈາກເຊີບເວີເມື່ອສົ່ງຄົບແລ້ວເທົ່ານັ້ນ
+    INFLIGHT--; if (d && d.delta) apply(d); else if (!INFLIGHT) apply(d); // delta ລວມໄດ້ທັນທີ · ຂໍ້ມູນທັງໝົດ: ໃຊ້ເມື່ອສົ່ງຄົບແລ້ວເທົ່ານັ້ນ
   }).catch(function (e) {
     INFLIGHT--; toast('⚠️ ບັນທຶກບໍ່ສຳເລັດ: ' + (e && e.message ? e.message : e) + ' — ໂຫຼດຂໍ້ມູນຄືນ', true); refresh();
   });
 }
 function refresh(show) {
   if (show) busy(true);
+  FRESH = true;
   return call('api_getAll').then(function (d) { busy(false); UI.loaded = true; apply(d); if (show) toast('ອັບເດດແລ້ວ ✓'); })
     .catch(function (e) { busy(false); toast('⚠️ ໂຫຼດບໍ່ໄດ້: ' + (e && e.message ? e.message : e), true); });
 }
@@ -2197,6 +2225,7 @@ var MOCK = (function () {
       }
       return all(c);
     },
+    api_getProducts: function (c) { need(c); return JSON.stringify({ products: db.products }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
     api_delExpense: function (c, id, eid) { need(c); var j = find(id); j.expenses = (j.expenses || []).filter(function (e) { return e.id !== eid; }); return all(c); },
     api_issueReceipt: function (c, d) {
