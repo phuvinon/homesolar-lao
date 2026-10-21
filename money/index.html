@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="lo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>ສະໝຸດເງິນ · PHUSIRI</title>
+<meta name="theme-color" content="#0A1322">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ສະໝຸດເງິນ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f3f4f7;--card:#fff;--ink:#151a23;--muted:#667085;--line:#e4e7ec;--navy:#0A1322;--gold:#F6C453;
+  --green:#12a150;--red:#dc2626;--blue:#2563eb;--amber:#d97706}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg)}
+body{font-family:'Noto Sans Lao','Phetsarath OT',system-ui,sans-serif;color:var(--ink);font-size:15px;line-height:1.5;padding-bottom:84px;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:inherit}
+header{background:var(--navy);color:#fff;padding:12px 16px 10px;position:sticky;top:0;z-index:40}
+.hrow{display:flex;align-items:center;gap:8px;max-width:860px;margin:0 auto}
+.brand{flex:1;min-width:0}.brand b{display:block;font-size:17px;font-weight:800}.brand small{color:var(--gold);font-size:12px}
+.chip{background:#1f2a3d;color:#fff;border:0;border-radius:99px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.seg{display:flex;background:#1f2a3d;border-radius:99px;padding:3px;max-width:860px;margin:8px auto 0}
+.seg button{flex:1;border:0;background:none;color:#cbd5e1;border-radius:99px;padding:5px 8px;font-size:13.5px;font-weight:700;cursor:pointer}
+.seg button.on{background:var(--gold);color:var(--navy)}
+.demo{background:#fff7d6;color:#7a5a00;font-size:12.5px;text-align:center;padding:6px 12px;border-bottom:1px solid #f1e3a6}
+main{max-width:860px;margin:0 auto;padding:14px 14px 0}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:45;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:none;padding:8px 2px 10px;font-size:11.5px;color:var(--muted);cursor:pointer}
+nav.tabs button i{display:block;font-style:normal;font-size:20px;line-height:1.3}
+nav.tabs button.on{color:var(--navy);font-weight:800}
+.fab{position:fixed;right:16px;bottom:84px;width:58px;height:58px;border-radius:50%;border:0;background:var(--gold);color:var(--navy);font-size:30px;font-weight:800;box-shadow:0 6px 18px rgba(10,19,34,.3);cursor:pointer;z-index:44}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.kpi .n{font-size:20px;font-weight:800;line-height:1.25;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:12px;color:var(--muted)}.kpi .s{font-size:11.5px;color:var(--muted)}
+.kpi.g .n{color:var(--green)}.kpi.r .n{color:var(--red)}.kpi.b .n{color:var(--blue)}
+.sec{margin:16px 2px 8px;font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{font-size:15px;margin-bottom:8px}
+.toolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.toolbar h2{flex:1;font-size:16.5px;text-align:center}
+.nb{border:1px solid var(--line);background:#fff;border-radius:10px;padding:7px 14px;cursor:pointer;font-weight:700}
+.empty{color:var(--muted);font-size:13.5px;background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:14px;text-align:center}
+.pend{background:#fff7e6;border:1px solid #fcd9a0;border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;gap:10px;align-items:center;cursor:pointer}
+.pend b{color:#8a5a00}
+.row{display:flex;gap:8px}.row>*{flex:1;min-width:0}
+.tx{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:6px;cursor:pointer}
+.tx .ic{font-size:20px;width:28px;text-align:center}
+.tx .mid{flex:1;min-width:0}.tx .nm{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx .sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.amt{font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+.amt.in{color:var(--green)}.amt.out{color:var(--red)}.amt.x{color:var(--blue)}
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:0 7px;border-radius:99px;background:#fff1d6;color:#8a5a00}
+.dayh{display:flex;justify-content:space-between;padding:8px 2px 4px;font-weight:800;font-size:13.5px}
+.dayh small{color:var(--muted);font-weight:600}
+.brow{display:grid;grid-template-columns:minmax(80px,40%) 1fr auto;gap:8px;align-items:center;padding:6px 0;font-size:13.5px;border-bottom:1px solid #f1f2f5}
+.brow:last-child{border-bottom:0}
+.brow .bl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bt{height:10px;background:#eef1f5;border-radius:4px;overflow:hidden;position:relative}
+.bf{display:block;height:100%;background:var(--navy);border-radius:4px}
+.bf.over{background:var(--red)}
+.brow .bv{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.brow .bv small{display:block;color:var(--muted);font-size:11px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}th{font-size:11.5px;color:var(--muted);font-weight:600}
+.wal{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:6px}
+.wal .mid{flex:1}.wal .bal{font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.ov{position:fixed;inset:0;background:rgba(10,19,34,.55);z-index:60;display:none}.ov.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:94vh;overflow-y:auto;background:var(--bg);z-index:61;border-radius:18px 18px 0 0;transform:translateY(105%);transition:transform .22s ease;max-width:860px;margin:0 auto}
+.sheet.on{transform:none}
+.shd{position:sticky;top:0;background:var(--navy);color:#fff;padding:12px 14px;display:flex;align-items:center;gap:8px;z-index:2;border-radius:18px 18px 0 0}
+.shd b{flex:1;font-size:16px}
+.x{background:#1f2a3d;border:0;color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.sbody{padding:14px 14px 40px}
+label.f{display:block;font-size:12.5px;color:var(--muted);font-weight:600;margin:10px 0 4px}
+.inp{width:100%;border:1px solid #d0d5dd;border-radius:10px;padding:10px 11px;background:#fff}
+.inp:focus{outline:2px solid var(--gold);border-color:var(--gold)}
+.big{font-size:28px;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.kseg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kseg button{border:2px solid var(--line);background:#fff;border-radius:12px;padding:9px 4px;font-weight:800;cursor:pointer}
+.kseg button.on.out{border-color:var(--red);background:#fef2f2;color:var(--red)}
+.kseg button.on.in{border-color:var(--green);background:#ecfdf3;color:var(--green)}
+.kseg button.on.xfer{border-color:var(--blue);background:#eff6ff;color:var(--blue)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 11px;font-size:13.5px;cursor:pointer}
+.chips button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chips .gh{width:100%;font-size:12px;color:var(--muted);font-weight:700;margin-top:4px}
+.btn{border:0;border-radius:12px;padding:12px 16px;font-weight:800;cursor:pointer;font-size:15px}
+.btn.pri{background:var(--navy);color:#fff}.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.ghost{background:#fff;border:1px solid var(--line)}.btn.danger{background:#fff;color:var(--red);border:1px solid #fecaca}
+.btn.full{width:100%}.btns{display:flex;gap:8px;margin-top:14px}.btns .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:90;display:none;max-width:90vw;text-align:center}
+.toast.err{background:var(--red)}
+.loading{position:fixed;inset:0;background:rgba(243,244,247,.6);z-index:80;display:none;align-items:center;justify-content:center}.loading.on{display:flex}
+.spin{width:38px;height:38px;border:4px solid #d0d5dd;border-top-color:var(--navy);border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.who{max-width:360px;margin:40px auto;text-align:center}.who h2{font-size:20px;margin-bottom:4px}.who p{color:var(--muted);font-size:13.5px;margin-bottom:16px}
+.pinp{font-size:26px;letter-spacing:10px;text-align:center}
+.muted{color:var(--muted);font-size:13px}
+.photo{width:100%;max-height:320px;object-fit:contain;border-radius:10px;background:#e5e7eb;margin-top:8px}
+.ck{display:flex;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.ck input{width:20px;height:20px;accent-color:var(--green)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hrow">
+    <div class="brand"><b>💰 ສະໝຸດເງິນ</b><small id="sub">PHUSIRI · ບໍລິສັດ + ສ່ວນຕົວ</small></div>
+    <button class="chip" onclick="refresh(true)">⟳</button>
+    <button class="chip" id="meChip" style="display:none" onclick="logout()"></button>
+  </div>
+  <div class="seg" id="bookSeg" style="display:none"></div>
+</header>
+<div class="demo" id="demoBar" style="display:none">🧪 ໂໝດທົດລອງ — ຂໍ້ມູນຕົວຢ່າງ · PIN ເຈົ້າຂອງ 1234 · ຜູ້ຊ່ວຍ 5678</div>
+<main id="app"></main>
+<button class="fab" id="fab" style="display:none" onclick="openTx()">＋</button>
+<nav class="tabs" id="tabs"></nav>
+<div class="ov" id="ov" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+<div class="loading" id="loading"><div class="spin"></div></div>
+<input type="file" id="fileIn" accept="image/*" style="display:none">
+<script>
+/* ================= ພື້ນຖານ ================= */
+var API_URL = 'https://script.google.com/macros/s/AKfycbxZZ_J_fGI3VpbFd3BDol-a_WfsvW3aMOOgplNEdQq-ExB5EAGvQqLxxms7iWrDKx5adg/exec'; // Apps Script MONEY_BOOK (mee50cent) · Deploy ໃໝ່ = ລິ້ງເດີມ (ແກ້ deployment ເກົ່າ)
+var MODE = /^https?:$/.test(location.protocol) && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) && API_URL ? 'api' : 'demo';
+var S = null, UI = { view: 'dash', book: 'co', month: '', q: '', wf: '' }, PIN = '';
+var LS = { get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { localStorage.setItem(k, v); } catch (e) { } }, del: function (k) { try { localStorage.removeItem(k); } catch (e) { } } };
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function money(n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function short(n) { n = Number(n) || 0; var a = Math.abs(n); return (n < 0 ? '−' : '') + (a >= 1e6 ? (a / 1e6).toFixed(a >= 1e8 ? 0 : 2).replace(/\.?0+$/, '') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'K' : money(a)); }
+function pad(n) { return ('0' + n).slice(-2); }
+function ymd(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function today() { return ymd(new Date()); }
+var MON = ['ມັງກອນ', 'ກຸມພາ', 'ມີນາ', 'ເມສາ', 'ພຶດສະພາ', 'ມິຖຸນາ', 'ກໍລະກົດ', 'ສິງຫາ', 'ກັນຍາ', 'ຕຸລາ', 'ພະຈິກ', 'ທັນວາ'];
+function monName(m) { var p = m.split('-'); return MON[Number(p[1]) - 1] + ' ' + p[0]; }
+function addMonth(m, k) { var p = m.split('-'), d = new Date(Number(p[0]), Number(p[1]) - 1 + k, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+function toast(m, err) { var t = $('toast'); t.textContent = m; t.className = 'toast' + (err ? ' err' : ''); t.style.display = 'block'; clearTimeout(t._h); t._h = setTimeout(function () { t.style.display = 'none'; }, 2600); }
+function busy(on) { $('loading').classList.toggle('on', !!on); }
+function openSheet() { $('ov').classList.add('on'); $('sheet').classList.add('on'); }
+function closeSheet() { $('ov').classList.remove('on'); $('sheet').classList.remove('on'); }
+function numOf(v) { return Number(String(v || '').replace(/[^\d]/g, '')) || 0; }
+function fmtNum(el) { var n = numOf(el.value); el.value = n ? money(n) : ''; }
+
+function call(fn) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  return new Promise(function (res, rej) {
+    var c = { pin: PIN };
+    if (MODE === 'api') {
+      var body = JSON.stringify({ fn: fn, args: [c].concat(args) });
+      var post = function () { return fetch(API_URL, { method: 'POST', body: body }).then(function (r) { return r.json(); }); };
+      var p = fn === 'api_getAll' ? post().catch(function () { return new Promise(function (ok) { setTimeout(ok, 1200); }).then(post); }) : post(); // ອ່ານ = ລອງຄືນ 1 ເທື່ອ · ຂຽນ = ຫ້າມລອງຊ້ຳ
+      p.then(function (o) { if (o.error) rej(new Error(o.error)); else res(JSON.parse(o.result)); }).catch(function (e) { rej(e && e.message ? e : new Error('ເຊື່ອມຕໍ່ບໍ່ໄດ້ — ກວດອິນເຕີເນັດ')); });
+    } else setTimeout(function () { try { res(JSON.parse(MOCK[fn].apply(null, [c].concat(args)))); } catch (e) { rej(e); } }, 120);
+  });
+}
+function act() {
+  var a = arguments; busy(true);
+  return call.apply(null, a).then(function (d) { busy(false); apply(d); return d; }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); throw e; });
+}
+function apply(d) {
+  if (d.needSetup) { S = null; return renderSetup(); }
+  S = d; if (S.role !== 'owner') UI.book = 'co';
+  if (!UI.month) UI.month = (S.today || today()).slice(0, 7);
+  render();
+}
+function refresh(show) {
+  if (!PIN && MODE === 'api') return renderLogin();
+  if (show) busy(true);
+  return call('api_getAll').then(function (d) { busy(false); apply(d); if (show) toast('ອັບເດດແລ້ວ ✓'); })
+    .catch(function (e) { busy(false); if (/PIN/.test(e.message)) { PIN = ''; LS.del('mb_pin'); renderLogin(); } toast('⚠️ ' + e.message, true); });
+}
+
+/* ================= ເຂົ້າລະບົບ ================= */
+function renderLogin() {
+  bare();
+  $('app').innerHTML = '<div class="who"><h2>🔒 ໃສ່ PIN</h2><p>ເຈົ້າຂອງ ຫຼື ຜູ້ຊ່ວຍ</p><input class="inp pinp" id="pinIn" type="password" inputmode="numeric" maxlength="8" onkeydown="if(event.key===\'Enter\')login()">' +
+    '<button class="btn pri full" style="margin-top:12px" onclick="login()">ເຂົ້າ</button></div>';
+  setTimeout(function () { $('pinIn') && $('pinIn').focus(); }, 50);
+}
+function login() { PIN = $('pinIn').value.trim(); if (!PIN) return; LS.set('mb_pin', PIN); refresh(true); }
+function logout() { PIN = ''; LS.del('mb_pin'); S = null; renderLogin(); }
+function renderSetup() {
+  bare();
+  $('app').innerHTML = '<div class="who"><h2>👑 ເປີດໃຊ້ຄັ້ງທຳອິດ</h2><p>ຕັ້ງ PIN ເຈົ້າຂອງ (ຕົວເລກ 4–8 ຫຼັກ) — ຈື່ໄວ້ໃຫ້ດີ</p>' +
+    '<input class="inp pinp" id="p1" type="password" inputmode="numeric" maxlength="8" placeholder="PIN"><input class="inp pinp" id="p2" type="password" inputmode="numeric" maxlength="8" placeholder="ອີກເທື່ອ" style="margin-top:8px">' +
+    '<button class="btn gold full" style="margin-top:12px" onclick="firstPin()">ຕັ້ງ PIN</button></div>';
+}
+function firstPin() {
+  var a = $('p1').value.trim(), b = $('p2').value.trim();
+  if (a !== b) return toast('PIN 2 ຊ່ອງບໍ່ກົງກັນ', true);
+  busy(true); call('api_setFirstPin', a).then(function (d) { busy(false); PIN = a; LS.set('mb_pin', a); apply(d); }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); });
+}
+function bare() { $('tabs').innerHTML = ''; $('fab').style.display = 'none'; $('meChip').style.display = 'none'; $('bookSeg').style.display = 'none'; }
+
+/* ================= ຂໍ້ມູນ + ຄຳນວນ ================= */
+function cat(id) { return (S.cats || []).filter(function (c) { return c.id === id; })[0]; }
+function wal(id) { return (S.wallets || []).filter(function (w) { return w.id === id; })[0]; }
+function wBook(id) { var w = wal(id); return w ? w.book : (id ? 'me' : ''); } // ກະເປົາທີ່ຜູ້ຊ່ວຍບໍ່ເຫັນ = ສ່ວນຕົວ
+function grp(t) { var c = cat(t.cat); return c ? c.grp : ''; }
+function catName(t) { if (t.masked && t.kind !== 'xfer') return '🏠 ຈ່າຍແທນສ່ວນຕົວ'; var c = cat(t.cat); return c ? c.name : '—'; }
+function icon(name) { var m = String(name).match(/^(\S+)\s/); return m ? m[1] : '•'; }
+function plain(name) { return String(name).replace(/^\S+\s/, ''); }
+function inMonth(m) { return (S.tx || []).filter(function (t) { return t.status !== 'void' && t.date.indexOf(m) === 0; }); }
+// ບັນຊີບໍລິສັດ ໃນເດືອນ m
+function coCalc(m) {
+  var r = { sales: 0, cogs: 0, opex: 0, draws: 0, stock: 0, debt: 0, loan: 0, capital: 0, byCat: {}, cin: 0, cout: 0, owed: 0, pend: 0 };
+  inMonth(m).forEach(function (t) {
+    var g = grp(t), wb = wBook(t.wallet), tb = wBook(t.toWallet);
+    if (t.kind === 'in' && t.book === 'co') {
+      if (g === 'sales' || g === 'other') { r.sales += t.amount; r.cogs += t.cost || 0; } else if (g === 'loan') r.loan += t.amount;
+    }
+    if (t.kind === 'out' && t.book === 'co') {
+      if (g === 'fixed' || g === 'var') { r.opex += t.amount; r.byCat[t.cat] = (r.byCat[t.cat] || 0) + t.amount; }
+      else if (g === 'stock') r.stock += t.amount; else if (g === 'debt') r.debt += t.amount;
+      if (wb === 'me') r.owed += t.amount; // ເຈົ້າຂອງຈ່າຍແທນບໍລິສັດ
+    }
+    if (t.kind === 'out' && t.book === 'me' && wb === 'co') r.draws += t.amount; // ບໍລິສັດຈ່າຍແທນສ່ວນຕົວ
+    if (t.kind === 'xfer') {
+      if (g === 'salary') { r.opex += t.amount; r.byCat[t.cat] = (r.byCat[t.cat] || 0) + t.amount; }
+      if (g === 'draw' && wb === 'co') r.draws += t.amount;
+      if (g === 'capital' && tb === 'co') r.capital += t.amount;
+    }
+    if (t.status === 'ok') { // ເງິນສົດເຂົ້າ-ອອກ ກະເປົາບໍລິສັດ (ສະເພາະທີ່ຢືນຢັນແລ້ວ)
+      if (t.kind === 'in' && wb === 'co') r.cin += t.amount;
+      if (t.kind === 'out' && wb === 'co') r.cout += t.amount;
+      if (t.kind === 'xfer' && wb === 'co' && tb !== 'co') r.cout += t.amount;
+      if (t.kind === 'xfer' && tb === 'co' && wb !== 'co') r.cin += t.amount;
+    } else if (t.status === 'pending') r.pend += t.amount;
+  });
+  r.gross = r.sales - r.cogs; r.profit = r.gross - r.opex;
+  return r;
+}
+// ບັນຊີສ່ວນຕົວ ໃນເດືອນ m
+function meCalc(m) {
+  var r = { income: 0, fromCo: 0, spend: 0, coPaid: 0, byCat: {}, forCo: 0 };
+  inMonth(m).forEach(function (t) {
+    var wb = wBook(t.wallet), tb = wBook(t.toWallet);
+    if (t.kind === 'in' && t.book === 'me') r.income += t.amount;
+    if (t.kind === 'xfer' && tb === 'me' && wb === 'co') r.fromCo += t.amount;
+    if (t.kind === 'out' && t.book === 'me') { r.spend += t.amount; r.byCat[t.cat] = (r.byCat[t.cat] || 0) + t.amount; if (wb === 'co') r.coPaid += t.amount; }
+    if (t.kind === 'out' && t.book === 'co' && wb === 'me') r.forCo += t.amount;
+  });
+  r.total = r.income + r.fromCo + r.coPaid; r.left = r.total - r.spend;
+  return r;
+}
+function pending() { return (S.tx || []).filter(function (t) { return t.status === 'pending'; }); }
+
+/* ================= ໜ້າຈໍ ================= */
+function render() {
+  if (!S) return;
+  var owner = S.role === 'owner';
+  $('meChip').style.display = ''; $('meChip').textContent = (owner ? '👑 ' : '🧾 ') + S.me;
+  var seg = $('bookSeg');
+  if (owner) { seg.style.display = 'flex'; seg.innerHTML = [['co', '🏢 ບໍລິສັດ'], ['me', '🏠 ສ່ວນຕົວ']].map(function (b) { return '<button class="' + (UI.book === b[0] ? 'on' : '') + '" onclick="UI.book=\'' + b[0] + '\';render()">' + b[1] + '</button>'; }).join(''); }
+  else seg.style.display = 'none';
+  var tabs = [['dash', '📊', 'ພາບລວມ'], ['list', '📒', 'ລາຍການ'], ['wal', '👛', 'ກະເປົາ']];
+  if (owner) tabs.push(['set', '⚙️', 'ຕັ້ງຄ່າ']);
+  $('tabs').innerHTML = tabs.map(function (t) { return '<button class="' + (UI.view === t[0] ? 'on' : '') + '" onclick="UI.view=\'' + t[0] + '\';render();scrollTo(0,0)"><i>' + t[1] + '</i>' + t[2] + '</button>'; }).join('');
+  $('fab').style.display = UI.view === 'set' ? 'none' : '';
+  $('app').innerHTML = UI.view === 'list' ? vList() : UI.view === 'wal' ? vWal() : UI.view === 'set' && owner ? vSet() : vDash();
+}
+function monthBar() {
+  return '<div class="toolbar"><button class="nb" onclick="UI.month=addMonth(UI.month,-1);render()">‹</button><h2>' + monName(UI.month) + '</h2>' +
+    '<button class="nb" onclick="UI.month=addMonth(UI.month,1);render()">›</button></div>';
+}
+function kpi(n, l, cls, s) { return '<div class="kpi ' + (cls || '') + '"><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (s ? '<div class="s">' + s + '</div>' : '') + '</div>'; }
+function bars(rows) { // rows: [{l, v, b}] b = ງົບ
+  var max = Math.max.apply(null, rows.map(function (r) { return Math.max(r.v, r.b || 0); }).concat([1]));
+  return rows.map(function (r) {
+    var over = r.b && r.v > r.b;
+    return '<div class="brow"><span class="bl">' + esc(r.l) + '</span><span class="bt"><span class="bf' + (over ? ' over' : '') + '" style="width:' + Math.max(2, r.v / max * 100) + '%"></span></span>' +
+      '<span class="bv">' + short(r.v) + (r.b ? '<small' + (over ? ' style="color:#dc2626"' : '') + '>ງົບ ' + short(r.b) + '</small>' : '') + '</span></div>';
+  }).join('');
+}
+function vDash() {
+  var h = monthBar(), p = pending();
+  if (p.length && UI.book === 'co') h += '<div class="pend" onclick="openConfirm()"><span style="font-size:22px">⏳</span><span style="flex:1"><b>' + p.length + ' ລາຍຮັບ Pancake ລໍຢືນຢັນ</b><br><span class="muted">' + money(p.reduce(function (a, t) { return a + t.amount; }, 0)) + ' ກີບ · ກົດເພື່ອເລືອກກະເປົາ</span></span><b>›</b></div>';
+  return h + (UI.book === 'co' ? dashCo() : dashMe());
+}
+function dashCo() {
+  var r = coCalc(UI.month), h = '';
+  var gm = r.sales ? Math.round(r.gross / r.sales * 100) : 0, nm = r.sales ? Math.round(r.profit / r.sales * 100) : 0;
+  h += '<div class="kpis">' + kpi(short(r.sales), 'ຍອດຂາຍ', 'b', 'ຕົ້ນທຶນ ' + short(r.cogs)) + kpi(short(r.gross), 'ກຳໄລຂັ້ນຕົ້ນ', '', 'ມາຣ໌ຈິ້ນ ' + gm + '%') +
+    kpi(short(r.opex), 'ຄ່າໃຊ້ຈ່າຍດຳເນີນງານ', 'r', 'ລວມເງິນເດືອນເຈົ້າຂອງ') + kpi(short(r.profit), 'ກຳໄລສຸດທິ', r.profit >= 0 ? 'g' : 'r', nm + '% ຂອງຍອດຂາຍ') + '</div>';
+  // ຄ່າໃຊ້ຈ່າຍຕາມໝວດ ທຽບງົບ
+  var cats = (S.cats || []).filter(function (c) { return c.active && ((c.book === 'co' && c.kind === 'out' && (c.grp === 'fixed' || c.grp === 'var')) || c.grp === 'salary'); });
+  var rows = cats.map(function (c) { return { l: c.name, v: r.byCat[c.id] || 0, b: c.budget }; }).filter(function (x) { return x.v || x.b; }).sort(function (a, b) { return b.v - a.v; });
+  var bud = cats.reduce(function (a, c) { return a + (c.budget || 0); }, 0);
+  h += '<div class="card"><h3>💸 ຄ່າໃຊ້ຈ່າຍ ທຽບງົບ <span class="muted">(ງົບລວມ ' + short(bud) + '/ເດືອນ)</span></h3>' + (rows.length ? bars(rows) : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div>';
+  // ເງິນທີ່ອອກແຕ່ບໍ່ຫັກກຳໄລ
+  h += '<div class="card"><h3>🔎 ເງິນອອກ ທີ່ບໍ່ແມ່ນຄ່າໃຊ້ຈ່າຍ</h3><div class="brow"><span class="bl">🏠 ຖອນ/ຈ່າຍແທນສ່ວນຕົວ</span><span></span><span class="bv">' + money(r.draws) + '</span></div>' +
+    '<div class="brow"><span class="bl">🏭 ຊື້ສິນຄ້າ/ຈ່າຍຊັບພລາຍ</span><span></span><span class="bv">' + money(r.stock) + '</span></div>' +
+    '<div class="brow"><span class="bl">↩️ ຈ່າຍຄືນເງິນກູ້</span><span></span><span class="bv">' + money(r.debt) + '</span></div>' +
+    (r.owed ? '<div class="brow"><span class="bl">🧾 ເຈົ້າຂອງຈ່າຍແທນບໍລິສັດ</span><span></span><span class="bv">' + money(r.owed) + '</span></div>' : '') + '</div>';
+  // ເງິນສົດ
+  var tot = (S.wallets || []).filter(function (w) { return w.book === 'co' && w.active; }).reduce(function (a, w) { return a + w.balance; }, 0);
+  h += '<div class="card"><h3>🏦 ເງິນສົດບໍລິສັດ</h3><div class="kpis" style="margin:0">' + kpi(short(r.cin), 'ເງິນເຂົ້າ (ຢືນຢັນແລ້ວ)', 'g') + kpi(short(r.cout), 'ເງິນອອກ', 'r') + '</div>' +
+    '<p style="margin-top:8px">ຍອດເຫຼືອທຸກກະເປົາ: <b>' + money(tot) + '</b> ກີບ' + (bud ? ' · ພໍຈ່າຍງົບໄດ້ <b>' + (tot / bud).toFixed(1) + '</b> ເດືອນ' : '') + '</p>' +
+    (r.pend ? '<p class="muted">+ ລໍຢືນຢັນ ' + money(r.pend) + '</p>' : '') + '</div>';
+  h += trend('co');
+  return h;
+}
+function dashMe() {
+  var r = meCalc(UI.month), h = '';
+  h += '<div class="kpis">' + kpi(short(r.total), 'ເງິນເຂົ້າສ່ວນຕົວ', 'b', 'ຈາກບໍລິສັດ ' + short(r.fromCo + r.coPaid)) + kpi(short(r.spend), 'ໃຊ້ຈ່າຍ', 'r', r.coPaid ? 'ບໍລິສັດຈ່າຍແທນ ' + short(r.coPaid) : '') +
+    kpi(short(r.left), 'ເຫຼືອ', r.left >= 0 ? 'g' : 'r') + kpi(short(r.forCo), 'ຈ່າຍແທນບໍລິສັດ', '', 'ບໍລິສັດຄວນຄືນ') + '</div>';
+  var cats = (S.cats || []).filter(function (c) { return c.active && c.book === 'me' && c.kind === 'out'; });
+  var rows = cats.map(function (c) { return { l: c.name, v: r.byCat[c.id] || 0, b: c.budget }; }).filter(function (x) { return x.v || x.b; }).sort(function (a, b) { return b.v - a.v; });
+  var bud = cats.reduce(function (a, c) { return a + (c.budget || 0); }, 0);
+  h += '<div class="card"><h3>🧾 ໃຊ້ຈ່າຍຕາມໝວດ <span class="muted">(ງົບ ' + short(bud) + '/ເດືອນ)</span></h3>' + (rows.length ? bars(rows) : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div>';
+  var tot = (S.wallets || []).filter(function (w) { return w.book === 'me' && w.active; }).reduce(function (a, w) { return a + w.balance; }, 0);
+  h += '<div class="card"><h3>👛 ເງິນສ່ວນຕົວຄົງເຫຼືອ</h3><b style="font-size:20px">' + money(tot) + '</b> ກີບ</div>';
+  h += trend('me');
+  return h;
+}
+function trend(book) {
+  var rows = '', m = UI.month;
+  for (var i = 5; i >= 0; i--) {
+    var mm = addMonth(m, -i), lab = MON[Number(mm.slice(5)) - 1].slice(0, 4);
+    if (book === 'co') { var r = coCalc(mm); rows += '<tr><td>' + lab + '</td><td>' + short(r.sales) + '</td><td>' + short(r.opex) + '</td><td style="color:' + (r.profit >= 0 ? '#12a150' : '#dc2626') + '">' + short(r.profit) + '</td><td>' + short(r.draws) + '</td></tr>'; }
+    else { var q = meCalc(mm); rows += '<tr><td>' + lab + '</td><td>' + short(q.total) + '</td><td>' + short(q.spend) + '</td><td style="color:' + (q.left >= 0 ? '#12a150' : '#dc2626') + '">' + short(q.left) + '</td></tr>'; }
+  }
+  return '<div class="card"><h3>📈 6 ເດືອນຫຼ້າສຸດ</h3><table><tr>' + (book === 'co' ? '<th>ເດືອນ</th><th>ຂາຍ</th><th>ຄ່າໃຊ້ຈ່າຍ</th><th>ກຳໄລ</th><th>ຖອນ</th>' : '<th>ເດືອນ</th><th>ເຂົ້າ</th><th>ຈ່າຍ</th><th>ເຫຼືອ</th>') + '</tr>' + rows + '</table></div>';
+}
+// ລາຍການ: ເດືອນ + ຄົ້ນຫາ + ກະເປົາ
+function inBook(t) {
+  if (UI.book === 'co') return t.book === 'co' || wBook(t.wallet) === 'co' || wBook(t.toWallet) === 'co';
+  return t.book === 'me' || wBook(t.wallet) === 'me' || wBook(t.toWallet) === 'me';
+}
+function vList() {
+  var q = UI.q.toLowerCase();
+  var list = inMonth(UI.month).filter(inBook).filter(function (t) {
+    return (!UI.wf || t.wallet === UI.wf || t.toWallet === UI.wf) && (!q || (catName(t) + ' ' + t.note + ' ' + t.amount).toLowerCase().indexOf(q) >= 0);
+  }).sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : (a.createdAt < b.createdAt ? 1 : -1); });
+  var h = monthBar() + '<div class="row" style="margin-bottom:8px"><input class="inp" placeholder="🔎 ຄົ້ນຫາ" value="' + esc(UI.q) + '" oninput="UI.q=this.value;clearTimeout(window._q);window._q=setTimeout(function(){render();var e=document.querySelector(\'main input\');e.focus();e.setSelectionRange(e.value.length,e.value.length)},300)">' +
+    '<select class="inp" onchange="UI.wf=this.value;render()"><option value="">ທຸກກະເປົາ</option>' + (S.wallets || []).filter(function (w) { return w.book === UI.book; }).map(function (w) { return '<option value="' + w.id + '"' + (UI.wf === w.id ? ' selected' : '') + '>' + esc(w.name) + '</option>'; }).join('') + '</select></div>';
+  if (!list.length) return h + '<div class="empty">ບໍ່ມີລາຍການໃນເດືອນນີ້</div>';
+  var cur = '', sumIn = 0, sumOut = 0;
+  list.forEach(function (t) { var s = sign(t); if (s > 0) sumIn += t.amount; else if (s < 0) sumOut += t.amount; });
+  h += '<p class="muted" style="margin-bottom:6px">ເຂົ້າ <b style="color:#12a150">' + money(sumIn) + '</b> · ອອກ <b style="color:#dc2626">' + money(sumOut) + '</b> · ' + list.length + ' ລາຍການ</p>';
+  list.forEach(function (t) {
+    if (t.date !== cur) { cur = t.date; var d = new Date(t.date + 'T00:00'); h += '<div class="dayh"><span>' + d.getDate() + ' ' + MON[d.getMonth()] + '</span><small>' + (t.date === today() ? 'ມື້ນີ້' : '') + '</small></div>'; }
+    h += txRow(t);
+  });
+  return h;
+}
+// +1 = ເງິນເຂົ້າບັນຊີທີ່ກຳລັງເບິ່ງ · −1 = ອອກ · 0 = ໂອນພາຍໃນ
+function sign(t) {
+  var b = UI.book;
+  if (t.kind === 'in') return 1;
+  if (t.kind === 'out') return -1;
+  var a = wBook(t.wallet) === b, z = wBook(t.toWallet) === b;
+  return a && z ? 0 : z ? 1 : -1;
+}
+function txRow(t) {
+  var s = sign(t), cls = s > 0 ? 'in' : s < 0 ? 'out' : 'x', w = wal(t.wallet), w2 = wal(t.toWallet);
+  var where = t.kind === 'xfer' ? (w ? w.name : 'ສ່ວນຕົວ') + ' → ' + (w2 ? w2.name : 'ສ່ວນຕົວ') : (w ? w.name : '');
+  var cross = t.kind === 'out' && t.book !== UI.book ? (t.book === 'me' ? ' · 🏠 ຈ່າຍແທນສ່ວນຕົວ' : ' · 🧾 ຈ່າຍແທນບໍລິສັດ') : '';
+  return '<div class="tx" onclick="openTx(\'' + t.id + '\')"><span class="ic">' + icon(catName(t)) + '</span><span class="mid"><span class="nm">' + esc(plain(catName(t))) +
+    (t.status === 'pending' ? ' <span class="badge">ລໍຢືນຢັນ</span>' : '') + (t.photo ? ' 📎' : '') + '</span><span class="sub">' + esc(where + cross + (t.note ? ' · ' + t.note : '')) + '</span></span>' +
+    '<span class="amt ' + cls + '">' + (s > 0 ? '+' : s < 0 ? '−' : '') + money(t.amount) + '</span></div>';
+}
+// ກະເປົາ
+function vWal() {
+  var owner = S.role === 'owner', h = '', b = UI.book;
+  var ws = (S.wallets || []).filter(function (w) { return w.book === b; });
+  var tot = ws.filter(function (w) { return w.active; }).reduce(function (a, w) { return a + w.balance; }, 0);
+  h += '<div class="card" style="text-align:center"><div class="muted">ເງິນ' + (b === 'co' ? 'ບໍລິສັດ' : 'ສ່ວນຕົວ') + 'ທັງໝົດ</div><div style="font-size:28px;font-weight:800">' + money(tot) + '</div></div>';
+  ws.forEach(function (w) {
+    h += '<div class="wal" style="' + (w.active ? '' : 'opacity:.5') + '"><span class="mid"><b>' + esc(w.name) + '</b><br><span class="muted">ຍົກຍອດ ' + money(w.opening) + ' (' + esc(w.openDate) + ')</span></span>' +
+      '<span style="text-align:right"><span class="bal">' + money(w.balance) + '</span><br><button class="nb" style="padding:3px 10px;font-size:12.5px;margin-top:4px" onclick="openCount(\'' + w.id + '\')">🧮 ນັບເງິນຈິງ</button>' +
+      (owner ? ' <button class="nb" style="padding:3px 10px;font-size:12.5px" onclick="openWallet(\'' + w.id + '\')">✏️</button>' : '') + '</span></div>';
+  });
+  if (owner) h += '<button class="btn ghost full" onclick="openWallet()">＋ ເພີ່ມກະເປົາ</button>';
+  h += '<p class="muted" style="margin-top:10px">💡 ນັບເງິນຈິງ ທຸກວັນສຸກ: ຖ້າບໍ່ກົງ ແອບຈະບອກສ່ວນຕ່າງ — ກວດວ່າລືມຈົດຫຍັງກ່ອນ ແລ້ວຈຶ່ງບັນທຶກປັບຍອດ</p>';
+  return h;
+}
+
+/* ================= ຟອມລາຍການ ================= */
+function openTx(id) {
+  var owner = S.role === 'owner', t = id ? (S.tx || []).filter(function (x) { return x.id === id; })[0] : null;
+  if (t && t.masked) return toast('ລາຍການສ່ວນຕົວ — ເຈົ້າຂອງເທົ່ານັ້ນ', true);
+  var defW = (S.wallets || []).filter(function (w) { return w.active && w.book === UI.book; })[0] || (S.wallets || [])[0] || {};
+  UI.d = t ? JSON.parse(JSON.stringify(t)) : { kind: 'out', amount: 0, cat: '', wallet: defW.id, toWallet: '', date: today(), note: '' };
+  UI.d.editable = !t || owner || (t.by === S.me && t.src !== 'pancake');
+  txForm();
+}
+function txForm() {
+  var d = UI.d, owner = S.role === 'owner', ro = !d.editable;
+  var h = '<div class="shd"><b>' + (d.id ? (ro ? '🧾 ລາຍການ' : '✏️ ແກ້ລາຍການ') : '＋ ບັນທຶກເງິນ') + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  if (d.src === 'pancake') h += '<div class="pend" style="cursor:default"><span>🛒</span><span class="muted" style="flex:1">ດຶງຈາກ Pancake ' + esc(d.ref) + (d.cost ? ' · ຕົ້ນທຶນ ' + money(d.cost) : '') + '</span></div>';
+  if (!d.src || d.src === 'manual') h += '<div class="kseg">' + [['out', '− ລາຍຈ່າຍ'], ['in', '+ ລາຍຮັບ'], ['xfer', '⇄ ໂອນ']].map(function (k) {
+    return '<button class="' + k[0] + (d.kind === k[0] ? ' on' : '') + '" ' + (ro ? 'disabled' : '') + ' onclick="UI.d.kind=\'' + k[0] + '\';UI.d.cat=\'\';txForm()">' + k[1] + '</button>'; }).join('') + '</div>';
+  h += '<label class="f">ຈຳນວນເງິນ (ກີບ)</label><input class="inp big" id="fAmt" inputmode="numeric" value="' + (d.amount ? money(d.amount) : '') + '" ' + (ro ? 'readonly' : '') + ' oninput="fmtNum(this);UI.d.amount=numOf(this.value)">';
+  // ໝວດ
+  var cats = (S.cats || []).filter(function (c) { return c.active && c.kind === d.kind && (d.kind === 'xfer' || owner || c.book === 'co') && (d.src !== 'pancake' || c.book === 'co'); });
+  var groups = d.kind === 'xfer' ? [['x', '']] : owner ? (UI.book === 'me' ? [['me', '🏠 ສ່ວນຕົວ'], ['co', '🏢 ບໍລິສັດ']] : [['co', '🏢 ບໍລິສັດ'], ['me', '🏠 ສ່ວນຕົວ']]) : [['co', '']];
+  h += '<label class="f">ໝວດ</label><div class="chips">' + groups.map(function (g) {
+    var cs = cats.filter(function (c) { return c.book === g[0]; }); if (!cs.length) return '';
+    return (g[1] ? '<div class="gh">' + g[1] + '</div>' : '') + cs.map(function (c) { return '<button class="' + (d.cat === c.id ? 'on' : '') + '" ' + (ro ? 'disabled' : '') + ' onclick="UI.d.cat=\'' + c.id + '\';txForm()">' + esc(c.name) + '</button>'; }).join('');
+  }).join('') + '</div>';
+  // ກະເປົາ
+  var ws = (S.wallets || []).filter(function (w) { return w.active || w.id === d.wallet || w.id === d.toWallet; });
+  var wchips = function (key) { return '<div class="chips">' + ws.map(function (w) { return '<button class="' + (d[key] === w.id ? 'on' : '') + '" ' + (ro ? 'disabled' : '') + ' onclick="UI.d.' + key + '=\'' + w.id + '\';txForm()">' + esc(w.name) + '</button>'; }).join('') + '</div>'; };
+  h += '<label class="f">' + (d.kind === 'in' ? 'ເງິນເຂົ້າກະເປົາ' : d.kind === 'xfer' ? 'ຈາກກະເປົາ' : 'ຈ່າຍຈາກກະເປົາ') + '</label>' + wchips('wallet');
+  if (d.kind === 'xfer') h += '<label class="f">ໄປກະເປົາ</label>' + wchips('toWallet');
+  var c = cat(d.cat), w = wal(d.wallet);
+  if (c && w && d.kind === 'out' && c.book !== w.book) h += '<p class="muted" style="margin-top:6px">ℹ️ ' + (c.book === 'me' ? 'ໃຊ້ເງິນບໍລິສັດຈ່າຍເລື່ອງສ່ວນຕົວ → ນັບເປັນ «ຖອນສ່ວນຕົວ» ບໍ່ຫັກກຳໄລ' : 'ໃຊ້ເງິນສ່ວນຕົວຈ່າຍແທນບໍລິສັດ → ບໍລິສັດຄວນຄືນ') + '</p>';
+  h += '<div class="row"><div><label class="f">ວັນທີ</label><input class="inp" type="date" value="' + esc(d.date) + '" ' + (ro ? 'readonly' : '') + ' onchange="UI.d.date=this.value"></div></div>';
+  h += '<label class="f">ໝາຍເຫດ</label><input class="inp" value="' + esc(d.note) + '" ' + (ro ? 'readonly' : '') + ' placeholder="ເຊັ່ນ: ຄ່າສົ່ງ HAL 3 ກ່ອງ" oninput="UI.d.note=this.value">';
+  if (d.src === 'pancake' && owner) h += '<label class="f">ຕົ້ນທຶນສິນຄ້າ (ຈາກ Pancake · ແກ້ໄດ້)</label><input class="inp" inputmode="numeric" value="' + money(d.cost) + '" oninput="fmtNum(this);UI.d.cost=numOf(this.value)">';
+  if (d.photo) h += '<img class="photo" src="https://drive.google.com/thumbnail?id=' + esc(d.photo) + '&sz=w800" onclick="window.open(\'https://drive.google.com/file/d/' + esc(d.photo) + '/view\')">';
+  if (d.id && !d.masked) h += '<button class="btn ghost full" style="margin-top:10px" onclick="$(\'fileIn\').click()">📷 ' + (d.photo ? 'ປ່ຽນຮູບບິນ' : 'ແນບຮູບບິນ') + '</button>';
+  if (!ro) h += '<div class="btns">' + (d.id ? '<button class="btn danger" onclick="delTx()">🗑️</button>' : '') +
+    '<button class="btn gold" onclick="saveTx()">' + (d.status === 'pending' ? '✓ ຢືນຢັນ + ບັນທຶກ' : '💾 ບັນທຶກ') + '</button></div>';
+  else if (d.status === 'pending') h += '<button class="btn gold full" style="margin-top:12px" onclick="act(\'api_confirmTx\',[\'' + d.id + '\'],UI.d.wallet).then(closeSheet)">✓ ຢືນຢັນເຂົ້າກະເປົານີ້</button>';
+  if (d.by) h += '<p class="muted" style="margin-top:10px">ບັນທຶກໂດຍ ' + esc(d.by) + ' · ' + esc(d.createdAt) + '</p>';
+  h += '</div>';
+  var keep = $('sheet').classList.contains('on') ? $('sheet').scrollTop : 0;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = keep;
+  if (!d.id && !d.amount) setTimeout(function () { $('fAmt') && $('fAmt').focus(); }, 250);
+}
+function saveTx() {
+  var d = UI.d;
+  if (!(d.amount > 0)) return toast('ໃສ່ຈຳນວນເງິນ', true);
+  if (!d.cat) return toast('ເລືອກໝວດ', true);
+  if (!d.wallet) return toast('ເລືອກກະເປົາ', true);
+  if (d.kind === 'xfer' && (!d.toWallet || d.toWallet === d.wallet)) return toast('ເລືອກກະເປົາປາຍທາງ', true);
+  var p = { id: d.id || '', kind: d.kind, amount: d.amount, cat: d.cat, wallet: d.wallet, toWallet: d.kind === 'xfer' ? d.toWallet : '', date: d.date, note: d.note, confirm: d.status === 'pending' };
+  if (d.src === 'pancake') p.cost = d.cost;
+  act('api_saveTx', p).then(function () { closeSheet(); toast('ບັນທຶກແລ້ວ ✓'); });
+}
+function delTx() { if (!confirm('ລຶບລາຍການນີ້?')) return; act('api_delTx', UI.d.id).then(function () { closeSheet(); toast('ລຶບແລ້ວ'); }); }
+$('fileIn').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = ''; if (!f || !UI.d || !UI.d.id) return;
+  var img = new Image(), rd = new FileReader();
+  rd.onload = function () { img.src = rd.result; };
+  img.onload = function () {
+    var k = Math.min(1, 1400 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    act('api_uploadBill', UI.d.id, c.toDataURL('image/jpeg', .8)).then(function (s) { var t = (s.tx || []).filter(function (x) { return x.id === UI.d.id; })[0]; if (t) { UI.d.photo = t.photo; txForm(); } toast('ແນບຮູບແລ້ວ ✓'); });
+  };
+  rd.readAsDataURL(f);
+});
+// ຢືນຢັນ Pancake ຫຼາຍລາຍການພ້ອມກັນ
+function openConfirm() {
+  var p = pending().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  UI.cf = {}; p.forEach(function (t) { UI.cf[t.id] = true; });
+  var ws = (S.wallets || []).filter(function (w) { return w.active && w.book === 'co'; });
+  var h = '<div class="shd"><b>⏳ ຢືນຢັນລາຍຮັບ Pancake</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    '<p class="muted">ກວດວ່າເງິນເຂົ້າແທ້ ແລ້ວເລືອກກະເປົາ · ກົດລາຍການເພື່ອແກ້ກະເປົາແຍກ</p>';
+  p.forEach(function (t) { var w = wal(t.wallet);
+    h += '<label class="ck"><input type="checkbox" checked onchange="UI.cf[\'' + t.id + '\']=this.checked"><span style="flex:1;font-size:13.5px">' + esc(t.date) + ' · ' + esc(t.note) + '<br><span class="muted">ແນະນຳ: ' + esc(w ? w.name : '') + '</span></span><b>' + money(t.amount) + '</b></label>'; });
+  h += '<label class="f">ເຂົ້າກະເປົາ</label><select class="inp" id="cfW"><option value="">ຕາມທີ່ແອບແນະນຳ (ແຕ່ລະລາຍການ)</option>' + ws.map(function (w) { return '<option value="' + w.id + '">' + esc(w.name) + '</option>'; }).join('') + '</select>' +
+    '<button class="btn gold full" style="margin-top:12px" onclick="doConfirm()">✓ ຢືນຢັນທີ່ຕິກໄວ້</button></div>';
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function doConfirm() {
+  var ids = Object.keys(UI.cf).filter(function (k) { return UI.cf[k]; });
+  if (!ids.length) return toast('ບໍ່ໄດ້ຕິກລາຍການ', true);
+  act('api_confirmTx', ids, $('cfW').value).then(function () { closeSheet(); toast('ຢືນຢັນ ' + ids.length + ' ລາຍການ ✓'); });
+}
+// ນັບເງິນຈິງ → ສ່ວນຕ່າງ → ບັນທຶກປັບຍອດ
+function openCount(id) {
+  var w = wal(id);
+  var h = '<div class="shd"><b>🧮 ນັບເງິນຈິງ: ' + esc(w.name) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    '<p>ຍອດໃນແອບ: <b>' + money(w.balance) + '</b> ກີບ</p><label class="f">ເງິນທີ່ນັບໄດ້ຈິງ / ຍອດໃນ BCEL One</label><input class="inp big" id="cnt" inputmode="numeric" oninput="fmtNum(this);cntDiff(\'' + id + '\')">' +
+    '<div id="cntR" style="margin-top:10px"></div></div>';
+  $('sheet').innerHTML = h; openSheet(); setTimeout(function () { $('cnt').focus(); }, 250);
+}
+function cntDiff(id) {
+  var w = wal(id), real = numOf($('cnt').value), diff = real - w.balance, el = $('cntR');
+  if (!$('cnt').value) { el.innerHTML = ''; return; }
+  if (!diff) { el.innerHTML = '<p style="color:#12a150;font-weight:800">✓ ກົງກັນ</p>'; return; }
+  el.innerHTML = '<p style="font-weight:800;color:' + (diff > 0 ? '#12a150' : '#dc2626') + '">' + (diff > 0 ? 'ເງິນຈິງຫຼາຍກວ່າ ' : 'ເງິນຈິງໜ້ອຍກວ່າ ') + money(Math.abs(diff)) + ' ກີບ</p>' +
+    '<p class="muted">ກວດກ່ອນ: ລືມຈົດລາຍຮັບ/ລາຍຈ່າຍໃດບໍ່? ຖ້າຫາບໍ່ພົບ ຈຶ່ງບັນທຶກປັບຍອດ</p>' +
+    '<button class="btn ghost full" style="margin-top:8px" onclick="adjust(\'' + id + '\',' + diff + ')">ບັນທຶກປັບຍອດ ' + (diff > 0 ? '+' : '−') + money(Math.abs(diff)) + '</button>';
+}
+function adjust(id, diff) {
+  var w = wal(id), kind = diff > 0 ? 'in' : 'out';
+  var c = (S.cats || []).filter(function (x) { return x.active && x.book === w.book && x.kind === kind && (x.grp === 'other' || x.grp === 'income' || x.grp === 'var' || x.grp === 'living') && /ອື່ນ/.test(x.name); })[0];
+  if (!c) return toast('ບໍ່ພົບໝວດ "ອື່ນໆ"', true);
+  act('api_saveTx', { kind: kind, amount: Math.abs(diff), cat: c.id, wallet: id, date: today(), note: '🧮 ປັບຍອດ: ນັບເງິນຈິງ' }).then(function () { closeSheet(); toast('ປັບຍອດແລ້ວ ✓'); });
+}
+
+/* ================= ຕັ້ງຄ່າ (ເຈົ້າຂອງ) ================= */
+function openWallet(id) {
+  var w = id ? wal(id) : { book: UI.book, name: '', type: 'cash', opening: 0, openDate: today(), active: true };
+  UI.w = JSON.parse(JSON.stringify(w));
+  var h = '<div class="shd"><b>' + (id ? '✏️ ແກ້ກະເປົາ' : '＋ ກະເປົາໃໝ່') + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    '<label class="f">ບັນຊີ</label><select class="inp" onchange="UI.w.book=this.value"' + (id ? ' disabled' : '') + '><option value="co"' + (w.book === 'co' ? ' selected' : '') + '>🏢 ບໍລິສັດ</option><option value="me"' + (w.book === 'me' ? ' selected' : '') + '>🏠 ສ່ວນຕົວ</option></select>' +
+    '<label class="f">ຊື່ກະເປົາ</label><input class="inp" value="' + esc(w.name) + '" oninput="UI.w.name=this.value" placeholder="ເຊັ່ນ: 🏦 BCEL ບໍລິສັດ">' +
+    '<label class="f">ປະເພດ</label><select class="inp" onchange="UI.w.type=this.value"><option value="cash"' + (w.type === 'cash' ? ' selected' : '') + '>ເງິນສົດ</option><option value="bank"' + (w.type === 'bank' ? ' selected' : '') + '>ບັນຊີທະນາຄານ</option><option value="other"' + (w.type === 'other' ? ' selected' : '') + '>ອື່ນໆ</option></select>' +
+    '<div class="row"><div><label class="f">ຍອດຍົກມາ (ກີບ)</label><input class="inp" inputmode="numeric" value="' + money(w.opening) + '" oninput="fmtNum(this);UI.w.opening=numOf(this.value)"></div>' +
+    '<div><label class="f">ນັບແຕ່ວັນທີ</label><input class="inp" type="date" value="' + esc(w.openDate) + '" onchange="UI.w.openDate=this.value"></div></div>' +
+    '<p class="muted" style="margin-top:6px">ລາຍການກ່ອນວັນນີ້ ບໍ່ນັບເຂົ້າຍອດກະເປົາ (ແຕ່ຍັງໃຊ້ວິເຄາະກຳໄລຍ້ອນຫຼັງ)</p>' +
+    (id ? '<label class="ck"><input type="checkbox" ' + (w.active ? 'checked' : '') + ' onchange="UI.w.active=this.checked"><span>ໃຊ້ງານຢູ່</span></label>' : '') +
+    '<button class="btn gold full" style="margin-top:12px" onclick="act(\'api_saveWallet\',UI.w).then(closeSheet)">💾 ບັນທຶກ</button></div>';
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function vSet() {
+  var h = '<div class="card"><h3>👥 ຜູ້ຊ່ວຍ (ເຫັນ/ບັນທຶກ ສະເພາະບໍລິສັດ)</h3><div id="hl">' + (S.helpers || []).map(function (x, i) { return hRow(x.name, i); }).join('') + '</div>' +
+    '<button class="btn ghost full" style="margin-top:6px" onclick="$(\'hl\').insertAdjacentHTML(\'beforeend\',hRow(\'\',Date.now()))">＋ ເພີ່ມຜູ້ຊ່ວຍ</button>' +
+    '<label class="f">ປ່ຽນ PIN ເຈົ້າຂອງ (ວ່າງ = ບໍ່ປ່ຽນ)</label><input class="inp" id="newPin" type="password" inputmode="numeric" maxlength="8">' +
+    '<button class="btn pri full" style="margin-top:10px" onclick="saveSet()">💾 ບັນທຶກຜູ້ຊ່ວຍ / PIN</button></div>';
+  h += '<div class="card"><h3>🛒 Pancake</h3><p class="muted">' + (S.pancakeReady ? 'ເຊື່ອມແລ້ວ · ດຶງອັດຕະໂນມັດທຸກຊົ່ວໂມງ · ລ່າສຸດ ' + esc(S.lastSync || '—') : '⚠️ ຍັງບໍ່ໄດ້ໃສ່ PANCAKE_API_KEY ໃນ Apps Script') + '</p>' +
+    '<button class="btn ghost full" style="margin-top:8px" onclick="act(\'api_syncNow\').then(function(d){toast(d.syncMsg)})">🔄 ດຶງດຽວນີ້</button></div>';
+  [['co', '🏢 ໝວດບໍລິສັດ'], ['me', '🏠 ໝວດສ່ວນຕົວ'], ['x', '⇄ ໝວດໂອນ']].forEach(function (b) {
+    var cs = (S.cats || []).filter(function (c) { return c.book === b[0]; });
+    h += '<div class="card"><h3>' + b[1] + ' <span class="muted">· ກົດເພື່ອແກ້ຊື່/ງົບ</span></h3>' + cs.map(function (c) {
+      return '<div class="brow" style="grid-template-columns:1fr auto;cursor:pointer;' + (c.active ? '' : 'opacity:.45') + '" onclick="openCat(\'' + c.id + '\')"><span class="bl">' + (c.kind === 'in' ? '<b style="color:#12a150">+</b> ' : '') + esc(c.name) + '</span><span class="bv">' + (c.budget ? 'ງົບ ' + short(c.budget) : '') + '</span></div>';
+    }).join('') + (b[0] !== 'x' ? '<button class="btn ghost full" style="margin-top:8px" onclick="openCat(null,\'' + b[0] + '\')">＋ ເພີ່ມໝວດ</button>' : '') + '</div>';
+  });
+  h += '<button class="btn danger full" onclick="logout()">ອອກຈາກລະບົບ</button>';
+  return h;
+}
+function hRow(name, i) { return '<div class="row hrow2" style="margin-bottom:6px"><input class="inp hn" placeholder="ຊື່" value="' + esc(name) + '"><input class="inp hp" type="password" inputmode="numeric" maxlength="8" placeholder="' + (name ? 'PIN (ວ່າງ = ເກົ່າ)' : 'PIN 4–8 ຫຼັກ') + '"><button class="btn danger" style="flex:none;padding:8px 12px" onclick="this.parentNode.remove()">✕</button></div>'; }
+function saveSet() {
+  var hs = Array.prototype.slice.call(document.querySelectorAll('.hrow2')).map(function (r) { return { name: r.querySelector('.hn').value.trim(), pin: r.querySelector('.hp').value.trim() }; }).filter(function (x) { return x.name; });
+  var np = $('newPin').value.trim();
+  busy(true); call('api_saveSettings', { helpers: hs, newPin: np }).then(function (d) { busy(false); if (np) { PIN = np; LS.set('mb_pin', np); } apply(d); toast('ບັນທຶກແລ້ວ ✓'); }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); });
+}
+function openCat(id, book) {
+  var c = id ? cat(id) : { book: book, kind: 'out', name: '', budget: 0, active: true };
+  UI.c = JSON.parse(JSON.stringify(c));
+  var h = '<div class="shd"><b>' + (id ? '✏️ ແກ້ໝວດ' : '＋ ໝວດໃໝ່') + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    (id ? '' : '<label class="f">ປະເພດ</label><select class="inp" onchange="UI.c.kind=this.value"><option value="out">ລາຍຈ່າຍ</option><option value="in">ລາຍຮັບ</option></select>') +
+    '<label class="f">ຊື່ໝວດ (ໃສ່ emoji ໜ້າຊື່ໄດ້)</label><input class="inp" value="' + esc(c.name) + '" oninput="UI.c.name=this.value">' +
+    (c.kind !== 'in' ? '<label class="f">ງົບປະມານ/ເດືອນ (ກີບ · 0 = ບໍ່ມີງົບ)</label><input class="inp" inputmode="numeric" value="' + money(c.budget) + '" oninput="fmtNum(this);UI.c.budget=numOf(this.value)">' : '') +
+    (id && c.book === 'co' && c.kind === 'out' && (c.grp === 'fixed' || c.grp === 'var') ? '<label class="f">ກຸ່ມ</label><select class="inp" onchange="UI.c.grp=this.value"><option value="fixed"' + (c.grp === 'fixed' ? ' selected' : '') + '>ຄ່າໃຊ້ຈ່າຍຄົງທີ່</option><option value="var"' + (c.grp === 'var' ? ' selected' : '') + '>ຄ່າໃຊ້ຈ່າຍຜັນແປ</option></select>' : '') +
+    (id ? '<label class="ck"><input type="checkbox" ' + (c.active ? 'checked' : '') + ' onchange="UI.c.active=this.checked"><span>ໃຊ້ງານຢູ່</span></label>' : '') +
+    '<button class="btn gold full" style="margin-top:12px" onclick="act(\'api_saveCat\',UI.c).then(closeSheet)">💾 ບັນທຶກ</button></div>';
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+
+/* ================= ໂໝດທົດລອງ (ເປີດໄຟລ໌ໃນເຄື່ອງ) — ຈຳລອງ Code.gs ================= */
+var MOCK = (function () {
+  var KEY = 'mb_demo', db;
+  try { db = JSON.parse(localStorage.getItem(KEY)); } catch (e) { }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { } }
+  function d(k) { var x = new Date(); x.setDate(x.getDate() + k); return ymd(x); }
+  function mAgo(k, day) { var x = new Date(); x.setDate(1); x.setMonth(x.getMonth() - k); x.setDate(day); return ymd(x); }
+  if (!db) {
+    var C = [['co', 'in', '🛒 ຍອດຂາຍ (Pancake)', 'sales', 0], ['co', 'in', '🔧 ລາຍຮັບວຽກຕິດຕັ້ງ/ຮົ້ວ', 'sales', 0], ['co', 'in', '➕ ລາຍຮັບອື່ນ', 'other', 0], ['co', 'in', '🤝 ເງິນກູ້ຢືມເຂົ້າ', 'loan', 0],
+      ['co', 'out', '🏠 ຄ່າເຊົ່າຮ້ານ', 'fixed', 3750000], ['co', 'out', '💡 ຄ່າໄຟ+ນ້ຳ ຮ້ານ', 'fixed', 1500000], ['co', 'out', '👷 ເງິນເດືອນພະນັກງານ', 'fixed', 0], ['co', 'out', '📱 ຜ່ອນໂທລະສັບ', 'fixed', 1627000], ['co', 'out', '🚚 ຜ່ອນລົດຮ້ານ', 'fixed', 2695218],
+      ['co', 'out', '📦 ຄ່າສົ່ງເຄື່ອງ', 'var', 0], ['co', 'out', '🎁 ຄ່າແພັກ/ຫີບຫໍ່', 'var', 0], ['co', 'out', '📣 ຄ່າໂຄສະນາ', 'var', 0], ['co', 'out', '🛠️ ຄ່າຊ່າງຈ້າງຄັ້ງຄາວ', 'var', 0], ['co', 'out', '⛽ ນ້ຳມັນ/ເດີນທາງ', 'var', 0], ['co', 'out', '💸 ດອກເບ້ຍເງິນກູ້', 'var', 0], ['co', 'out', '📌 ຄ່າໃຊ້ຈ່າຍອື່ນ', 'var', 0],
+      ['co', 'out', '🏭 ຊື້ສິນຄ້າ/ຈ່າຍຊັບພລາຍ', 'stock', 0], ['co', 'out', '↩️ ຈ່າຍຄືນເງິນກູ້ (ຕົ້ນ)', 'debt', 0],
+      ['me', 'in', '💼 ລາຍຮັບອື່ນ', 'income', 0], ['me', 'out', '🧹 ຄ່າແມ່ບ້ານ', 'family', 4000000], ['me', 'out', '👴 ຄ່າຜູ້ດູແລພໍ່', 'family', 2000000], ['me', 'out', '💡 ຄ່າໄຟ+ນ້ຳ ບ້ານ', 'family', 2500000], ['me', 'out', '🍼 ນົມ+ຂອງໃຊ້ລູກ', 'family', 4000000],
+      ['me', 'out', '🍚 ອາຫານ/ຕະຫຼາດ', 'living', 0], ['me', 'out', '⛽ ເດີນທາງ/ນ້ຳມັນ', 'living', 0], ['me', 'out', '🏥 ສຸຂະພາບ', 'living', 0], ['me', 'out', '🎓 ການສຶກສາ', 'living', 0], ['me', 'out', '🙏 ບຸນ/ສັງຄົມ', 'living', 0], ['me', 'out', '🛍️ ຊື້ຂອງສ່ວນຕົວ', 'living', 0], ['me', 'out', '📌 ອື່ນໆ', 'living', 0],
+      ['x', 'xfer', '💰 ເງິນເດືອນເຈົ້າຂອງ+ເມຍ', 'salary', 10000000], ['x', 'xfer', '🏧 ຖອນໃຊ້ສ່ວນຕົວ', 'draw', 0], ['x', 'xfer', '🔁 ໂອນລະຫວ່າງກະເປົາ', 'internal', 0], ['x', 'xfer', '💵 ເອົາເງິນສ່ວນຕົວໃສ່ບໍລິສັດ', 'capital', 0]];
+    db = { ownerPin: '1234', helpers: [{ name: 'ນ້ອງບັນຊີ', pin: '5678' }], lastSync: '',
+      wallets: [{ id: 'W1', book: 'co', name: '💵 ເງິນສົດຮ້ານ', type: 'cash', opening: 2000000, openDate: mAgo(2, 1), active: true },
+        { id: 'W2', book: 'co', name: '🏦 BCEL ບໍລິສັດ', type: 'bank', opening: 15000000, openDate: mAgo(2, 1), active: true },
+        { id: 'W3', book: 'me', name: '💵 ເງິນສົດສ່ວນຕົວ', type: 'cash', opening: 1500000, openDate: mAgo(2, 1), active: true },
+        { id: 'W4', book: 'me', name: '🏦 ບັນຊີສ່ວນຕົວ', type: 'bank', opening: 5000000, openDate: mAgo(2, 1), active: true }],
+      cats: C.map(function (c, i) { return { id: 'C' + (i + 1), book: c[0], kind: c[1], name: c[2], grp: c[3], budget: c[4], active: true }; }), tx: [] };
+    var T = function (date, kind, cat, wallet, amount, note, x) { db.tx.push(Object.assign({ id: 'T' + db.tx.length, date: date, kind: kind, book: kind === 'xfer' ? 'x' : (db.cats.filter(function (c) { return c.id === cat; })[0].book), cat: cat, wallet: wallet, toWallet: '', amount: amount, note: note || '', src: 'manual', ref: '', status: 'ok', cost: 0, photo: '', by: 'ເຈົ້າຂອງ', createdAt: date + ' 09:00' }, x || {})); };
+    for (var k = 2; k >= 0; k--) {
+      var s = [42e6, 51e6, 38e6][k];
+      for (var i = 0; i < 6; i++) T(mAgo(k, 2 + i * 4), 'in', 'C1', i % 3 ? 'W2' : 'W1', Math.round(s / 6), 'Pancake S' + (100 + k * 10 + i), { src: 'pancake', ref: 'S' + (100 + k * 10 + i), cost: Math.round(s / 6 * .75), by: 'Pancake', status: k === 0 && i > 3 ? 'pending' : 'ok' });
+      T(mAgo(k, 3), 'out', 'C5', 'W2', 3750000); T(mAgo(k, 5), 'out', 'C6', 'W1', 1450000 + k * 90000); T(mAgo(k, 6), 'out', 'C8', 'W2', 1627000); T(mAgo(k, 7), 'out', 'C9', 'W2', 2695218);
+      T(mAgo(k, 9), 'out', 'C10', 'W1', 850000 + k * 120000, 'HAL'); T(mAgo(k, 11), 'out', 'C12', 'W2', 1200000, 'TikTok ads'); T(mAgo(k, 12), 'out', 'C17', 'W2', 18000000, 'ສັ່ງໂຊລ່າລອດໃໝ່');
+      T(mAgo(k, 25), 'xfer', 'C31', 'W2', 10000000, 'ເງິນເດືອນ 2 ທ່ານ', { toWallet: 'W4' });
+      T(mAgo(k, 26), 'out', 'C20', 'W4', 4000000); T(mAgo(k, 26), 'out', 'C21', 'W4', 2000000); T(mAgo(k, 15), 'out', 'C22', 'W1', 2400000, 'ຈ່າຍຈາກເງິນສົດຮ້ານ'); T(mAgo(k, 16), 'out', 'C23', 'W3', 3800000);
+      T(mAgo(k, 10), 'out', 'C24', 'W3', 2500000); T(mAgo(k, 18), 'out', 'C28', 'W3', 600000, 'ບຸນ');
+    }
+    save();
+  }
+  function role(c) { if (c.pin === db.ownerPin) return { role: 'owner', name: 'ເຈົ້າຂອງ' }; var h = db.helpers.filter(function (x) { return x.pin === c.pin; })[0]; if (h) return { role: 'helper', name: h.name }; throw new Error('PIN ບໍ່ຖືກຕ້ອງ'); }
+  function wb(id) { var w = db.wallets.filter(function (x) { return x.id === id; })[0]; return w ? w.book : ''; }
+  function all(c) {
+    save(); var r = role(c), owner = r.role === 'owner', bal = {};
+    db.wallets.forEach(function (w) { bal[w.id] = w.opening; });
+    db.tx.forEach(function (t) { if (t.status !== 'ok') return; var add = function (w, n) { var x = db.wallets.filter(function (y) { return y.id === w; })[0]; if (x && t.date >= x.openDate) bal[w] += n; };
+      if (t.kind === 'in') add(t.wallet, t.amount); else if (t.kind === 'out') add(t.wallet, -t.amount); else { add(t.wallet, -t.amount); add(t.toWallet, t.amount); } });
+    var tx = db.tx.filter(function (t) { return t.status !== 'void'; }).map(function (t) { return JSON.parse(JSON.stringify(t)); });
+    if (!owner) tx = tx.filter(function (t) { return t.book === 'co' || wb(t.wallet) === 'co' || wb(t.toWallet) === 'co'; }).map(function (t) {
+      if (t.book === 'me' || (t.kind === 'xfer' && (wb(t.toWallet) !== 'co' || wb(t.wallet) !== 'co'))) return { id: t.id, date: t.date, kind: t.kind, book: t.book, cat: t.kind === 'xfer' ? t.cat : '', wallet: wb(t.wallet) === 'co' ? t.wallet : '', toWallet: wb(t.toWallet) === 'co' ? t.toWallet : '', amount: t.amount, note: '', src: t.src, status: t.status, cost: 0, photo: '', by: t.by, createdAt: t.createdAt, masked: true };
+      return t; });
+    return JSON.stringify({ role: r.role, me: r.name, today: today(), wallets: db.wallets.filter(function (w) { return owner || w.book === 'co'; }).map(function (w) { var o = JSON.parse(JSON.stringify(w)); o.balance = bal[w.id]; return o; }),
+      cats: db.cats.filter(function (x) { return owner || x.book !== 'me'; }), tx: tx, helpers: owner ? db.helpers.map(function (h) { return { name: h.name }; }) : [], lastSync: db.lastSync, pancakeReady: true });
+  }
+  function find(id) { var t = db.tx.filter(function (x) { return x.id === id; })[0]; if (!t) throw new Error('ບໍ່ພົບລາຍການ'); return t; }
+  return {
+    api_getAll: all,
+    api_setFirstPin: function (c, p) { db.ownerPin = p; return all({ pin: p }); },
+    api_saveTx: function (c, d) {
+      var r = role(c), cc = db.cats.filter(function (x) { return x.id === d.cat; })[0];
+      if (r.role !== 'owner' && (wb(d.wallet) !== 'co' || cc.book === 'me')) throw new Error('ບໍ່ອະນຸຍາດ');
+      var t = d.id ? find(d.id) : { id: 'T' + Date.now(), src: 'manual', ref: '', status: 'ok', cost: 0, photo: '', by: r.name, createdAt: today() + ' 12:00' };
+      Object.assign(t, { date: d.date, kind: d.kind, book: d.kind === 'xfer' ? 'x' : cc.book, cat: d.cat, wallet: d.wallet, toWallet: d.toWallet || '', amount: d.amount, note: d.note || '' });
+      if (d.cost != null && t.src === 'pancake') t.cost = d.cost; if (d.confirm && t.status === 'pending') t.status = 'ok';
+      if (!d.id) db.tx.push(t); return all(c);
+    },
+    api_delTx: function (c, id) { role(c); var t = find(id); if (t.src === 'pancake') t.status = 'void'; else db.tx = db.tx.filter(function (x) { return x.id !== id; }); return all(c); },
+    api_confirmTx: function (c, ids, w) { role(c); ids.forEach(function (id) { var t = find(id); if (t.status === 'pending') { t.status = 'ok'; if (w) t.wallet = w; } }); return all(c); },
+    api_saveWallet: function (c, d) { if (role(c).role !== 'owner') throw new Error('ສະເພາະເຈົ້າຂອງ'); var w = d.id ? db.wallets.filter(function (x) { return x.id === d.id; })[0] : null; if (!w) { w = { id: 'W' + Date.now() }; db.wallets.push(w); } Object.assign(w, { book: d.book, name: d.name, type: d.type, opening: d.opening, openDate: d.openDate, active: d.active !== false }); return all(c); },
+    api_saveCat: function (c, d) { if (role(c).role !== 'owner') throw new Error('ສະເພາະເຈົ້າຂອງ'); var x = d.id ? db.cats.filter(function (y) { return y.id === d.id; })[0] : null; if (!x) { x = { id: 'C' + Date.now(), book: d.book, kind: d.kind, grp: d.book === 'co' ? (d.kind === 'in' ? 'other' : 'var') : (d.kind === 'in' ? 'income' : 'living') }; db.cats.push(x); } Object.assign(x, { name: d.name, budget: d.budget || 0, active: d.active !== false }); if (d.grp) x.grp = d.grp; return all(c); },
+    api_saveSettings: function (c, d) { if (role(c).role !== 'owner') throw new Error('ສະເພາະເຈົ້າຂອງ'); var pin = c.pin; if (d.newPin) { db.ownerPin = d.newPin; pin = d.newPin; } if (d.helpers) { var old = {}; db.helpers.forEach(function (h) { old[h.name] = h.pin; }); db.helpers = d.helpers.map(function (h) { return { name: h.name, pin: h.pin || old[h.name] }; }); } return all({ pin: pin }); },
+    api_uploadBill: function (c) { throw new Error('ໂໝດທົດລອງ ແນບຮູບບໍ່ໄດ້'); },
+    api_syncNow: function (c) { db.lastSync = today() + ' 12:00'; var o = JSON.parse(all(c)); o.syncMsg = 'ໂໝດທົດລອງ: ບໍ່ມີອໍເດີໃໝ່'; return JSON.stringify(o); }
+  };
+})();
+
+/* ================= ເລີ່ມ ================= */
+if (MODE === 'demo') $('demoBar').style.display = '';
+PIN = LS.get('mb_pin') || '';
+if (PIN || MODE === 'demo') { if (!PIN) renderLogin(); else refresh(); } else { busy(true); call('api_getAll').then(function (d) { busy(false); if (d.needSetup) renderSetup(); else renderLogin(); }).catch(function () { busy(false); renderLogin(); }); }
+</script>
+</body>
+</html>
