@@ -281,7 +281,7 @@ function bars(rows) { // rows: [{l, v, b}] b = ງົບ
 }
 function vDash() {
   var h = monthBar(), p = pending();
-  if (p.length && UI.book === 'co') h += '<div class="pend" onclick="openConfirm()"><span style="font-size:22px">⏳</span><span style="flex:1"><b>' + p.length + ' ລາຍຮັບ Pancake ລໍຢືນຢັນ</b><br><span class="muted">' + money(p.reduce(function (a, t) { return a + t.amount; }, 0)) + ' ກີບ · ກົດເພື່ອເລືອກກະເປົາ</span></span><b>›</b></div>';
+  if (p.length && UI.book === 'co') h += '<div class="pend" onclick="openConfirm()"><span style="font-size:22px">⏳</span><span style="flex:1"><b>' + p.length + ' ລາຍການອັດຕະໂນມັດ ລໍຢືນຢັນ</b><br><span class="muted">' + money(p.reduce(function (a, t) { return a + t.amount; }, 0)) + ' ກີບ · ກົດເພື່ອເລືອກກະເປົາ</span></span><b>›</b></div>';
   return h + (UI.book === 'co' ? dashCo() : dashMe());
 }
 function dashCo() {
@@ -329,7 +329,7 @@ function trend(book) {
     if (book === 'co') {
       var r = coCalc(mm), pre = mm < startMonth();
       if (!pre) { avg.n++; avg.p += r.profit; }
-      rows += '<tr><td>' + lab + '</td><td>' + short(r.sales) + '</td><td>' + (pre ? '—' : short(r.stock)) + '</td><td>' + (pre ? '—' : short(r.opex)) + '</td><td style="color:' + (pre ? '#667085' : r.profit >= 0 ? '#12a150' : '#dc2626') + '">' + (pre ? '—' : short(r.profit)) + '</td></tr>';
+      rows += '<tr><td>' + lab + '</td><td>' + short(r.sales) + '</td><td>' + (pre && !r.stock ? '—' : short(r.stock)) + '</td><td>' + (pre ? '—' : short(r.opex)) + '</td><td style="color:' + (pre ? '#667085' : r.profit >= 0 ? '#12a150' : '#dc2626') + '">' + (pre ? '—' : short(r.profit)) + '</td></tr>';
     }
     else { var q = meCalc(mm); rows += '<tr><td>' + lab + '</td><td>' + short(q.total) + '</td><td>' + short(q.spend) + '</td><td style="color:' + (q.left >= 0 ? '#12a150' : '#dc2626') + '">' + short(q.left) + '</td></tr>'; }
   }
@@ -407,6 +407,7 @@ function openTx(id) {
 function txForm() {
   var d = UI.d, owner = S.role === 'owner', ro = !d.editable;
   var h = '<div class="shd"><b>' + (d.id ? (ro ? '🧾 ລາຍການ' : '✏️ ແກ້ລາຍການ') : '＋ ບັນທຶກເງິນ') + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  if (d.src === 'jobs') h += '<div class="pend" style="cursor:default"><span>📋</span><span class="muted" style="flex:1">ມາຈາກແອບຕາຕະລາງວຽກ (ອັດຕະໂນມັດ) · ກວດກະເປົາ ແລ້ວຢືນຢັນ</span></div>';
   if (d.src === 'pancake') h += '<div class="pend" style="cursor:default"><span>🛒</span><span class="muted" style="flex:1">ດຶງຈາກ Pancake ' + esc(d.ref) + (d.cost ? ' · ຕົ້ນທຶນ ' + money(d.cost) : '') + '</span></div>';
   if (!d.src || d.src === 'manual') h += '<div class="kseg">' + [['out', '− ລາຍຈ່າຍ'], ['in', '+ ລາຍຮັບ'], ['xfer', '⇄ ໂອນ']].map(function (k) {
     return '<button class="' + k[0] + (d.kind === k[0] ? ' on' : '') + '" ' + (ro ? 'disabled' : '') + ' onclick="UI.d.kind=\'' + k[0] + '\';UI.d.cat=\'\';txForm()">' + k[1] + '</button>'; }).join('') + '</div>';
@@ -466,11 +467,11 @@ function openConfirm() {
   var p = pending().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
   UI.cf = {}; p.forEach(function (t) { UI.cf[t.id] = true; });
   var ws = (S.wallets || []).filter(function (w) { return w.active && w.book === 'co'; });
-  var h = '<div class="shd"><b>⏳ ຢືນຢັນລາຍຮັບ Pancake</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
-    '<p class="muted">ກວດວ່າເງິນເຂົ້າແທ້ ແລ້ວເລືອກກະເປົາ · ກົດລາຍການເພື່ອແກ້ກະເປົາແຍກ</p>';
+  var h = '<div class="shd"><b>⏳ ຢືນຢັນລາຍການອັດຕະໂນມັດ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    '<p class="muted">🛒 = ຍອດຂາຍ Pancake · 📋 = ຈາກແອບຕາຕະລາງວຽກ (ຈ່າຍໃບສັ່ງຊື້ / ຮັບເງິນວຽກຮົ້ວ) · ກວດວ່າເງິນເຂົ້າ-ອອກແທ້ ແລ້ວເລືອກກະເປົາ</p>';
   p.forEach(function (t) { var w = wal(t.wallet);
-    h += '<label class="ck"><input type="checkbox" checked onchange="UI.cf[\'' + t.id + '\']=this.checked"><span style="flex:1;font-size:13.5px">' + esc(t.date) + ' · ' + esc(t.note) + '<br><span class="muted">ແນະນຳ: ' + esc(w ? w.name : '') + '</span></span><b>' + money(t.amount) + '</b></label>'; });
-  h += '<label class="f">ເຂົ້າກະເປົາ</label><select class="inp" id="cfW"><option value="">ຕາມທີ່ແອບແນະນຳ (ແຕ່ລະລາຍການ)</option>' + ws.map(function (w) { return '<option value="' + w.id + '">' + esc(w.name) + '</option>'; }).join('') + '</select>' +
+    h += '<label class="ck"><input type="checkbox" checked onchange="UI.cf[\'' + t.id + '\']=this.checked"><span style="flex:1;font-size:13.5px">' + (t.src === 'jobs' ? '📋 ' : '🛒 ') + esc(t.date) + ' · ' + esc(t.note) + '<br><span class="muted">ແນະນຳ: ' + esc(w ? w.name : '') + '</span></span><b style="color:' + (t.kind === 'out' ? '#dc2626' : '#12a150') + '">' + (t.kind === 'out' ? '−' : '+') + money(t.amount) + '</b></label>'; });
+  h += '<label class="f">ກະເປົາ (ເງິນເຂົ້າ/ອອກ ຈາກ)</label><select class="inp" id="cfW"><option value="">ຕາມທີ່ແອບແນະນຳ (ແຕ່ລະລາຍການ)</option>' + ws.map(function (w) { return '<option value="' + w.id + '">' + esc(w.name) + '</option>'; }).join('') + '</select>' +
     '<button class="btn gold full" style="margin-top:12px" onclick="doConfirm()">✓ ຢືນຢັນທີ່ຕິກໄວ້</button></div>';
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
 }
