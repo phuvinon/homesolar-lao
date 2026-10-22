@@ -232,7 +232,9 @@ function coCalc(m) {
       if (t.kind === 'xfer' && tb === 'co' && wb !== 'co') r.cin += t.amount;
     } else if (t.status === 'pending') r.pend += t.amount;
   });
-  r.gross = r.sales - r.cogs; r.profit = r.gross - r.opex;
+  // ເຈົ້າຂອງເລືອກ (2026-10-22): ຕົ້ນທຶນ = ເງິນຈ່າຍຄ່າສັ່ງເຄື່ອງແທ້ (grp stock) ເພາະຕົ້ນທຶນໃນ Pancake ເຊື່ອບໍ່ໄດ້
+  // ຕົ້ນທຶນ Pancake (cogs) ເຫຼືອໄວ້ເປັນຕົວເລກອ້າງອີງ — ຫ້າມຫັກທັງສອງ (ຈະນັບຊ້ຳ)
+  r.gross = r.sales - r.stock; r.profit = r.gross - r.opex; r.refGross = r.sales - r.cogs;
   return r;
 }
 // ບັນຊີສ່ວນຕົວ ໃນເດືອນ m
@@ -285,8 +287,11 @@ function vDash() {
 function dashCo() {
   var r = coCalc(UI.month), h = '';
   var gm = r.sales ? Math.round(r.gross / r.sales * 100) : 0, nm = r.sales ? Math.round(r.profit / r.sales * 100) : 0;
-  h += '<div class="kpis">' + kpi(short(r.sales), 'ຍອດຂາຍ', 'b', 'ຕົ້ນທຶນ ' + short(r.cogs)) + kpi(short(r.gross), 'ກຳໄລຂັ້ນຕົ້ນ', '', 'ມາຣ໌ຈິ້ນ ' + gm + '%') +
-    kpi(short(r.opex), 'ຄ່າໃຊ້ຈ່າຍດຳເນີນງານ', 'r', 'ລວມເງິນເດືອນເຈົ້າຂອງ') + kpi(short(r.profit), 'ກຳໄລສຸດທິ', r.profit >= 0 ? 'g' : 'r', nm + '% ຂອງຍອດຂາຍ') + '</div>';
+  var rgm = r.sales ? Math.round(r.refGross / r.sales * 100) : 0, early = UI.month < startMonth();
+  h += '<div class="kpis">' + kpi(short(r.sales), 'ຍອດຂາຍ', 'b') + kpi(short(r.stock), 'ຈ່າຍຄ່າສັ່ງເຄື່ອງ', 'r', 'ຈ່າຍຜູ້ສະໜອງແທ້') +
+    kpi(short(r.opex), 'ຄ່າໃຊ້ຈ່າຍດຳເນີນງານ', 'r', 'ລວມເງິນເດືອນເຈົ້າຂອງ') + kpi(early ? '—' : short(r.profit), 'ກຳໄລສຸດທິ', early ? '' : r.profit >= 0 ? 'g' : 'r', early ? 'ຍັງບໍ່ໄດ້ຈົດລາຍຈ່າຍເດືອນນີ້' : nm + '% ຂອງຍອດຂາຍ') + '</div>';
+  h += '<p class="muted" style="margin:-4px 2px 12px">ກຳໄລ = ຂາຍ − ຄ່າສັ່ງເຄື່ອງ − ຄ່າໃຊ້ຈ່າຍ' + (r.cogs ? ' · ອ້າງອີງ: ຕົ້ນທຶນຕາມ Pancake ' + short(r.cogs) + ' (ມາຣ໌ຈິ້ນ ' + rgm + '%)' : '') +
+    '<br>💡 ເດືອນທີ່ສັ່ງເຄື່ອງລອດໃຫຍ່ ກຳໄລຈະຕ່ຳ ເດືອນຕໍ່ໄປຈະສູງ — ເບິ່ງສະເລ່ຍ 3 ເດືອນໃນຕາຕະລາງລຸ່ມ</p>';
   // ຄ່າໃຊ້ຈ່າຍຕາມໝວດ ທຽບງົບ
   var cats = (S.cats || []).filter(function (c) { return c.active && ((c.book === 'co' && c.kind === 'out' && (c.grp === 'fixed' || c.grp === 'var')) || c.grp === 'salary'); });
   var rows = cats.map(function (c) { return { l: c.name, v: r.byCat[c.id] || 0, b: c.budget }; }).filter(function (x) { return x.v || x.b; }).sort(function (a, b) { return b.v - a.v; });
@@ -294,7 +299,6 @@ function dashCo() {
   h += '<div class="card"><h3>💸 ຄ່າໃຊ້ຈ່າຍ ທຽບງົບ <span class="muted">(ງົບລວມ ' + short(bud) + '/ເດືອນ)</span></h3>' + (rows.length ? bars(rows) : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div>';
   // ເງິນທີ່ອອກແຕ່ບໍ່ຫັກກຳໄລ
   h += '<div class="card"><h3>🔎 ເງິນອອກ ທີ່ບໍ່ແມ່ນຄ່າໃຊ້ຈ່າຍ</h3><div class="brow"><span class="bl">🏠 ຖອນ/ຈ່າຍແທນສ່ວນຕົວ</span><span></span><span class="bv">' + money(r.draws) + '</span></div>' +
-    '<div class="brow"><span class="bl">🏭 ຊື້ສິນຄ້າ/ຈ່າຍຊັບພລາຍ</span><span></span><span class="bv">' + money(r.stock) + '</span></div>' +
     '<div class="brow"><span class="bl">↩️ ຈ່າຍຄືນເງິນກູ້</span><span></span><span class="bv">' + money(r.debt) + '</span></div>' +
     (r.owed ? '<div class="brow"><span class="bl">🧾 ເຈົ້າຂອງຈ່າຍແທນບໍລິສັດ</span><span></span><span class="bv">' + money(r.owed) + '</span></div>' : '') + '</div>';
   // ເງິນສົດ
@@ -319,13 +323,23 @@ function dashMe() {
   return h;
 }
 function trend(book) {
-  var rows = '', m = UI.month;
+  var rows = '', m = UI.month, avg = { n: 0, p: 0 };
   for (var i = 5; i >= 0; i--) {
     var mm = addMonth(m, -i), lab = MON[Number(mm.slice(5)) - 1].slice(0, 4);
-    if (book === 'co') { var r = coCalc(mm); rows += '<tr><td>' + lab + '</td><td>' + short(r.sales) + '</td><td>' + short(r.opex) + '</td><td style="color:' + (r.profit >= 0 ? '#12a150' : '#dc2626') + '">' + short(r.profit) + '</td><td>' + short(r.draws) + '</td></tr>'; }
+    if (book === 'co') {
+      var r = coCalc(mm), pre = mm < startMonth();
+      if (!pre) { avg.n++; avg.p += r.profit; }
+      rows += '<tr><td>' + lab + '</td><td>' + short(r.sales) + '</td><td>' + (pre ? '—' : short(r.stock)) + '</td><td>' + (pre ? '—' : short(r.opex)) + '</td><td style="color:' + (pre ? '#667085' : r.profit >= 0 ? '#12a150' : '#dc2626') + '">' + (pre ? '—' : short(r.profit)) + '</td></tr>';
+    }
     else { var q = meCalc(mm); rows += '<tr><td>' + lab + '</td><td>' + short(q.total) + '</td><td>' + short(q.spend) + '</td><td style="color:' + (q.left >= 0 ? '#12a150' : '#dc2626') + '">' + short(q.left) + '</td></tr>'; }
   }
-  return '<div class="card"><h3>📈 6 ເດືອນຫຼ້າສຸດ</h3><table><tr>' + (book === 'co' ? '<th>ເດືອນ</th><th>ຂາຍ</th><th>ຄ່າໃຊ້ຈ່າຍ</th><th>ກຳໄລ</th><th>ຖອນ</th>' : '<th>ເດືອນ</th><th>ເຂົ້າ</th><th>ຈ່າຍ</th><th>ເຫຼືອ</th>') + '</tr>' + rows + '</table></div>';
+  return '<div class="card"><h3>📈 6 ເດືອນຫຼ້າສຸດ</h3><table><tr>' + (book === 'co' ? '<th>ເດືອນ</th><th>ຂາຍ</th><th>ສັ່ງເຄື່ອງ</th><th>ຄ່າໃຊ້ຈ່າຍ</th><th>ກຳໄລ</th>' : '<th>ເດືອນ</th><th>ເຂົ້າ</th><th>ຈ່າຍ</th><th>ເຫຼືອ</th>') + '</tr>' + rows + '</table>' +
+    (book === 'co' ? '<p class="muted" style="margin-top:6px">' + (avg.n ? 'ກຳໄລສະເລ່ຍ ' + avg.n + ' ເດືອນ: <b>' + short(avg.p / avg.n) + '</b>/ເດືອນ · ' : '') + '«—» = ກ່ອນເລີ່ມຈົດລາຍຈ່າຍ (' + startMonth() + ')</p>' : '') + '</div>';
+}
+// ເດືອນທຳອິດທີ່ມີການຈົດລາຍຈ່າຍ (= ວັນຍົກຍອດກະເປົາບໍລິສັດ) · ກ່ອນນັ້ນມີແຕ່ຍອດຂາຍ Pancake → ຢ່າສະແດງກຳໄລ
+function startMonth() {
+  var d = (S.wallets || []).filter(function (w) { return w.book === 'co'; }).map(function (w) { return w.openDate || ''; }).sort()[0];
+  return (d || S.today || today()).slice(0, 7);
 }
 // ລາຍການ: ເດືອນ + ຄົ້ນຫາ + ກະເປົາ
 function inBook(t) {
