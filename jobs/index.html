@@ -37,7 +37,7 @@ header{background:var(--navy);color:#fff;padding:12px 16px 10px;position:sticky;
 main{max-width:860px;margin:0 auto;padding:14px 14px 0}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);display:flex;z-index:45;
   padding-bottom:env(safe-area-inset-bottom)}
-nav.tabs button{flex:1;border:0;background:none;padding:8px 2px 10px;font-size:11.5px;color:var(--muted);cursor:pointer}
+nav.tabs button{flex:1;min-width:0;border:0;background:none;padding:8px 1px 10px;font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 nav.tabs button i{display:block;font-style:normal;font-size:20px;line-height:1.3}
 nav.tabs button.on{color:var(--navy);font-weight:800}
 nav.tabs button.on i{transform:scale(1.1)}
@@ -433,7 +433,7 @@ function render() {
   chip.className = 'chip' + (S.owner ? ' gold' : ''); chip.textContent = (S.owner ? '👑 ' : '👷 ') + ME.name;
   var tabs = [['today', '🏠', 'ມື້ນີ້'], ['week', '🗓️', 'ອາທິດ'], ['month', '📅', 'ເດືອນ'], ['list', '🔎', 'ທັງໝົດ']];
   // ເຈົ້າຂອງ: 📊 ພາບລວມ ຢູ່ໜ້າສຸດ · 💰 ເງິນ ເຂົ້າຈາກໜ້າພາບລວມ · ⚙️ ຕັ້ງຄ່າ ຢູ່ປຸ່ມເທິງຫົວ
-  if (S.owner) { tabs.unshift(['dash', '📊', 'ພາບລວມ']); tabs.push(['notes', '📝', 'ໂນດ'], ['po', '📦', 'ສັ່ງເຄື່ອງ']); }
+  if (S.owner) { tabs.unshift(['dash', '📊', 'ພາບລວມ']); tabs.push(['notes', '📝', 'ໂນດ'], ['po', '📦', 'ສັ່ງເຄື່ອງ'], ['cust', '👥', 'ລູກຄ້າ']); }
   if (!S.owner && ['money', 'settings', 'notes', 'po', 'dash', 'cust'].indexOf(UI.view) >= 0) UI.view = 'today';
   $('setChip').style.display = S.owner ? '' : 'none';
   $('tabs').innerHTML = tabs.map(function (t) {
@@ -1925,12 +1925,12 @@ function vPO() {
   var c = function (s) { return pos.filter(function (p) { return p.status === s; }).length; };
   var dueSum = pos.reduce(function (a, p) { return a + poCalc(p).due; }, 0);
   var synced = prods.length ? prods[0].syncedAt : '';
-  var h = '<div class="toolbar"><button class="nb" onclick="syncProducts()">🔄 ດຶງສິນຄ້າ Pancake</button><button class="nb" onclick="openSuppliers()">🏭 ຜູ້ສະໜອງ (' + (S.suppliers || []).filter(function (s) { return s.active !== false; }).length + ')</button></div>';
+  var h = '<div class="toolbar"><button class="nb" onclick="syncProducts()">🔄 ດຶງສິນຄ້າ Pancake</button><button class="nb" onclick="openSuppliers()">🏭 ຜູ້ສະໜອງ (' + (S.suppliers || []).filter(function (s) { return s.active !== false; }).length + ')</button><button class="nb" style="background:#fff4dc;border-color:#f3c78c" onclick="openDueSel()">🧾 ລວມບິນຄ້າງຈ່າຍ</button></div>';
   h += '<p class="muted" style="margin:-4px 2px 10px">' + (synced ? 'ສິນຄ້າ ' + prods.length + ' ລາຍການ · ອັບເດດ ' + esc(synced) : '⚠️ ຍັງບໍ່ໄດ້ດຶງສິນຄ້າ — ກົດ 🔄 ກ່ອນ') + '</p>';
   h += '<div class="kpis">' +
     '<div class="kpi" onclick="UI.pf=\'draft\';render()"><div class="n">' + c('draft') + '</div><div class="l">ຮ່າງ</div></div>' +
     '<div class="kpi blue" onclick="UI.pf=\'sent\';render()"><div class="n">' + c('sent') + '</div><div class="l">ລໍຖ້າຮັບເຄື່ອງ</div></div>' +
-    '<div class="kpi red" onclick="UI.pf=\'due\';render()"><div class="n" style="font-size:16px">' + money(dueSum) + '</div><div class="l">ຄ້າງຈ່າຍ (ກີບ)</div></div>' +
+    '<div class="kpi red" onclick="openDueSel()"><div class="n" style="font-size:16px">' + money(dueSum) + '</div><div class="l">ຄ້າງຈ່າຍ (ກີບ)</div></div>' +
     '<div class="kpi amber" onclick="document.getElementById(\'lowBox\').scrollIntoView({behavior:\'smooth\'})"><div class="n">' + low.length + '</div><div class="l">ສິນຄ້າໃກ້ໝົດ</div></div></div>';
   h += '<div class="filters">' + [['open', 'ກຳລັງດຳເນີນ'], ['due', '💰 ຄ້າງຈ່າຍ'], ['draft', 'ຮ່າງ'], ['sent', 'ສົ່ງແລ້ວ'], ['received', 'ໄດ້ຮັບແລ້ວ'], ['cancelled', 'ຍົກເລີກ'], ['all', 'ທັງໝົດ']].map(function (x) {
     return '<span class="fchip' + (f === x[0] ? ' on' : '') + '" onclick="UI.pf=\'' + x[0] + '\';render()">' + x[1] + '</span>';
@@ -1957,6 +1957,96 @@ function poCard(p) {
 }
 
 function syncProducts() { act('api_syncProducts').then(function () { toast('ດຶງສິນຄ້າຈາກ Pancake ແລ້ວ ✓'); }); }
+
+/* ---------- 🧾 ລວມບິນຄ້າງຈ່າຍ: ຕິກເລືອກໃບສັ່ງຊື້ → ຍອດລວມ + ລາຍລະອຽດ → ສົ່ງ/ພິມ/ຈ່າຍພ້ອມກັນ ---------- */
+function duePOs() {
+  return (S.pos || []).filter(function (p) { return poCalc(p).due > 0; })
+    .sort(function (a, b) { return String(a.supplierId).localeCompare(String(b.supplierId)) || String(a.date).localeCompare(String(b.date)); });
+}
+function openDueSel() {
+  if (!UI.dsel) UI.dsel = {};
+  var list = duePOs();
+  Object.keys(UI.dsel).forEach(function (id) { if (!list.some(function (p) { return p.id === id; })) delete UI.dsel[id]; });
+  var groups = {}; list.forEach(function (p) { (groups[p.supplierId] = groups[p.supplierId] || []).push(p); });
+  var h = '<div class="shd"><b>🧾 ລວມບິນຄ້າງຈ່າຍ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  if (!list.length) { $('sheet').innerHTML = h + '<div class="empty">ບໍ່ມີບິນຄ້າງຈ່າຍ 🎉</div></div>'; openSheet(); return; }
+  h += '<div class="filters"><span class="fchip" onclick="duePOs().forEach(function(p){UI.dsel[p.id]=1});openDueSel()">✓ ເລືອກທັງໝົດ</span><span class="fchip" onclick="UI.dsel={};openDueSel()">✕ ລ້າງ</span>' +
+    Object.keys(groups).map(function (sid) { var s = supById(sid) || {}; return '<span class="fchip" onclick="UI.dsel={};duePOs().filter(function(p){return p.supplierId===\'' + esc(sid) + '\'}).forEach(function(p){UI.dsel[p.id]=1});openDueSel()">🏭 ' + esc(s.name || '?') + '</span>'; }).join('') + '</div>';
+  Object.keys(groups).forEach(function (sid) {
+    var s = supById(sid) || {}, g = groups[sid], gsum = g.reduce(function (a, p) { return a + poCalc(p).due; }, 0);
+    h += '<div class="sec">🏭 ' + esc(s.name || '(ບໍ່ລະບຸຜູ້ສະໜອງ)') + '<span class="sp"></span><span class="muted" style="font-weight:600">ຄ້າງ ' + money(gsum) + '</span></div>';
+    h += g.map(function (p) {
+      var k = poCalc(p), on = !!UI.dsel[p.id];
+      return '<label class="eq" style="align-items:flex-start;background:' + (on ? '#fffbeb' : '#fff') + ';border:1px solid ' + (on ? '#F6C453' : 'var(--line)') + ';border-radius:12px;padding:9px 10px;margin-bottom:6px">' +
+        '<input type="checkbox" ' + (on ? 'checked' : '') + ' style="margin-top:3px" onchange="if(this.checked)UI.dsel[\'' + esc(p.id) + '\']=1;else delete UI.dsel[\'' + esc(p.id) + '\'];openDueSel()">' +
+        '<span style="flex:1;min-width:0"><b>' + esc(p.id) + '</b> <span class="muted">· ' + esc(p.date ? dLabel(p.date) : '') + ' · ' + esc((POST[p.status] || POST.draft).l) + '</span>' +
+        '<span style="display:block;font-size:12.5px;color:var(--muted)">' + p.items.map(function (it) { return esc(it.name) + ' ×' + it.qty; }).join(', ') + '</span>' +
+        (p.paid ? '<span style="display:block;font-size:12px">ລວມ ' + money(k.total) + ' · ຈ່າຍແລ້ວ ' + money(p.paid) + '</span>' : '') + '</span>' +
+        '<b style="white-space:nowrap;color:#dc2626">' + money(k.due) + '</b></label>';
+    }).join('');
+  });
+  var sel = list.filter(function (p) { return UI.dsel[p.id]; }), tot = sel.reduce(function (a, p) { return a + poCalc(p).due; }, 0);
+  h += '<div style="position:sticky;bottom:0;background:var(--navy);color:#fff;border-radius:14px;padding:12px 14px;margin-top:10px">' +
+    '<div style="display:flex;align-items:baseline;gap:8px"><span style="flex:1">ເລືອກ <b>' + sel.length + '</b> / ' + list.length + ' ບິນ</span><span style="font-size:20px;font-weight:800;color:#F6C453">' + money(tot) + ' ກີບ</span></div>' +
+    (sel.length ? '<div class="btns" style="margin-top:8px"><button class="btn ghost" style="padding:9px 6px;color:#151a23" onclick="dueShare()">💬 ສົ່ງ</button><button class="btn ghost" style="padding:9px 6px;color:#151a23" onclick="duePrint()">🖨️ PDF</button>' +
+      '<button class="btn gold" style="padding:9px 6px" onclick="duePayAll()">✓ ຈ່າຍແລ້ວ</button></div>' : '<div class="muted" style="color:#c9d0dc;margin-top:4px">ຕິກບິນທີ່ຈະຈ່າຍ</div>') + '</div>';
+  h += '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  var keep = $('sheet').classList.contains('on') ? $('sheet').scrollTop : 0;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = keep;
+}
+function dueSelected() { return duePOs().filter(function (p) { return UI.dsel && UI.dsel[p.id]; }); }
+function dueText() {
+  var sel = dueSelected(), by = {}, tot = 0;
+  sel.forEach(function (p) { (by[p.supplierId] = by[p.supplierId] || []).push(p); tot += poCalc(p).due; });
+  var t = '🧾 ສະຫຼຸບບິນຄ້າງຈ່າຍ (' + sel.length + ' ບິນ)\nHOME SOLAR · ' + today() + '\n';
+  Object.keys(by).forEach(function (sid) {
+    var s = supById(sid) || {}, g = by[sid];
+    t += '\n🏭 ' + (s.name || '?') + ' — ' + money(g.reduce(function (a, p) { return a + poCalc(p).due; }, 0)) + ' ກີບ\n';
+    g.forEach(function (p) { var k = poCalc(p); t += '• ' + p.id + ' (' + (p.date || '') + ') ' + money(k.due) + (p.paid ? ' (ລວມ ' + money(k.total) + ', ຈ່າຍແລ້ວ ' + money(p.paid) + ')' : '') + '\n   ' + p.items.map(function (it) { return it.name + ' ×' + it.qty; }).join(', ') + '\n'; });
+  });
+  return t + '\n💰 ລວມທີ່ຈະຈ່າຍ: ' + money(tot) + ' ກີບ';
+}
+function dueShare() { window.open('https://wa.me/?text=' + encodeURIComponent(dueText()), '_blank'); }
+function duePrint() {
+  var w = window.open('', '_blank'); if (!w) return toast('ອະນຸຍາດ popup ກ່ອນ', true);
+  var sel = dueSelected(), by = {}, tot = 0;
+  sel.forEach(function (p) { (by[p.supplierId] = by[p.supplierId] || []).push(p); tot += poCalc(p).due; });
+  var dmy = function (s) { var x = String(s || '').split('-'); return x.length === 3 ? x[2] + '/' + x[1] + '/' + x[0] : '—'; };
+  var body = Object.keys(by).map(function (sid) {
+    var s = supById(sid) || {}, g = by[sid], gs = g.reduce(function (a, p) { return a + poCalc(p).due; }, 0);
+    return '<h3>🏭 ' + esc(s.name || '?') + (s.phone ? ' <span class="sm">· ' + esc(s.phone) + '</span>' : '') + '</h3><table><thead><tr><th style="width:100px">ເລກໃບ</th><th style="width:72px">ວັນທີ</th><th>ລາຍການ</th><th class="n" style="width:90px">ລວມ</th><th class="n" style="width:84px">ຈ່າຍແລ້ວ</th><th class="n" style="width:96px">ຄ້າງຈ່າຍ</th></tr></thead><tbody>' +
+      g.map(function (p) { var k = poCalc(p); return '<tr><td><b>' + esc(p.id) + '</b></td><td>' + dmy(p.date) + '</td><td class="sm2">' + p.items.map(function (it) { return esc(it.name) + ' ×' + it.qty; }).join(', ') + '</td><td class="n">' + money(k.total) + '</td><td class="n">' + (p.paid ? money(p.paid) : '—') + '</td><td class="n"><b>' + money(k.due) + '</b></td></tr>'; }).join('') +
+      '</tbody><tfoot><tr><td colspan="5" class="n">ລວມ ' + esc(s.name || '') + '</td><td class="n"><b>' + money(gs) + '</b></td></tr></tfoot></table>';
+  }).join('');
+  var css = ':root{--navy:#155a94;--amber:#f7941d;--line:#d6dee6;--soft:#f4f7fa;--ink:#1c2733}*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans Lao",sans-serif;color:var(--ink);font-size:12.5px;line-height:1.5;background:#e8ecf0;padding:20px 8px}' +
+    '.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:12mm}@page{size:A4;margin:0}@media print{body{background:#fff;padding:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}}' +
+    '.head{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--navy);padding-bottom:9px}.head img{width:50px;height:50px;object-fit:contain}.head .nm{flex:1;font-size:20px;font-weight:700;color:var(--navy)}.head .ct{font-size:11px;color:#5b6b7b;text-align:right}' +
+    'h1{text-align:center;font-size:18px;color:var(--navy);margin:12px 0 2px}.sub{text-align:center;color:#5b6b7b;font-size:12px;margin-bottom:10px}' +
+    '.tot{display:flex;justify-content:space-between;align-items:center;background:#fff6ea;border:2px solid var(--amber);border-radius:12px;padding:10px 16px;margin-bottom:6px}.tot b{font-size:22px;color:#c96a07}' +
+    'h3{font-size:13.5px;color:var(--navy);margin:14px 0 6px}.sm{font-size:11px;color:#5b6b7b;font-weight:400}table{width:100%;border-collapse:collapse}th{background:var(--navy);color:#fff;font-size:11.5px;padding:6px;text-align:left}' +
+    'td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:nth-child(even) td{background:#f8fafc}tfoot td{background:var(--soft);font-weight:600}.n{text-align:right;white-space:nowrap}.sm2{font-size:11px}' +
+    '.sign{display:flex;justify-content:space-between;margin-top:30px}.sign div{width:42%;text-align:center;border-top:1px dotted #8fa0b0;padding-top:5px;font-size:12px}';
+  w.document.write('<!doctype html><html lang="lo"><head><meta charset="utf-8"><title>ບິນຄ້າງຈ່າຍ ' + today() + '</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div class="nm">HOME SOLAR</div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<h1>ສະຫຼຸບບິນຄ້າງຈ່າຍຜູ້ສະໜອງ</h1><div class="sub">' + sel.length + ' ບິນ · ' + Object.keys(by).length + ' ຜູ້ສະໜອງ · ວັນທີ ' + dmy(today()) + '</div>' +
+    '<div class="tot"><span>💰 ລວມທີ່ຈະຈ່າຍ</span><b>' + money(tot) + ' ກີບ</b></div>' + body +
+    '<div class="sign"><div>ຜູ້ກະກຽມ</div><div>ຜູ້ອະນຸມັດຈ່າຍ</div></div>' +
+    '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){print()},300)})<\/script></body></html>');
+  w.document.close();
+}
+// ຈ່າຍຄົບທຸກບິນທີ່ເລືອກ (ແຕ່ລະບິນ = api_payPO ຍອດລວມ → ສະໝຸດເງິນໄດ້ລາຍການຈ່າຍອັດຕະໂນມັດ)
+function duePayAll() {
+  var sel = dueSelected(), tot = sel.reduce(function (a, p) { return a + poCalc(p).due; }, 0);
+  ask({ title: '✓ ບັນທຶກວ່າຈ່າຍຄົບ ' + sel.length + ' ບິນ?', msg: 'ລວມ ' + money(tot) + ' ກີບ\n' + sel.map(function (p) { return p.id + ' · ' + money(poCalc(p).due); }).join('\n') + '\n\n→ ເງິນຈ່າຍຈະໄປຂຶ້ນໃນ ສະໝຸດເງິນ ໃຫ້ຢືນຢັນກະເປົາ', ok: 'ຈ່າຍແລ້ວ' }).then(function (y) {
+    if (!y) return;
+    sel.forEach(function (p) {
+      var k = poCalc(p);
+      optimistic(function () { p.paid = k.total; addLocalLog(p.id, 'pay', 'ຈ່າຍຜູ້ສະໜອງແລ້ວລວມ ' + money(k.total) + ' ກີບ'); }, '', 'api_payPO', p.id, k.total);
+    });
+    UI.dsel = {}; toast('ບັນທຶກຈ່າຍ ' + sel.length + ' ບິນ · ' + money(tot) + ' ກີບ ✓'); openDueSel();
+  });
+}
 
 /* ---------- ຜູ້ສະໜອງ ---------- */
 function openSuppliers() {
