@@ -1439,11 +1439,11 @@ function dCRM() {
     rows.map(function (r) {
       var pct = r.n ? Math.round(r.closed / r.n * 100) : 0;
       return '<tr onclick="openSrcReport(\'' + esc(r.src).replace(/'/g, '\\\'') + '\')" style="cursor:pointer"><td>' + esc(r.src) + '</td><td class="num">' + r.n + '</td><td class="num"><b>' + r.closed + '</b></td>' +
-        '<td class="num" style="color:' + (pct >= 50 ? '#12a150' : pct >= 25 ? '#d97706' : '#dc2626') + '">' + pct + '%</td><td class="num">' + r.repeat + '</td><td class="num">📤</td></tr>';
+        '<td class="num" style="color:' + (pct >= 50 ? '#12a150' : pct >= 25 ? '#d97706' : '#dc2626') + '">' + pct + '%</td><td class="num">' + r.repeat + '</td><td class="num"><span class="badge" style="background:#F6C453;color:#0A1322">📤 ສົ່ງ</span></td></tr>';
     }).join('') + '</table>';
   var unk = rows.filter(function (r) { return r.src === NO_SRC; })[0];
   if (unk) h += '<p class="muted" style="margin-top:6px">⚠️ ' + unk.n + ' ລູກຄ້າຍັງບໍ່ລະບຸແຫຼ່ງ — <a href="javascript:void 0" onclick="UI.cf=\'nosrc\';go(\'cust\')">ໃສ່ແຫຼ່ງໃຫ້ລູກຄ້າ</a></p>';
-  h += '<p class="muted" style="margin-top:4px">ກົດແຖວ = ລາຍງານລາຍຊື່ ສົ່ງໃຫ້ຕົ້ນທາງ (ເຊັ່ນ Solaro)</p></div>';
+  h += '<p class="muted" style="margin-top:4px">ກົດ 📤 ສົ່ງ ທີ່ແຖວແຫຼ່ງ = ອອກລາຍງານ PDF/WhatsApp ໃຫ້ຕົ້ນທາງ (ເຊັ່ນ Solaro) · ຫຼື ແຖບ 👥 ລູກຄ້າ</p></div>';
   var mp = UI.modPer || 'm', ms = modelStats(mp).slice(0, 10), mx = ms.length ? ms[0].qty : 1;
   h += '<div class="card"><h3>🏆 ລຸ້ນຂາຍດີ <span class="muted">(ບິນ Pancake ບໍ່ນັບບິນຍົກເລີກ)</span></h3>' + perChips('modPer', 'render()') +
     (ms.length ? ms.map(function (r, i) {
@@ -1454,6 +1454,16 @@ function dCRM() {
   return h;
 }
 function short(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(n >= 1e8 ? 0 : 1).replace(/\.0$/, '') + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : money(n); }
+// ເລືອກແຫຼ່ງ → ລາຍງານ
+function openSrcPicker() {
+  var rows = srcStats('all');
+  var h = '<div class="shd"><b>📤 ສົ່ງລາຍງານໃຫ້ຕົ້ນທາງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody"><p class="muted" style="margin-bottom:8px">ເລືອກແຫຼ່ງທີ່ຈະສົ່ງລາຍງານໃຫ້</p>' +
+    rows.filter(function (r) { return r.src !== NO_SRC; }).map(function (r) {
+      return '<div class="eq" onclick="openSrcReport(\'' + esc(r.src).replace(/'/g, '\\\'') + '\')"><span style="flex:1"><b>' + esc(r.src) + '</b><br><span class="muted">ລູກຄ້າ ' + r.n + ' · ປິດໄດ້ ' + r.closed + ' · ຊື້ຊ້ຳ ' + r.repeat + '</span></span><span class="badge" style="background:#F6C453;color:#0A1322">📤 ລາຍງານ</span></div>';
+    }).join('') + '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
 // ໜ້າຖານລູກຄ້າ
 function vCust() {
   var h = '<div class="toolbar"><button class="nb" onclick="go(\'dash\')">‹ ພາບລວມ</button><h2>👥 ຖານລູກຄ້າ</h2><button class="nb" onclick="syncCRM()">🔄</button></div>';
@@ -1466,6 +1476,9 @@ function vCust() {
     if (f !== 'all' && f !== 'nosrc' && f !== 'repeat' && f !== 'open' && x.k.src !== f) return false;
     return !q || (x.c.name + ' ' + x.c.phone + ' ' + x.c.address).toLowerCase().indexOf(q) >= 0;
   }).sort(function (a, b) { return (b.k.last || b.k.first) < (a.k.last || a.k.first) ? -1 : 1; });
+  // 📤 ປຸ່ມສົ່ງລາຍງານໃຫ້ຕົ້ນທາງ (ໃຫ້ເຫັນຊັດ — ເຈົ້າຂອງຊອກບໍ່ເຫັນ ຕອນຢູ່ແຕ່ໃນຕາຕະລາງພາບລວມ)
+  var isSrc = (S.sources || []).indexOf(f) >= 0;
+  h += '<button class="btn gold full" style="margin-bottom:10px" onclick="' + (isSrc ? 'openSrcReport(\'' + esc(f).replace(/'/g, '\\\'') + '\')' : 'openSrcPicker()') + '">📤 ສົ່ງລາຍງານໃຫ້ຕົ້ນທາງ' + (isSrc ? ': ' + esc(f) : '') + '</button>';
   h += '<input class="search" placeholder="🔎 ຊື່ / ເບີໂທ / ທີ່ຢູ່" value="' + esc(UI.cq || '') + '" oninput="UI.cq=this.value;clearTimeout(window._cq);window._cq=setTimeout(function(){render();var e=document.querySelector(\'.search\');e.focus();e.setSelectionRange(e.value.length,e.value.length)},300)">';
   h += '<div class="filters">' + [['all', 'ທັງໝົດ'], ['nosrc', '❓ ບໍ່ລະບຸແຫຼ່ງ'], ['repeat', '🔁 ຊື້ຊ້ຳ'], ['open', '⏳ ຍັງບໍ່ຊື້']].concat((S.sources || []).map(function (s) { return [s, s]; })).map(function (o) {
     return '<button class="fchip' + (f === o[0] ? ' on' : '') + '" onclick="UI.cf=\'' + esc(o[0]).replace(/'/g, '\\\'') + '\';render()">' + esc(o[1]) + '</button>'; }).join('') + '</div>';
