@@ -1420,6 +1420,7 @@ function modelStats(per) {
   var by = {};
   CRM.sales.forEach(function (s) {
     if (!(s.status === 'received_money' || s.status === 'delivered') || !periodOk(s.date, per)) return;
+    if (/^ຄ່າ/.test(s.name)) return; // ຄ່າຕິດຕັ້ງ/ຄ່າສົ່ງ ແມ່ນບໍລິການ ບໍ່ແມ່ນລຸ້ນສິນຄ້າ
     var k = s.vid || s.name, r = by[k] = by[k] || { name: s.name, qty: 0, amount: 0, orders: {} };
     r.qty += s.qty; r.amount += s.amount; r.orders[s.oid] = 1;
   });
