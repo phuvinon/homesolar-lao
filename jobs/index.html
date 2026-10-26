@@ -1553,12 +1553,68 @@ function srcReport() {
   h += '<p class="muted" style="margin-top:8px">ແກ້ຂໍ້ຄວາມໃນກ່ອງໄດ້ກ່ອນສຳເນົາ · ລູກຄ້າທີ່ບໍ່ລະບຸແຫຼ່ງ ຈະບໍ່ຢູ່ໃນລາຍງານ — ໃສ່ແຫຼ່ງໄດ້ທີ່ 👥 ຖານລູກຄ້າ</p></div>';
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
 }
+// PDF ລາຍງານແບບຕາຕະລາງ (ແບບດຽວກັບໃບເກັບເງິນ Home Solar: ໂລໂກ້ + ສີ navy/amber)
 function srcReportPrint() {
   var w = window.open('', '_blank'); if (!w) return toast('ອະນຸຍາດ popup ກ່ອນ', true);
-  w.document.write('<!doctype html><html lang="lo"><head><meta charset="utf-8"><title>ລາຍງານ ' + esc(UI.rs.src) + '</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">' +
-    '<style>body{font-family:"Noto Sans Lao",sans-serif;padding:28px;white-space:pre-wrap;font-size:14px;line-height:1.7;color:#151a23}@page{size:A4;margin:16mm}</style></head><body>' + esc($('rsText').value) +
-    '<script>document.fonts.ready.then(function(){setTimeout(function(){print()},300)})<\/script></body></html>');
-  w.document.close();
+  var r = UI.rs, D = srcReportData(), t = D.tot, pct = t.n ? Math.round(t.closed / t.n * 100) : 0;
+  var dmy = function (s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '—'; };
+  var srcName = String(r.src).replace(/^\S+\s/, '');
+  // ສິນຄ້າທີ່ລູກຄ້າກຸ່ມນີ້ຊື້ (ລວມ)
+  var mods = {};
+  D.list.forEach(function (x) { D.models(x.c).forEach(function (m) { var k = m.replace(/ ×\d+$/, ''), q = Number((m.match(/×(\d+)$/) || [0, 1])[1]); mods[k] = (mods[k] || 0) + q; }); });
+  var modRows = Object.keys(mods).filter(function (k) { return !/^ຄ່າ/.test(k); }).sort(function (a, b) { return mods[b] - mods[a]; });
+  var mx = modRows.length ? mods[modRows[0]] : 1;
+  var pill = function (k) {
+    return k.repeat ? '<span class="pill rep">🔁 ຊື້ຊ້ຳ</span>' : k.closed ? '<span class="pill ok">✓ ຊື້ແລ້ວ</span>' : '<span class="pill wait">⏳ ຍັງບໍ່ຊື້</span>';
+  };
+  var rows = D.list.map(function (x, i) {
+    var c = x.c, k = x.k, m = D.models(c).filter(function (s) { return !/^ຄ່າ/.test(s); });
+    return '<tr><td class="c">' + (i + 1) + '</td><td><b>' + esc(c.name || '—') + '</b>' + (r.phone && c.phone ? '<div class="sm">📞 ' + esc(maskPhone(c.phone)) + '</div>' : '') +
+      (c.sourceNote ? '<div class="sm">ຜູ້ແນະນຳ: ' + esc(c.sourceNote) + '</div>' : '') + '</td>' +
+      '<td class="c">' + dmy(k.first) + '</td><td class="c">' + pill(k) + '</td><td class="c"><b>' + (k.buys || '—') + '</b></td>' +
+      '<td class="sm2">' + (m.length ? esc(m.join(', ')) : '<span class="mu">—</span>') + '</td><td class="c">' + (k.last ? dmy(k.last) : '—') + '</td>' +
+      (r.money ? '<td class="n">' + (k.spent ? money(k.spent) : '—') + '</td>' : '') + '</tr>';
+  }).concat(D.leads.map(function (n, i) {
+    return '<tr><td class="c">' + (D.list.length + i + 1) + '</td><td><b>' + esc(n.customer || n.title) + '</b></td><td class="c">' + dmy(String(n.createdAt || '').slice(0, 10)) + '</td>' +
+      '<td class="c"><span class="pill wait">⏳ ກຳລັງຕິດຕາມ</span></td><td class="c">—</td><td class="sm2 mu">' + esc(n.title || '') + '</td><td class="c">—</td>' + (r.money ? '<td class="n">—</td>' : '') + '</tr>';
+  })).join('');
+  var css = ':root{--navy:#155a94;--amber:#f7941d;--line:#d6dee6;--soft:#f4f7fa;--ink:#1c2733;--green:#12804a}*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:"Noto Sans Lao",sans-serif;color:var(--ink);font-size:12.5px;line-height:1.5;background:#e8ecf0;padding:20px 8px}' +
+    '.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:12mm 12mm 10mm;box-shadow:0 2px 14px rgba(22,50,74,.18)}@page{size:A4;margin:0}' +
+    '@media print{body{background:#fff;padding:0}.sheet{box-shadow:none;margin:0}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}tr{break-inside:avoid}}' +
+    '.head{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--navy);padding-bottom:9px}.head img{width:52px;height:52px;object-fit:contain}' +
+    '.brand{flex:1}.brand .nm{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:1px;line-height:1.2}.brand .tg{font-size:11px;color:#5b6b7b}.ct{font-size:11px;color:#44556a;text-align:right;line-height:1.7}' +
+    'h1{text-align:center;font-size:19px;color:var(--navy);margin:12px 0 2px}h1 span{border-bottom:2.5px solid var(--amber);padding:0 18px 2px}' +
+    '.sub{text-align:center;color:#5b6b7b;font-size:12px;margin-bottom:12px}.sub b{color:var(--ink)}' +
+    '.kpis{display:grid;grid-template-columns:repeat(' + (r.money ? 5 : 4) + ',1fr);gap:8px;margin-bottom:12px}.kpi{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center}' +
+    '.kpi .v{font-size:22px;font-weight:700;color:var(--navy);line-height:1.2}.kpi .l{font-size:11px;color:#5b6b7b}.kpi.hi{background:#fff6ea;border-color:#f3c78c}.kpi.hi .v{color:#c96a07}' +
+    '.bar{height:7px;background:#e3e8ee;border-radius:4px;margin-top:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--amber)}' +
+    'h3{font-size:13.5px;color:var(--navy);margin:12px 0 6px;display:flex;align-items:center;gap:6px}h3:before{content:"";width:4px;height:15px;background:var(--amber);border-radius:2px}' +
+    'table{width:100%;border-collapse:collapse}th{background:var(--navy);color:#fff;font-weight:600;font-size:11.5px;padding:6px 6px;text-align:left}' +
+    'td{padding:6px 6px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:nth-child(even) td{background:#f8fafc}.c{text-align:center}.n{text-align:right;white-space:nowrap}' +
+    '.sm{font-size:10.5px;color:#5b6b7b}.sm2{font-size:11px}.mu{color:#98a2b3}' +
+    '.pill{display:inline-block;border-radius:99px;padding:1px 9px;font-size:11px;font-weight:700;white-space:nowrap}.pill.ok{background:#e3f4ea;color:var(--green)}.pill.rep{background:#e8f0fb;color:var(--navy)}.pill.wait{background:#f1f3f5;color:#6b7280}' +
+    '.mrow{display:grid;grid-template-columns:42% 1fr 40px;gap:8px;align-items:center;padding:3px 0;font-size:11.5px}.mbar{height:9px;background:#e3e8ee;border-radius:4px;overflow:hidden}.mbar i{display:block;height:100%;background:var(--navy)}' +
+    '.foot{margin-top:14px;border-top:1px dashed var(--line);padding-top:8px;font-size:10.5px;color:#5b6b7b;display:flex;justify-content:space-between;gap:12px}.thanks{text-align:center;color:var(--navy);font-weight:700;margin-top:10px;font-size:13px}';
+  var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ລາຍງານລູກຄ້າ ' + esc(srcName) + ' ' + today() + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div class="brand"><div class="nm">HOME SOLAR</div><div class="tg">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<h1><span>ລາຍງານລູກຄ້າທີ່ໄດ້ຮັບການແນະນຳ</span></h1>' +
+    '<div class="sub">ແຫຼ່ງ: <b>' + esc(r.src) + '</b> · ຊ່ວງ: <b>' + PER_L[r.per] + '</b> · ອອກວັນທີ ' + dmy(today()) + '</div>' +
+    '<div class="kpis"><div class="kpi"><div class="v">' + t.n + '</div><div class="l">ລູກຄ້າທັງໝົດ</div></div>' +
+    '<div class="kpi"><div class="v">' + t.closed + '</div><div class="l">ປິດການຂາຍໄດ້</div></div>' +
+    '<div class="kpi hi"><div class="v">' + pct + '%</div><div class="l">ອັດຕາປິດການຂາຍ</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
+    '<div class="kpi"><div class="v">' + t.repeat + '</div><div class="l">ຊື້ຊ້ຳ</div></div>' +
+    (r.money ? '<div class="kpi"><div class="v" style="font-size:16px">' + money(t.spent) + '</div><div class="l">ຍອດຊື້ລວມ (ກີບ)</div></div>' : '') + '</div>' +
+    '<h3>ລາຍຊື່ລູກຄ້າ</h3><table><thead><tr><th class="c" style="width:36px;white-space:nowrap">ລ/ດ</th><th>ລູກຄ້າ</th><th class="c" style="width:72px">ເລີ່ມຕິດຕໍ່</th><th class="c" style="width:88px">ສະຖານະ</th>' +
+    '<th class="c" style="width:44px">ຊື້ (ຄັ້ງ)</th><th>ສິນຄ້າທີ່ຊື້</th><th class="c" style="width:72px">ຊື້ລ່າສຸດ</th>' + (r.money ? '<th class="n" style="width:84px">ຍອດ (ກີບ)</th>' : '') + '</tr></thead><tbody>' +
+    (rows || '<tr><td colspan="8" class="c mu">ບໍ່ມີລູກຄ້າໃນຊ່ວງນີ້</td></tr>') + '</tbody></table>' +
+    (modRows.length ? '<h3>ສິນຄ້າທີ່ລູກຄ້າກຸ່ມນີ້ຊື້</h3>' + modRows.slice(0, 8).map(function (k) {
+      return '<div class="mrow"><span>' + esc(k) + '</span><span class="mbar"><i style="width:' + Math.max(4, mods[k] / mx * 100) + '%"></i></span><b class="n">' + mods[k] + '</b></div>'; }).join('') : '') +
+    '<div class="thanks">ຂອບໃຈທີ່ແນະນຳລູກຄ້າໃຫ້ HOME SOLAR 🙏</div>' +
+    '<div class="foot"><span>«ປິດການຂາຍ» = ລູກຄ້າຊື້ສຳເລັດຢ່າງໜ້ອຍ 1 ຄັ້ງ · «ຊື້ຊ້ຳ» = ຊື້ສຳເລັດ 2 ຄັ້ງຂຶ້ນໄປ</span><span>ຂໍ້ມູນຈາກລະບົບຂາຍ HOME SOLAR · ' + dmy(today()) + '</span></div>' +
+    '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){print()},300)})<\/script></body></html>';
+  w.document.open(); w.document.write(html); w.document.close();
 }
 
 /* ================= 💸 ລາຍຈ່າຍ & ກຳໄລຂອງແຕ່ລະວຽກ (ເຈົ້າຂອງ) =================
