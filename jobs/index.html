@@ -309,6 +309,7 @@ function apply(d) {
   if (d.warn) toast(d.warn, true);
   render();
   if (S.owner && !S.products) loadProducts();
+  if (S.owner) loadCRM();
 }
 /* ⚡ v12: ຫຼັງບັນທຶກ ເຊີບເວີສົ່ງຄືນສະເພາະວຽກທີ່ປ່ຽນ (delta) → ລວມເຂົ້າກັບຂໍ້ມູນທີ່ມີ ບໍ່ຕ້ອງໂຫຼດທັງໝົດ */
 function mergeDelta(d) {
@@ -433,13 +434,13 @@ function render() {
   var tabs = [['today', '🏠', 'ມື້ນີ້'], ['week', '🗓️', 'ອາທິດ'], ['month', '📅', 'ເດືອນ'], ['list', '🔎', 'ທັງໝົດ']];
   // ເຈົ້າຂອງ: 📊 ພາບລວມ ຢູ່ໜ້າສຸດ · 💰 ເງິນ ເຂົ້າຈາກໜ້າພາບລວມ · ⚙️ ຕັ້ງຄ່າ ຢູ່ປຸ່ມເທິງຫົວ
   if (S.owner) { tabs.unshift(['dash', '📊', 'ພາບລວມ']); tabs.push(['notes', '📝', 'ໂນດ'], ['po', '📦', 'ສັ່ງເຄື່ອງ']); }
-  if (!S.owner && ['money', 'settings', 'notes', 'po', 'dash'].indexOf(UI.view) >= 0) UI.view = 'today';
+  if (!S.owner && ['money', 'settings', 'notes', 'po', 'dash', 'cust'].indexOf(UI.view) >= 0) UI.view = 'today';
   $('setChip').style.display = S.owner ? '' : 'none';
   $('tabs').innerHTML = tabs.map(function (t) {
     return '<button class="' + (UI.view === t[0] ? 'on' : '') + '" onclick="go(\'' + t[0] + '\')"><i>' + t[1] + '</i>' + t[2] + '</button>';
   }).join('');
   $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
-  var v = { dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings }[UI.view] || vToday;
+  var v = { dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings, cust: vCust }[UI.view] || vToday;
   $('app').innerHTML = v();
   if (UI.openId) { if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
   else if (UI.openNote) { if (noteById(UI.openNote)) renderNoteDetail(); else closeSheet(); }
@@ -605,6 +606,7 @@ function vSettings() {
   });
   h += '<button class="btn ghost full" style="margin-top:10px" onclick="DRAFT_TECHS.push({name:\'\',phone:\'\',email:\'\'});render()">＋ ເພີ່ມຊ່າງ</button></div>';
   h += '<div class="card"><h3>🏷️ ປະເພດວຽກ</h3><p class="muted">1 ແຖວ = 1 ປະເພດ (ໃສ່ emoji ນຳໜ້າໄດ້)</p><textarea class="inp" id="setTypes" style="min-height:140px">' + esc(S.types.join('\n')) + '</textarea></div>';
+  h += '<div class="card"><h3>📣 ແຫຼ່ງທີ່ມາຂອງລູກຄ້າ</h3><p class="muted">1 ແຖວ = 1 ແຫຼ່ງ (ໃສ່ emoji ນຳໜ້າໄດ້)</p><textarea class="inp" id="setSources" style="min-height:150px">' + esc((S.sources || []).join('\n')) + '</textarea></div>';
   h += '<div class="card"><h3>🔔 ແຈ້ງເຕືອນໃນ Google Calendar</h3><div class="tpick">' + REM_OPTS.map(function (o) {
     return '<label><input type="checkbox" class="remCb" value="' + o[0] + '" ' + (S.reminders.indexOf(o[0]) >= 0 ? 'checked' : '') + '> ' + o[1] + '</label>';
   }).join('') + '</div><p class="muted" style="margin-top:8px">ມີຜົນກັບວຽກທີ່ບັນທຶກ/ອັບເດດຫຼັງຈາກນີ້</p></div>';
@@ -627,7 +629,8 @@ function saveSettings() {
   var keep = DRAFT_TECHS.filter(function (t) { return String(t.name).trim(); });
   var ids = keep.map(function (t) { return t.id; });
   var removed = S.techs.filter(function (t) { return ids.indexOf(t.id) < 0; }).map(function (t) { return { id: t.id, name: t.name, phone: t.phone, email: t.email, active: false }; });
-  act('api_saveSettings', { techs: keep.concat(removed), types: types, reminders: rem, newPin: pin,
+  var sources = $('setSources').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
+  act('api_saveSettings', { techs: keep.concat(removed), types: types, sources: sources, reminders: rem, newPin: pin,
     instRate: num('setInst'), dayRate: num('setDay'), halfRate: num('setHalf') }).then(function () {
     if (pin) { ME.pin = pin; LS.set('js_me', JSON.stringify(ME)); }
     DRAFT_TECHS = null; render(); toast('ບັນທຶກແລ້ວ ✓');
@@ -653,6 +656,7 @@ function detailHtml(j, page) {
   h += '<div class="info">' +
     '<span class="k">📅</span><span><b>' + esc(j.date ? dLabel(j.date) + ' ' + parseYmd(j.date).getFullYear() : 'ຍັງບໍ່ນັດວັນ') + '</b>' + (j.start ? ' · ' + esc(j.start) + (j.end ? '–' + esc(j.end) : '') : '') + (relDay(j.date) ? ' <span class="badge" style="background:#dbe7ff;color:#1d4ed8">' + relDay(j.date) + '</span>' : '') + (isOverdue(j) ? ' <span class="badge" style="background:#fee4e2;color:#b42318">ເລີຍກຳນົດ</span>' : '') + '</span>' +
     (j.phone ? '<span class="k">📞</span><span>' + esc(j.phone) + '</span>' : '') +
+    (S.owner && j.source ? '<span class="k">📣</span><span>' + esc(j.source) + custBadge(j.customerId) + '</span>' : '') +
     (j.location ? '<span class="k">📍</span><span>' + esc(j.location) + '</span>' : '') +
     '<span class="k">👷</span><span>' + (j.techIds.length ? esc(j.techIds.map(techName).join(', ')) : '<span style="color:#dc2626">ຍັງບໍ່ມອບໝາຍຊ່າງ</span>') + '</span>' +
     (j.title ? '<span class="k">📝</span><span style="white-space:pre-wrap">' + esc(j.title) + '</span>' : '') +
@@ -924,6 +928,7 @@ function renderNoteDetail() {
   h += '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + esc(n.title) + '</div><div class="info">' +
     (n.customer ? '<span class="k">👤</span><span>' + esc(n.customer) + '</span>' : '') +
     (n.phone ? '<span class="k">📞</span><span>' + esc(n.phone) + '</span>' : '') +
+    (n.source ? '<span class="k">📣</span><span>' + esc(n.source) + '</span>' : '') +
     (n.remindDate ? '<span class="k">⏰</span><span><b>' + esc(dLabel(n.remindDate)) + '</b>' + (n.remindTime ? ' · ' + esc(n.remindTime) : '') + (noteDue(n) ? ' <span class="badge" style="background:#fee4e2;color:#b42318">ຮອດກຳນົດ</span>' : '') + '</span>' : '') +
     (n.value ? '<span class="k">💰</span><span>ມູນຄ່າຄາດ <b>' + money(n.value) + '</b> ກີບ</span>' : '') +
     (n.detail ? '<span class="k">📝</span><span style="white-space:pre-wrap">' + esc(n.detail) + '</span>' : '') +
@@ -960,7 +965,9 @@ function openNoteForm(id) {
   }).join('') + '</div>';
   h += '<label class="f">ຫົວຂໍ້ *</label><input class="inp" id="nTitle" placeholder="ເຊັ່ນ: ສົນໃຈຊຸດໂຊລ່າ 3000W ຂໍໃບສະເໜີລາຄາ" value="' + esc(v('title')) + '">';
   h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ</label><input class="inp" id="nCustomer" value="' + esc(v('customer')) + '"></div>' +
-    '<div><label class="f">ເບີໂທ</label><input class="inp" id="nPhone" inputmode="tel" value="' + esc(v('phone')) + '"></div></div>';
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="nPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'nSource\',\'nCustHint\')"></div></div>' +
+    '<div class="muted" id="nCustHint" style="font-size:12.5px"></div>';
+  h += srcSelect('nSource', v('source'));
   h += '<label class="f">ລາຍລະອຽດ</label><textarea class="inp" id="nDetail" placeholder="ລູກຄ້າຢາກໄດ້ຫຍັງ, ລໍຖ້າຫຍັງ, ຕ້ອງເຮັດຫຍັງຕໍ່">' + esc(v('detail')) + '</textarea>';
   h += '<div class="row"><div><label class="f">⏰ ວັນເຕືອນ</label><input class="inp" type="date" id="nDate" value="' + esc(n ? n.remindDate : '') + '"></div>' +
     '<div><label class="f">ເວລາ</label><input class="inp" type="time" id="nTime" value="' + esc(n && n.remindTime ? n.remindTime : '09:00') + '"></div></div>';
@@ -976,7 +983,7 @@ function openNoteForm(id) {
 function saveNote(id) {
   var cat = (document.querySelector('input[name=nCat]:checked') || {}).value || 'other';
   var data = { id: id || '', cat: cat, title: $('nTitle').value.trim(), customer: $('nCustomer').value.trim(), phone: $('nPhone').value.trim(),
-    detail: $('nDetail').value.trim(), remindDate: $('nDate').value, remindTime: $('nTime').value, value: num('nValue') };
+    detail: $('nDetail').value.trim(), remindDate: $('nDate').value, remindTime: $('nTime').value, value: num('nValue'), source: $('nSource').value };
   if (!data.title) return toast('ກະລຸນາໃສ່ຫົວຂໍ້ໂນດ', true);
   var before = (S.notes || []).map(function (x) { return x.id; });
   act('api_saveNote', data).then(function (d) {
@@ -1002,7 +1009,7 @@ function delNote(id) {
 }
 function noteToJob(id) {
   var n = noteById(id);
-  openForm(null, null, { customer: n.customer, phone: n.phone, title: n.title + (n.detail ? '\n' + n.detail : ''), price: n.value || 0, fromNote: n.id });
+  openForm(null, null, { customer: n.customer, phone: n.phone, source: n.source, title: n.title + (n.detail ? '\n' + n.detail : ''), price: n.value || 0, fromNote: n.id });
 }
 function fabClick() { if (UI.view === 'notes') openNoteForm(); else if (UI.view === 'po') openPOForm(); else openForm(); }
 
@@ -1176,6 +1183,7 @@ function vDash() {
   h += '<div class="card"><h3>🏷️ ວຽກເດືອນ' + MON[d.getMonth()] + ' ແຍກຕາມປະເພດ <span class="muted">(' + month.length + ' ວຽກ · ສຳເລັດ ' + doneM.length + ')</span></h3>' + dBars(types) + '</div>';
   h += dInstall();
   h += dProfit();
+  h += dCRM();
   // ເງິນ
   var val = 0, got = 0; month.forEach(function (j) { val += j.price || 0; got += (j.deposit || 0) + (j.collected || 0); });
   var due = js.reduce(function (a, j) { return a + (j.status !== 'cancelled' ? (j.due || 0) : 0); }, 0);
@@ -1343,6 +1351,214 @@ function printReceipt(rc, w) {
   w.document.open(); w.document.write(html); w.document.close();
 }
 function reprintReceipt(no) { var rc = (S.receipts || []).filter(function (r) { return r.no === no; })[0]; if (rc) printReceipt(rc); }
+
+/* ================= 👥 ຖານລູກຄ້າ · 📣 ແຫຼ່ງທີ່ມາ · 🏆 ລຸ້ນຂາຍດີ (ເຈົ້າຂອງ) =================
+   ຂໍ້ມູນ: Pancake (ລູກຄ້າ + ອໍເດີ) + ແອບວຽກ · ຈັບຄູ່ດ້ວຍເບີໂທ · ໂຫຼດຢູ່ເບື້ອງຫຼັງ (CRM)
+   ປິດການຂາຍ = ມີອໍເດີ Pancake ສຳເລັດ ຫຼື ວຽກຮົ້ວສຳເລັດ · ຊື້ຊ້ຳ = ຊື້ສຳເລັດ 2 ຄັ້ງຂຶ້ນໄປ */
+var CRM = null, CRM_LOADING = false, NO_SRC = '❓ ຍັງບໍ່ລະບຸ';
+function loadCRM(force) {
+  if (CRM_LOADING || (CRM && !force)) return; CRM_LOADING = true;
+  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
+    .catch(function () { CRM_LOADING = false; });
+}
+function normPhone(p) { var d = String(p || '').replace(/\D/g, ''); if (d.indexOf('856') === 0 && d.length > 10) d = d.slice(3); return d.replace(/^0+/, ''); }
+function custById(id) { return CRM && id ? CRM.customers.filter(function (c) { return c.id === id; })[0] : null; }
+function custByPhone(p) { var ph = normPhone(p); return CRM && ph.length >= 7 ? CRM.customers.filter(function (c) { return c.phone === ph; })[0] : null; }
+function srcSelect(id, val) {
+  var list = (S.sources || []).slice(); if (val && list.indexOf(val) < 0) list.push(val);
+  return '<label class="f">📣 ລູກຄ້າມາຈາກທາງໃດ</label><select class="inp" id="' + id + '"><option value="">— ເລືອກ —</option>' +
+    list.map(function (s) { return '<option' + (s === val ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select>';
+}
+// ພິມເບີໂທ → ຖ້າເປັນລູກຄ້າເກົ່າ ບອກປະຫວັດ + ໃສ່ແຫຼ່ງທີ່ມາໃຫ້
+function custHint(phone, selId, hintId) {
+  var c = custByPhone(phone), el = $(hintId); if (!el) return;
+  if (!c) { el.innerHTML = ''; return; }
+  var k = custStat(c);
+  el.innerHTML = '👤 ລູກຄ້າເກົ່າ: <b>' + esc(c.name) + '</b> · ຊື້ ' + k.buys + ' ຄັ້ງ' + (k.spent ? ' · ' + money(k.spent) + ' ກີບ' : '') + (k.src !== NO_SRC ? ' · ' + esc(k.src) : '');
+  var sel = $(selId); if (sel && !sel.value && k.src !== NO_SRC) { if (![].some.call(sel.options, function (o) { return o.value === k.src; })) sel.add(new Option(k.src, k.src)); sel.value = k.src; }
+}
+function custBadge(cid) { var c = custById(cid); if (!c) return ''; var k = custStat(c); return ' <span class="badge" style="background:#eef4ff;color:#1d4ed8;cursor:pointer" onclick="event.stopPropagation();openCust(\'' + esc(c.id) + '\')">👤 ຊື້ ' + k.buys + ' ຄັ້ງ</span>'; }
+function fenceDoneOf(cid) { return S.jobs.filter(function (j) { return j.customerId === cid && j.status === 'done' && /ຮົ້ວ/.test(j.type); }); }
+function custStat(c) {
+  var fj = fenceDoneOf(c.id), jobs = S.jobs.filter(function (j) { return j.customerId === c.id; });
+  var withSrc = jobs.filter(function (j) { return j.source; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; })[0];
+  var buys = (c.okOrders || 0) + fj.length, spent = (c.amount || 0) + fj.reduce(function (a, j) { return a + (j.price || 0); }, 0);
+  var first = [c.firstOrder, String(c.createdAt || '').slice(0, 10)].concat(jobs.map(function (j) { return String(j.createdAt || '').slice(0, 10); })).filter(Boolean).sort()[0] || '';
+  var last = [c.lastOrder].concat(fj.map(function (j) { return j.date; })).filter(Boolean).sort().pop() || '';
+  return { buys: buys, spent: spent, closed: buys > 0, repeat: buys >= 2, src: c.source || (withSrc && withSrc.source) || NO_SRC, first: first, last: last, jobs: jobs };
+}
+// ລີດທີ່ຍັງບໍ່ເປັນລູກຄ້າ (ໂນດຕິດຕາມ ທີ່ເບີໂທບໍ່ກົງກັບລູກຄ້າໃດ)
+function openLeads() {
+  return (S.notes || []).filter(function (n) { return n.cat === 'follow' && n.status !== 'won' && !custByPhone(n.phone); });
+}
+function periodOk(d, per) {
+  if (per === 'all' || !d) return per === 'all';
+  var t = today(), m = t.slice(0, 7);
+  if (per === 'm') return d.slice(0, 7) === m;
+  if (per === 'pm') { var x = new Date(); x.setDate(1); x.setMonth(x.getMonth() - 1); return d.slice(0, 7) === ymd(x).slice(0, 7); }
+  if (per === '3m') { var y = new Date(); y.setMonth(y.getMonth() - 3); return d >= ymd(y); }
+  return true;
+}
+var PER_L = { m: 'ເດືອນນີ້', pm: 'ເດືອນກ່ອນ', '3m': '3 ເດືອນ', all: 'ທັງໝົດ' };
+function perChips(key, fn) {
+  return '<div class="filters">' + ['m', 'pm', '3m', 'all'].map(function (p) { return '<button class="fchip' + ((UI[key] || 'all') === p ? ' on' : '') + '" onclick="UI.' + key + '=\'' + p + '\';' + fn + '">' + PER_L[p] + '</button>'; }).join('') + '</div>';
+}
+// ສະຖິຕິຕໍ່ແຫຼ່ງ (ນັບລູກຄ້າທີ່ເລີ່ມຕິດຕໍ່ໃນຊ່ວງເວລາ)
+function srcStats(per) {
+  var rows = {};
+  var add = function (src) { return rows[src] = rows[src] || { src: src, n: 0, closed: 0, repeat: 0, spent: 0, leads: 0 }; };
+  (S.sources || []).forEach(add);
+  CRM.customers.forEach(function (c) {
+    var k = custStat(c); if (!periodOk(k.first, per)) return;
+    var r = add(k.src); r.n++; if (k.closed) r.closed++; if (k.repeat) r.repeat++; r.spent += k.spent;
+  });
+  openLeads().forEach(function (n) { if (!periodOk(String(n.createdAt || '').slice(0, 10), per)) return; var r = add(n.source || NO_SRC); r.n++; r.leads++; });
+  return Object.keys(rows).map(function (k) { return rows[k]; }).filter(function (r) { return r.n; }).sort(function (a, b) { return (a.src === NO_SRC) - (b.src === NO_SRC) || b.closed - a.closed || b.n - a.n; });
+}
+// ລຸ້ນຂາຍດີ (ອໍເດີ Pancake ທີ່ສຳເລັດ)
+function modelStats(per) {
+  var by = {};
+  CRM.sales.forEach(function (s) {
+    if (!(s.status === 'received_money' || s.status === 'delivered') || !periodOk(s.date, per)) return;
+    var k = s.vid || s.name, r = by[k] = by[k] || { name: s.name, qty: 0, amount: 0, orders: {} };
+    r.qty += s.qty; r.amount += s.amount; r.orders[s.oid] = 1;
+  });
+  return Object.keys(by).map(function (k) { var r = by[k]; r.n = Object.keys(r.orders).length; return r; }).sort(function (a, b) { return b.qty - a.qty || b.amount - a.amount; });
+}
+function dCRM() {
+  var h = '<div class="sec">👥 ລູກຄ້າ & ການຂາຍ <span class="sp"></span><button class="nb" style="padding:5px 12px;font-size:13px" onclick="go(\'cust\')">👥 ຖານລູກຄ້າ</button></div>';
+  if (!CRM) { loadCRM(); return h + '<div class="empty">ກຳລັງໂຫຼດຂໍ້ມູນລູກຄ້າ...</div>'; }
+  var per = UI.srcPer || 'all', rows = srcStats(per);
+  h += '<div class="card"><h3>📣 ແຫຼ່ງທີ່ມາຂອງລູກຄ້າ</h3>' + perChips('srcPer', 'render()') +
+    '<table><tr><th>ແຫຼ່ງ</th><th class="num">ລູກຄ້າ</th><th class="num">ປິດໄດ້</th><th class="num">%</th><th class="num">ຊື້ຊ້ຳ</th><th></th></tr>' +
+    rows.map(function (r) {
+      var pct = r.n ? Math.round(r.closed / r.n * 100) : 0;
+      return '<tr onclick="openSrcReport(\'' + esc(r.src).replace(/'/g, '\\\'') + '\')" style="cursor:pointer"><td>' + esc(r.src) + '</td><td class="num">' + r.n + '</td><td class="num"><b>' + r.closed + '</b></td>' +
+        '<td class="num" style="color:' + (pct >= 50 ? '#12a150' : pct >= 25 ? '#d97706' : '#dc2626') + '">' + pct + '%</td><td class="num">' + r.repeat + '</td><td class="num">📤</td></tr>';
+    }).join('') + '</table>';
+  var unk = rows.filter(function (r) { return r.src === NO_SRC; })[0];
+  if (unk) h += '<p class="muted" style="margin-top:6px">⚠️ ' + unk.n + ' ລູກຄ້າຍັງບໍ່ລະບຸແຫຼ່ງ — <a href="javascript:void 0" onclick="UI.cf=\'nosrc\';go(\'cust\')">ໃສ່ແຫຼ່ງໃຫ້ລູກຄ້າ</a></p>';
+  h += '<p class="muted" style="margin-top:4px">ກົດແຖວ = ລາຍງານລາຍຊື່ ສົ່ງໃຫ້ຕົ້ນທາງ (ເຊັ່ນ Solaro)</p></div>';
+  var mp = UI.modPer || 'm', ms = modelStats(mp).slice(0, 10), mx = ms.length ? ms[0].qty : 1;
+  h += '<div class="card"><h3>🏆 ລຸ້ນຂາຍດີ <span class="muted">(ອໍເດີ Pancake ທີ່ສຳເລັດ)</span></h3>' + perChips('modPer', 'render()') +
+    (ms.length ? ms.map(function (r, i) {
+      return '<div class="brow"><span class="bl" title="' + esc(r.name) + '">' + (i + 1) + '. ' + esc(r.name) + '</span><span class="bt"><span class="bf" style="width:' + Math.max(3, r.qty / mx * 100) + '%"></span></span>' +
+        '<span class="bv"><b>' + r.qty + '</b> <span class="muted">· ' + short(r.amount) + '</span></span></div>';
+    }).join('') : '<div class="muted">ບໍ່ມີການຂາຍໃນຊ່ວງນີ້</div>') +
+    '<p class="muted" style="margin-top:6px">ຈຳນວນ (ຊິ້ນ) · ມູນຄ່າ · ອັບເດດ ' + esc(CRM.salesSync || '—') + '</p></div>';
+  return h;
+}
+function short(n) { n = Number(n) || 0; return n >= 1e6 ? (n / 1e6).toFixed(n >= 1e8 ? 0 : 1).replace(/\.0$/, '') + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : money(n); }
+// ໜ້າຖານລູກຄ້າ
+function vCust() {
+  var h = '<div class="toolbar"><button class="nb" onclick="go(\'dash\')">‹ ພາບລວມ</button><h2>👥 ຖານລູກຄ້າ</h2><button class="nb" onclick="syncCRM()">🔄</button></div>';
+  if (!CRM) { loadCRM(); return h + '<div class="empty">ກຳລັງໂຫຼດ...</div>'; }
+  var q = (UI.cq || '').toLowerCase(), f = UI.cf || 'all';
+  var list = CRM.customers.map(function (c) { return { c: c, k: custStat(c) }; }).filter(function (x) {
+    if (f === 'nosrc' && x.k.src !== NO_SRC) return false;
+    if (f === 'repeat' && !x.k.repeat) return false;
+    if (f === 'open' && x.k.closed) return false;
+    if (f !== 'all' && f !== 'nosrc' && f !== 'repeat' && f !== 'open' && x.k.src !== f) return false;
+    return !q || (x.c.name + ' ' + x.c.phone + ' ' + x.c.address).toLowerCase().indexOf(q) >= 0;
+  }).sort(function (a, b) { return (b.k.last || b.k.first) < (a.k.last || a.k.first) ? -1 : 1; });
+  h += '<input class="search" placeholder="🔎 ຊື່ / ເບີໂທ / ທີ່ຢູ່" value="' + esc(UI.cq || '') + '" oninput="UI.cq=this.value;clearTimeout(window._cq);window._cq=setTimeout(function(){render();var e=document.querySelector(\'.search\');e.focus();e.setSelectionRange(e.value.length,e.value.length)},300)">';
+  h += '<div class="filters">' + [['all', 'ທັງໝົດ'], ['nosrc', '❓ ບໍ່ລະບຸແຫຼ່ງ'], ['repeat', '🔁 ຊື້ຊ້ຳ'], ['open', '⏳ ຍັງບໍ່ຊື້']].concat((S.sources || []).map(function (s) { return [s, s]; })).map(function (o) {
+    return '<button class="fchip' + (f === o[0] ? ' on' : '') + '" onclick="UI.cf=\'' + esc(o[0]).replace(/'/g, '\\\'') + '\';render()">' + esc(o[1]) + '</button>'; }).join('') + '</div>';
+  h += '<p class="muted" style="margin-bottom:6px">' + list.length + ' ຄົນ · ຂໍ້ມູນ Pancake ອັບເດດ ' + esc(CRM.salesSync || '—') + '</p>';
+  h += list.slice(0, 200).map(function (x) {
+    var c = x.c, k = x.k;
+    return '<div class="job" style="--tc:' + (k.repeat ? '#12a150' : k.closed ? '#2563eb' : '#94a3b8') + '" onclick="openCust(\'' + esc(c.id) + '\')"><div class="top"><span class="t">' + esc(k.src) + '</span><span class="sp"></span>' +
+      (k.repeat ? '<span class="badge" style="background:#ecfdf3;color:#12a150">🔁 ຊື້ ' + k.buys + ' ຄັ້ງ</span>' : k.closed ? '<span class="badge" style="background:#eef4ff;color:#1d4ed8">✓ ຊື້ແລ້ວ</span>' : '<span class="badge" style="background:#f3f4f6;color:#6b7280">ຍັງບໍ່ຊື້</span>') + '</div>' +
+      '<div class="nm">' + esc(c.name || '(ບໍ່ມີຊື່)') + '</div><div class="m">📞 ' + esc(c.phone ? '0' + c.phone : '—') + (k.spent ? ' · 💰 ' + money(k.spent) : '') + (k.last ? ' · ລ່າສຸດ ' + esc(k.last) : '') + '</div></div>';
+  }).join('') + (list.length > 200 ? '<p class="muted">ສະແດງ 200 ຄົນທຳອິດ — ຄົ້ນຫາເພື່ອຊອກ</p>' : '');
+  return h;
+}
+function syncCRM() { busy(true); call('api_syncSales').then(function (r) { busy(false); CRM = r; render(); toast(r.msg || 'ອັບເດດແລ້ວ ✓'); }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); }); }
+// ບັດລູກຄ້າ: ແກ້ແຫຼ່ງທີ່ມາ + ປະຫວັດ
+function openCust(id) {
+  var c = custById(id); if (!c) return;
+  var k = custStat(c), orders = {};
+  CRM.sales.filter(function (s) { return (c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone); }).forEach(function (s) {
+    var o = orders[s.oid] = orders[s.oid] || { oid: s.oid, date: s.date, status: s.status, items: [] }; o.items.push(s.name + ' ×' + s.qty);
+  });
+  var ol = Object.keys(orders).map(function (x) { return orders[x]; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var h = '<div class="shd"><b>👤 ' + esc(c.name || 'ລູກຄ້າ') + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(k.buys, 'ຊື້ສຳເລັດ (ຄັ້ງ)', k.repeat ? '' : 'blue') + dTile(short(k.spent), 'ຍອດຊື້ລວມ', '') + dTile(k.closed ? '✓' : '—', k.closed ? 'ປິດການຂາຍແລ້ວ' : 'ຍັງບໍ່ຊື້', k.closed ? '' : 'amber') + '</div>';
+  h += '<label class="f">ຊື່</label><input class="inp" id="cuName" value="' + esc(c.name) + '">';
+  h += '<div class="row"><div><label class="f">ເບີໂທ</label><input class="inp" id="cuPhone" inputmode="tel" value="' + esc(c.phone ? '0' + c.phone : '') + '"></div>' +
+    '<div><label class="f">ທີ່ຢູ່</label><input class="inp" id="cuAddr" value="' + esc(c.address) + '"></div></div>';
+  h += srcSelect('cuSrc', c.source || (k.src !== NO_SRC ? k.src : ''));
+  h += '<label class="f">ຜູ້ແນະນຳ / ລາຍລະອຽດແຫຼ່ງ (ເຊັ່ນ: ຊື່ຄົນ Solaro ທີ່ສົ່ງມາ, ຊື່ຄລິບ TikTok)</label><input class="inp" id="cuSrcNote" value="' + esc(c.sourceNote) + '">';
+  h += '<label class="f">ໝາຍເຫດ</label><input class="inp" id="cuNote" value="' + esc(c.note) + '">';
+  h += '<div class="btns"><button class="btn ghost" onclick="openForm(null,null,{customer:' + esc(JSON.stringify(c.name)) + ',phone:\'0' + esc(c.phone) + '\',location:' + esc(JSON.stringify(c.address || '')) + ',source:' + esc(JSON.stringify(k.src !== NO_SRC ? k.src : '')) + '})">＋ ວຽກໃໝ່</button>' +
+    '<button class="btn pri" onclick="saveCust(\'' + esc(c.id) + '\')">💾 ບັນທຶກ</button></div>';
+  if (c.phone) h += '<div class="acts" style="grid-template-columns:repeat(2,1fr)"><a class="abtn" target="_top" href="tel:0' + esc(c.phone) + '"><i>📞</i>ໂທ</a><a class="abtn" target="_blank" rel="noopener" href="https://wa.me/856' + esc(c.phone) + '"><i>💬</i>WhatsApp</a></div>';
+  if (k.jobs.length) h += '<div class="card"><h3>🔧 ວຽກໃນແອບ (' + k.jobs.length + ')</h3>' + k.jobs.map(function (j) {
+    return '<div class="eq" onclick="openJob(\'' + esc(j.id) + '\')"><span style="flex:1">' + esc(j.type) + ' · ' + esc(j.date || 'ຍັງບໍ່ນັດ') + '</span><span class="badge" style="background:' + STATUS[j.status].bg + ';color:' + STATUS[j.status].c + '">' + STATUS[j.status].l + '</span></div>'; }).join('') + '</div>';
+  h += '<div class="card"><h3>🛒 ອໍເດີ Pancake (' + ol.length + ')</h3>' + (ol.length ? ol.map(function (o) {
+    var ok = o.status === 'received_money' || o.status === 'delivered';
+    return '<div class="eq" style="cursor:default"><span style="flex:1;font-size:13px">' + esc(o.date) + ' · ' + esc(o.oid) + '<br><span class="muted">' + esc(o.items.join(', ')) + '</span></span>' +
+      '<span class="badge" style="background:' + (ok ? '#ecfdf3;color:#12a150' : '#f3f4f6;color:#6b7280') + '">' + (ok ? '✓' : esc(o.status)) + '</span></div>'; }).join('') : '<div class="muted">ບໍ່ມີ</div>') + '</div>';
+  h += '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function saveCust(id) {
+  var d = { id: id, name: $('cuName').value, phone: $('cuPhone').value, address: $('cuAddr').value, source: $('cuSrc').value, sourceNote: $('cuSrcNote').value, note: $('cuNote').value };
+  busy(true); call('api_saveCustomer', d).then(function (r) { busy(false); CRM = r; toast('ບັນທຶກແລ້ວ ✓'); openCust(id); render(); }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); });
+}
+// 📤 ລາຍງານແຫຼ່ງທີ່ມາ → ສົ່ງກັບຕົ້ນທາງ (WhatsApp / PDF)
+function openSrcReport(src) {
+  UI.rs = { src: src, per: UI.rs && UI.rs.src === src ? UI.rs.per : 'all', money: UI.rs && UI.rs.src === src ? UI.rs.money : false, phone: UI.rs && UI.rs.src === src ? UI.rs.phone : false };
+  srcReport();
+}
+function srcReportData() {
+  var r = UI.rs, list = CRM.customers.map(function (c) { return { c: c, k: custStat(c) }; }).filter(function (x) { return x.k.src === r.src && periodOk(x.k.first, r.per); });
+  var leads = openLeads().filter(function (n) { return (n.source || NO_SRC) === r.src && periodOk(String(n.createdAt || '').slice(0, 10), r.per); });
+  list.sort(function (a, b) { return (b.k.buys - a.k.buys) || (a.k.first < b.k.first ? 1 : -1); });
+  var models = function (c) {
+    var by = {}; CRM.sales.filter(function (s) { return (s.status === 'received_money' || s.status === 'delivered') && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); })
+      .forEach(function (s) { by[s.name] = (by[s.name] || 0) + s.qty; });
+    fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
+    return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
+  };
+  var tot = { n: list.length + leads.length, closed: list.filter(function (x) { return x.k.closed; }).length, repeat: list.filter(function (x) { return x.k.repeat; }).length, spent: list.reduce(function (a, x) { return a + x.k.spent; }, 0) };
+  return { list: list, leads: leads, models: models, tot: tot };
+}
+function maskPhone(p) { p = String(p || ''); return p ? '0' + (p.length > 4 ? p.slice(0, p.length - 4).replace(/\d/g, '•') + p.slice(-4) : p) : ''; }
+function srcReportText() {
+  var r = UI.rs, D = srcReportData(), t = D.tot, pct = t.n ? Math.round(t.closed / t.n * 100) : 0;
+  var s = '📊 ລາຍງານລູກຄ້າຈາກ ' + r.src + ' (' + PER_L[r.per] + ')\nHOME SOLAR · ' + today() + '\n\n';
+  s += '👥 ລູກຄ້າ ' + t.n + ' · ✅ ປິດການຂາຍ ' + t.closed + ' (' + pct + '%) · 🔁 ຊື້ຊ້ຳ ' + t.repeat + (r.money ? '\n💰 ຍອດຊື້ລວມ ' + money(t.spent) + ' ກີບ' : '') + '\n\n';
+  D.list.forEach(function (x, i) {
+    var c = x.c, k = x.k, m = D.models(c);
+    s += (i + 1) + '. ' + (c.name || '—') + (r.phone && c.phone ? ' (' + maskPhone(c.phone) + ')' : '') + ' — ' + (k.closed ? '✅ ຊື້ ' + k.buys + ' ຄັ້ງ' + (k.repeat ? ' 🔁' : '') : '⏳ ຍັງບໍ່ຊື້') +
+      (k.last ? ' · ລ່າສຸດ ' + k.last : '') + (r.money && k.spent ? ' · ' + money(k.spent) + ' ກີບ' : '') + (m.length ? '\n   ' + m.join(', ') : '') + '\n';
+  });
+  D.leads.forEach(function (n, i) { s += (D.list.length + i + 1) + '. ' + (n.customer || n.title) + ' — ⏳ ກຳລັງຕິດຕາມ\n'; });
+  return s + '\nຂອບໃຈທີ່ແນະນຳລູກຄ້າໃຫ້ພວກເຮົາ 🙏';
+}
+function srcReport() {
+  var r = UI.rs, D = srcReportData(), t = D.tot, pct = t.n ? Math.round(t.closed / t.n * 100) : 0;
+  var h = '<div class="shd"><b>📤 ລາຍງານ: ' + esc(r.src) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="filters">' + ['m', 'pm', '3m', 'all'].map(function (p) { return '<button class="fchip' + (r.per === p ? ' on' : '') + '" onclick="UI.rs.per=\'' + p + '\';srcReport()">' + PER_L[p] + '</button>'; }).join('') + '</div>';
+  h += '<div class="kpis">' + dTile(t.n, 'ລູກຄ້າ', 'blue') + dTile(t.closed, 'ປິດການຂາຍ', '') + dTile(pct + '%', 'ອັດຕາປິດ', pct >= 50 ? '' : 'amber') + dTile(t.repeat, 'ຊື້ຊ້ຳ', '') + '</div>';
+  h += '<label class="toggle"><input type="checkbox" ' + (r.money ? 'checked' : '') + ' onchange="UI.rs.money=this.checked;srcReport()"> ສະແດງຍອດເງິນໃນລາຍງານ</label>' +
+    '<label class="toggle" style="margin-top:6px"><input type="checkbox" ' + (r.phone ? 'checked' : '') + ' onchange="UI.rs.phone=this.checked;srcReport()"> ສະແດງເບີໂທ (ປິດບາງຕົວ)</label>';
+  h += '<textarea class="inp" id="rsText" style="min-height:240px;margin-top:10px;font-size:13px">' + esc(srcReportText()) + '</textarea>';
+  h += '<div class="btns"><button class="btn ghost" onclick="var t=$(\'rsText\');t.select();document.execCommand(\'copy\');toast(\'ສຳເນົາແລ້ວ ✓\')">📋 ສຳເນົາ</button>' +
+    '<button class="btn ghost" onclick="srcReportPrint()">🖨️ PDF</button>' +
+    '<a class="btn gold" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=' + encodeURIComponent(srcReportText()) + '">💬 WhatsApp</a></div>';
+  h += '<p class="muted" style="margin-top:8px">ແກ້ຂໍ້ຄວາມໃນກ່ອງໄດ້ກ່ອນສຳເນົາ · ລູກຄ້າທີ່ບໍ່ລະບຸແຫຼ່ງ ຈະບໍ່ຢູ່ໃນລາຍງານ — ໃສ່ແຫຼ່ງໄດ້ທີ່ 👥 ຖານລູກຄ້າ</p></div>';
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function srcReportPrint() {
+  var w = window.open('', '_blank'); if (!w) return toast('ອະນຸຍາດ popup ກ່ອນ', true);
+  w.document.write('<!doctype html><html lang="lo"><head><meta charset="utf-8"><title>ລາຍງານ ' + esc(UI.rs.src) + '</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;700&display=swap" rel="stylesheet">' +
+    '<style>body{font-family:"Noto Sans Lao",sans-serif;padding:28px;white-space:pre-wrap;font-size:14px;line-height:1.7;color:#151a23}@page{size:A4;margin:16mm}</style></head><body>' + esc($('rsText').value) +
+    '<script>document.fonts.ready.then(function(){setTimeout(function(){print()},300)})<\/script></body></html>');
+  w.document.close();
+}
 
 /* ================= 💸 ລາຍຈ່າຍ & ກຳໄລຂອງແຕ່ລະວຽກ (ເຈົ້າຂອງ) =================
    ກຳໄລ = ມູນຄ່າວຽກ − ລາຍຈ່າຍທີ່ບັນທຶກ − ຄ່າແຮງຊ່າງ (ຈາກບັນທຶກວັນເຮັດວຽກ) */
@@ -1947,7 +2163,9 @@ function openForm(id, copyFrom, prefill) {
   var h = '<div class="shd"><b>' + (j ? '✏️ ແກ້ໄຂວຽກ' : prefill ? (prefill.fromQuote ? '🧱 ສ້າງວຽກຈາກໃບສະເໜີລາຄາ' : '🔧 ປ່ຽນໂນດເປັນວຽກ') : '＋ ວຽກໃໝ່') + '</b><button class="x" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<label class="f">ປະເພດວຽກ *</label><select class="inp" id="fType">' + S.types.map(function (t) { return '<option' + (v('type') === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>';
   h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="fCustomer" value="' + esc(v('customer')) + '"></div>' +
-    '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '"></div></div>';
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'fSource\',\'fCustHint\')"></div></div>' +
+    '<div class="muted" id="fCustHint" style="font-size:12.5px"></div>';
+  h += srcSelect('fSource', v('source'));
   h += '<label class="f">ລາຍລະອຽດວຽກ</label><textarea class="inp" id="fTitle" placeholder="ເຊັ່ນ: ຕິດໄຟສາດ 600W 4 ດວງ ອ້ອມເຮືອນ + ໄຟທາງເຂົ້າ">' + esc(v('title')) + '</textarea>';
   h += '<label class="f">ສະຖານທີ່</label><input class="inp" id="fLocation" placeholder="ບ້ານ / ເມືອງ / ແຂວງ" value="' + esc(v('location')) + '">';
   h += '<label class="f">ລິ້ງ Google Maps</label><input class="inp" id="fMap" inputmode="url" placeholder="ວາງລິ້ງທີ່ລູກຄ້າສົ່ງມາ" value="' + esc(v('mapUrl')) + '">';
@@ -2076,7 +2294,7 @@ function saveForm(id) {
     date: $('fDate').value, start: $('fStart').value, end: $('fEnd').value,
     techIds: Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; }),
     equipment: equipment, price: num('fPrice'), deposit: num('fDeposit'), note: $('fNote').value.trim(),
-    points: num('fPoints'), instFee: num('fInstFee'), labor: laborData()
+    points: num('fPoints'), instFee: num('fInstFee'), labor: laborData(), source: $('fSource').value
   };
   if ($('fCollected')) data.collected = num('fCollected');
   if (!id && UI.fromNote) data.fromNote = UI.fromNote;
@@ -2151,6 +2369,28 @@ var MOCK = (function () {
   if (!db.pos) db.pos = [];
   if (!db.receipts) db.receipts = [];
   if (!db.fenceDocs) db.fenceDocs = [];
+  var MOCK_SRC = ['🟠 Solaro ສົ່ງມາ', '🎵 TikTok', '📘 Facebook', '🚶 Walk-in', '🏪 ໜ້າຮ້ານ', '🗣️ ແນະນຳບອກຕໍ່', '🔁 ລູກຄ້າຊື້ຊ້ຳ'];
+  if (!db.customers) {
+    var cd = function (k) { var x = new Date(); x.setDate(x.getDate() - k); return ymd(x); };
+    db.customers = [
+      { id: 'CU1', name: 'ລູກຄ້າ Solaro ກ', phone: '2011112222', address: 'ໄຊທານີ', source: '🟠 Solaro ສົ່ງມາ', sourceNote: 'ທ້າວ ບຸນມີ (Solaro)', pancakeId: 'p1', orders: 2, okOrders: 2, amount: 9500000, firstOrder: cd(40), lastOrder: cd(5), note: '', createdAt: cd(40) },
+      { id: 'CU2', name: 'ລູກຄ້າ Solaro ຂ', phone: '2033334444', address: 'ສີໂຄດ', source: '🟠 Solaro ສົ່ງມາ', sourceNote: '', pancakeId: '', orders: 0, okOrders: 0, amount: 0, firstOrder: '', lastOrder: '', note: '', createdAt: cd(3) },
+      { id: 'CU3', name: 'ລູກຄ້າ TikTok', phone: '2055556666', address: '', source: '🎵 TikTok', sourceNote: 'ຄລິບ ຖາມ-ຕອບ', pancakeId: 'p3', orders: 1, okOrders: 1, amount: 1590000, firstOrder: cd(2), lastOrder: cd(2), note: '', createdAt: cd(2) },
+      { id: 'CU4', name: 'ລູກຄ້າໜ້າຮ້ານ', phone: '2077778888', address: '', source: '', sourceNote: '', pancakeId: 'p4', orders: 1, okOrders: 1, amount: 2900000, firstOrder: cd(20), lastOrder: cd(20), note: '', createdAt: cd(20) }];
+    db.sales = [
+      { oid: 'S1', date: cd(40), status: 'received_money', pancakeCust: 'p1', phone: '2011112222', vid: 'v1', name: 'ສະປອດໄລທ໌ 600W', qty: 4, amount: 4600000 },
+      { oid: 'S2', date: cd(5), status: 'received_money', pancakeCust: 'p1', phone: '2011112222', vid: 'v2', name: 'ໄຟເຢືອງທາງ 800W', qty: 2, amount: 4900000 },
+      { oid: 'S3', date: cd(2), status: 'received_money', pancakeCust: 'p3', phone: '2055556666', vid: 'v3', name: 'Solaro Aura Pro', qty: 1, amount: 1590000 },
+      { oid: 'S4', date: cd(20), status: 'delivered', pancakeCust: 'p4', phone: '2077778888', vid: 'v1', name: 'ສະປອດໄລທ໌ 600W', qty: 2, amount: 2900000 },
+      { oid: 'S5', date: cd(1), status: 'canceled', pancakeCust: 'p3', phone: '2055556666', vid: 'v2', name: 'ໄຟເຢືອງທາງ 800W', qty: 1, amount: 2450000 }];
+  }
+  function mockCust(name, phone, source) {
+    var ph = normPhone(phone); if (ph.length < 7) return '';
+    var c = db.customers.filter(function (x) { return x.phone === ph; })[0];
+    if (!c) { c = { id: 'CU' + Date.now().toString(36), name: name, phone: ph, address: '', source: source || '', sourceNote: '', pancakeId: '', orders: 0, okOrders: 0, amount: 0, firstOrder: '', lastOrder: '', note: '', createdAt: nowF() }; db.customers.push(c); }
+    else if (!c.source && source) c.source = source;
+    return c.id;
+  }
   function nextInv() { return Math.max(42, db.receipts.reduce(function (a, r) { return Math.max(a, r.no); }, 0)) + 1; }
   function findPO(id) { var p = db.pos.filter(function (x) { return x.id === id; })[0]; if (!p) throw new Error('ບໍ່ພົບໃບສັ່ງ'); return p; }
   function findN(id) { var n = db.notes.filter(function (x) { return x.id === id; })[0]; if (!n) throw new Error('ບໍ່ພົບໂນດ'); return n; }
@@ -2162,7 +2402,7 @@ var MOCK = (function () {
     jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id].filter(function (l) { return o || l.action !== 'pay'; }); });
     var ids = {}; jobs.forEach(function (j) { j.techIds.forEach(function (t) { ids[t] = 1; }); });
     return JSON.stringify({
-      owner: !!o, notes: notes, types: db.types, reminders: db.reminders, logs: logs,
+      owner: !!o, notes: notes, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
       receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [],
       instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
@@ -2182,7 +2422,8 @@ var MOCK = (function () {
     api_saveJob: function (c, d) {
       need(c); var isNew = !d.id;
       var j = isNew ? { id: 'J' + Date.now().toString(36).toUpperCase(), photosBefore: [], photosAfter: [], collected: 0, createdAt: nowF(), shareKey: newKey() } : find(d.id);
-      ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
+      ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment', 'source'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
+      if (j.phone) j.customerId = mockCust(j.customer, j.phone, j.source);
       ['price', 'deposit', 'collected', 'points', 'instFee'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
       if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 350000) + l.half * (db.halfRate || 150000); }, 0); }
       if (j.status === 'pending' && j.date) j.status = 'scheduled';
@@ -2201,7 +2442,7 @@ var MOCK = (function () {
     api_saveNote: function (c, d) {
       need(c); var isNew = !d.id;
       var n = isNew ? { id: 'N' + Date.now().toString(36).toUpperCase(), status: 'open', jobId: '', createdAt: nowF() } : findN(d.id);
-      ['cat', 'title', 'customer', 'phone', 'detail', 'remindDate', 'remindTime', 'value'].forEach(function (k) { if (d[k] !== undefined) n[k] = d[k]; });
+      ['cat', 'title', 'customer', 'phone', 'detail', 'remindDate', 'remindTime', 'value', 'source'].forEach(function (k) { if (d[k] !== undefined) n[k] = d[k]; });
       if (!n.title) throw new Error('ກະລຸນາໃສ່ຫົວຂໍ້ໂນດ');
       n.updatedAt = nowF(); if (isNew) db.notes.push(n);
       log(n.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງໂນດ' : 'ແກ້ໄຂໂນດ'); return all(c);
@@ -2225,6 +2466,9 @@ var MOCK = (function () {
       }
       return all(c);
     },
+    api_getCRM: function (c) { need(c); return JSON.stringify({ customers: db.customers, sales: db.sales, salesSync: nowF() }); },
+    api_syncSales: function (c) { need(c); var o = { customers: db.customers, sales: db.sales, salesSync: nowF(), msg: 'ໂໝດທົດລອງ: ບໍ່ມີອໍເດີໃໝ່' }; return JSON.stringify(o); },
+    api_saveCustomer: function (c, d) { need(c); var x = db.customers.filter(function (y) { return y.id === d.id; })[0]; ['name', 'address', 'source', 'sourceNote', 'note'].forEach(function (k) { if (d[k] !== undefined) x[k] = d[k]; }); if (d.phone) x.phone = normPhone(d.phone); save(); return JSON.stringify({ customers: db.customers, sales: db.sales, salesSync: nowF() }); },
     api_getProducts: function (c) { need(c); return JSON.stringify({ products: db.products }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
     api_delExpense: function (c, id, eid) { need(c); var j = find(id); j.expenses = (j.expenses || []).filter(function (e) { return e.id !== eid; }); return all(c); },
