@@ -1415,11 +1415,12 @@ function srcStats(per) {
   openLeads().forEach(function (n) { if (!periodOk(String(n.createdAt || '').slice(0, 10), per)) return; var r = add(n.source || NO_SRC); r.n++; r.leads++; });
   return Object.keys(rows).map(function (k) { return rows[k]; }).filter(function (r) { return r.n; }).sort(function (a, b) { return (a.src === NO_SRC) - (b.src === NO_SRC) || b.closed - a.closed || b.n - a.n; });
 }
-// ລຸ້ນຂາຍດີ (ອໍເດີ Pancake ທີ່ສຳເລັດ)
+// ລຸ້ນຂາຍດີ (ບິນ Pancake ທີ່ບໍ່ຖືກຍົກເລີກ)
+function isSale(st) { return !/^(canceled|returned|returning|removed)$/.test(st); } // ກົງກັບ NOT_SALE ໃນ Code.gs
 function modelStats(per) {
   var by = {};
   CRM.sales.forEach(function (s) {
-    if (!(s.status === 'received_money' || s.status === 'delivered') || !periodOk(s.date, per)) return;
+    if (!isSale(s.status) || !periodOk(s.date, per)) return;
     if (/^ຄ່າ/.test(s.name)) return; // ຄ່າຕິດຕັ້ງ/ຄ່າສົ່ງ ແມ່ນບໍລິການ ບໍ່ແມ່ນລຸ້ນສິນຄ້າ
     var k = s.vid || s.name, r = by[k] = by[k] || { name: s.name, qty: 0, amount: 0, orders: {} };
     r.qty += s.qty; r.amount += s.amount; r.orders[s.oid] = 1;
@@ -1441,7 +1442,7 @@ function dCRM() {
   if (unk) h += '<p class="muted" style="margin-top:6px">⚠️ ' + unk.n + ' ລູກຄ້າຍັງບໍ່ລະບຸແຫຼ່ງ — <a href="javascript:void 0" onclick="UI.cf=\'nosrc\';go(\'cust\')">ໃສ່ແຫຼ່ງໃຫ້ລູກຄ້າ</a></p>';
   h += '<p class="muted" style="margin-top:4px">ກົດແຖວ = ລາຍງານລາຍຊື່ ສົ່ງໃຫ້ຕົ້ນທາງ (ເຊັ່ນ Solaro)</p></div>';
   var mp = UI.modPer || 'm', ms = modelStats(mp).slice(0, 10), mx = ms.length ? ms[0].qty : 1;
-  h += '<div class="card"><h3>🏆 ລຸ້ນຂາຍດີ <span class="muted">(ອໍເດີ Pancake ທີ່ສຳເລັດ)</span></h3>' + perChips('modPer', 'render()') +
+  h += '<div class="card"><h3>🏆 ລຸ້ນຂາຍດີ <span class="muted">(ບິນ Pancake ບໍ່ນັບບິນຍົກເລີກ)</span></h3>' + perChips('modPer', 'render()') +
     (ms.length ? ms.map(function (r, i) {
       return '<div class="brow"><span class="bl" title="' + esc(r.name) + '">' + (i + 1) + '. ' + esc(r.name) + '</span><span class="bt"><span class="bf" style="width:' + Math.max(3, r.qty / mx * 100) + '%"></span></span>' +
         '<span class="bv"><b>' + r.qty + '</b> <span class="muted">· ' + short(r.amount) + '</span></span></div>';
@@ -1497,9 +1498,9 @@ function openCust(id) {
   if (k.jobs.length) h += '<div class="card"><h3>🔧 ວຽກໃນແອບ (' + k.jobs.length + ')</h3>' + k.jobs.map(function (j) {
     return '<div class="eq" onclick="openJob(\'' + esc(j.id) + '\')"><span style="flex:1">' + esc(j.type) + ' · ' + esc(j.date || 'ຍັງບໍ່ນັດ') + '</span><span class="badge" style="background:' + STATUS[j.status].bg + ';color:' + STATUS[j.status].c + '">' + STATUS[j.status].l + '</span></div>'; }).join('') + '</div>';
   h += '<div class="card"><h3>🛒 ອໍເດີ Pancake (' + ol.length + ')</h3>' + (ol.length ? ol.map(function (o) {
-    var ok = o.status === 'received_money' || o.status === 'delivered';
+    var ok = isSale(o.status), closedBill = /^(received_money|delivered)$/.test(o.status);
     return '<div class="eq" style="cursor:default"><span style="flex:1;font-size:13px">' + esc(o.date) + ' · ' + esc(o.oid) + '<br><span class="muted">' + esc(o.items.join(', ')) + '</span></span>' +
-      '<span class="badge" style="background:' + (ok ? '#ecfdf3;color:#12a150' : '#f3f4f6;color:#6b7280') + '">' + (ok ? '✓' : esc(o.status)) + '</span></div>'; }).join('') : '<div class="muted">ບໍ່ມີ</div>') + '</div>';
+      '<span class="badge" style="background:' + (closedBill ? '#ecfdf3;color:#12a150' : ok ? '#fff4dc;color:#8a5a00' : '#f3f4f6;color:#6b7280') + '">' + (closedBill ? '✓' : ok ? '⚠️ ' + esc(o.status) + ' · ຍັງບໍ່ປິດບິນ' : esc(o.status)) + '</span></div>'; }).join('') : '<div class="muted">ບໍ່ມີ</div>') + '</div>';
   h += '</div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
@@ -1518,7 +1519,7 @@ function srcReportData() {
   var leads = openLeads().filter(function (n) { return (n.source || NO_SRC) === r.src && periodOk(String(n.createdAt || '').slice(0, 10), r.per); });
   list.sort(function (a, b) { return (b.k.buys - a.k.buys) || (a.k.first < b.k.first ? 1 : -1); });
   var models = function (c) {
-    var by = {}; CRM.sales.filter(function (s) { return (s.status === 'received_money' || s.status === 'delivered') && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); })
+    var by = {}; CRM.sales.filter(function (s) { return isSale(s.status) && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); })
       .forEach(function (s) { by[s.name] = (by[s.name] || 0) + s.qty; });
     fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
     return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
@@ -1559,6 +1560,7 @@ function srcReportPrint() {
   var r = UI.rs, D = srcReportData(), t = D.tot, pct = t.n ? Math.round(t.closed / t.n * 100) : 0;
   var dmy = function (s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : '—'; };
   var srcName = String(r.src).replace(/^\S+\s/, '');
+  var logo = /solaro/i.test(r.src) ? RC_ASSET + 'solaro-logo.png' : ''; // ໂລໂກ້ຄູ່ຮ່ວມ (ໄຟລ໌ຢູ່ repo jobs/)
   // ສິນຄ້າທີ່ລູກຄ້າກຸ່ມນີ້ຊື້ (ລວມ)
   var mods = {};
   D.list.forEach(function (x) { D.models(x.c).forEach(function (m) { var k = m.replace(/ ×\d+$/, ''), q = Number((m.match(/×(\d+)$/) || [0, 1])[1]); mods[k] = (mods[k] || 0) + q; }); });
@@ -1585,7 +1587,9 @@ function srcReportPrint() {
     '.head{display:flex;align-items:center;gap:12px;border-bottom:3px solid var(--navy);padding-bottom:9px}.head img{width:52px;height:52px;object-fit:contain}' +
     '.brand{flex:1}.brand .nm{font-size:20px;font-weight:700;color:var(--navy);letter-spacing:1px;line-height:1.2}.brand .tg{font-size:11px;color:#5b6b7b}.ct{font-size:11px;color:#44556a;text-align:right;line-height:1.7}' +
     'h1{text-align:center;font-size:19px;color:var(--navy);margin:12px 0 2px}h1 span{border-bottom:2.5px solid var(--amber);padding:0 18px 2px}' +
-    '.sub{text-align:center;color:#5b6b7b;font-size:12px;margin-bottom:12px}.sub b{color:var(--ink)}' +
+    '.partner{display:flex;align-items:center;gap:20px;border:2px solid var(--amber);border-radius:14px;padding:12px 20px;margin:10px 0 14px;background:linear-gradient(90deg,#fff6ea,#fff 70%)}' +
+    '.partner img{height:62px;width:auto;max-width:44%;object-fit:contain}.pbig{font-size:24px;font-weight:700;color:var(--navy);white-space:nowrap}' +
+    '.pmeta{flex:1;border-left:2px solid #f3c78c;padding-left:18px}.pl{font-size:11.5px;color:#8a5a00;font-weight:600}.pn{font-size:21px;font-weight:700;color:var(--navy);line-height:1.3}.pd{font-size:11.5px;color:#5b6b7b}.pd b{color:var(--ink)}' +
     '.kpis{display:grid;grid-template-columns:repeat(' + (r.money ? 5 : 4) + ',1fr);gap:8px;margin-bottom:12px}.kpi{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center}' +
     '.kpi .v{font-size:22px;font-weight:700;color:var(--navy);line-height:1.2}.kpi .l{font-size:11px;color:#5b6b7b}.kpi.hi{background:#fff6ea;border-color:#f3c78c}.kpi.hi .v{color:#c96a07}' +
     '.bar{height:7px;background:#e3e8ee;border-radius:4px;margin-top:5px;overflow:hidden}.bar i{display:block;height:100%;background:var(--amber)}' +
@@ -1600,7 +1604,9 @@ function srcReportPrint() {
     '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
     '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div class="brand"><div class="nm">HOME SOLAR</div><div class="tg">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
     '<h1><span>ລາຍງານລູກຄ້າທີ່ໄດ້ຮັບການແນະນຳ</span></h1>' +
-    '<div class="sub">ແຫຼ່ງ: <b>' + esc(r.src) + '</b> · ຊ່ວງ: <b>' + PER_L[r.per] + '</b> · ອອກວັນທີ ' + dmy(today()) + '</div>' +
+    '<div class="partner">' + (logo ? '<img src="' + logo + '" alt="' + esc(srcName) + '">' : '<div class="pbig">' + esc(r.src) + '</div>') +
+    '<div class="pmeta"><div class="pl">ລາຍງານສຳລັບ · ລູກຄ້າທີ່ແນະນຳໂດຍ</div><div class="pn">' + esc(srcName) + '</div>' +
+    '<div class="pd">ຊ່ວງເວລາ: <b>' + PER_L[r.per] + '</b> · ອອກວັນທີ ' + dmy(today()) + '</div></div></div>' +
     '<div class="kpis"><div class="kpi"><div class="v">' + t.n + '</div><div class="l">ລູກຄ້າທັງໝົດ</div></div>' +
     '<div class="kpi"><div class="v">' + t.closed + '</div><div class="l">ປິດການຂາຍໄດ້</div></div>' +
     '<div class="kpi hi"><div class="v">' + pct + '%</div><div class="l">ອັດຕາປິດການຂາຍ</div><div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
