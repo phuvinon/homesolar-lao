@@ -1382,9 +1382,12 @@ function fenceDoneOf(cid) { return S.jobs.filter(function (j) { return j.custome
 function custStat(c) {
   var fj = fenceDoneOf(c.id), jobs = S.jobs.filter(function (j) { return j.customerId === c.id; });
   var withSrc = jobs.filter(function (j) { return j.source; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; })[0];
-  var buys = (c.okOrders || 0) + fj.length, spent = (c.amount || 0) + fj.reduce(function (a, j) { return a + (j.price || 0); }, 0);
+  // ວຽກອື່ນ (ດອກໄຟ…) ທີ່ສຳເລັດ: ປົກກະຕິມີບິນ Pancake ແລ້ວ → ນັບສະເພາະຕອນທີ່ຈັບຄູ່ບິນບໍ່ໄດ້ເລີຍ (ກັນນັບຊ້ຳ)
+  var lj = (c.okOrders || 0) ? [] : jobs.filter(function (j) { return j.status === 'done' && !/ຮົ້ວ/.test(j.type); });
+  var done = fj.concat(lj);
+  var buys = (c.okOrders || 0) + done.length, spent = (c.amount || 0) + done.reduce(function (a, j) { return a + (j.price || 0); }, 0);
   var first = [c.firstOrder, String(c.createdAt || '').slice(0, 10)].concat(jobs.map(function (j) { return String(j.createdAt || '').slice(0, 10); })).filter(Boolean).sort()[0] || '';
-  var last = [c.lastOrder].concat(fj.map(function (j) { return j.date; })).filter(Boolean).sort().pop() || '';
+  var last = [c.lastOrder].concat(done.map(function (j) { return j.date; })).filter(Boolean).sort().pop() || '';
   return { buys: buys, spent: spent, closed: buys > 0, repeat: buys >= 2, src: c.source || (withSrc && withSrc.source) || NO_SRC, first: first, last: last, jobs: jobs };
 }
 // ລີດທີ່ຍັງບໍ່ເປັນລູກຄ້າ (ໂນດຕິດຕາມ ທີ່ເບີໂທບໍ່ກົງກັບລູກຄ້າໃດ)
@@ -1522,6 +1525,7 @@ function srcReportData() {
     var by = {}; CRM.sales.filter(function (s) { return isSale(s.status) && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); })
       .forEach(function (s) { by[s.name] = (by[s.name] || 0) + s.qty; });
     fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
+    if (!c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type); }).forEach(function (j) { by['🔧 ' + (j.title || j.type).split('\n')[0]] = 1; }); // ວຽກດອກໄຟທີ່ຈັບຄູ່ບິນບໍ່ໄດ້
     return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
   };
   var tot = { n: list.length + leads.length, closed: list.filter(function (x) { return x.k.closed; }).length, repeat: list.filter(function (x) { return x.k.repeat; }).length, spent: list.reduce(function (a, x) { return a + x.k.spent; }, 0) };
