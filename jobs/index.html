@@ -615,6 +615,9 @@ function vSettings() {
     '<div class="row"><div><label class="f">ຄ່າແຮງຊ່າງ ເຕັມວັນ</label><input class="inp" id="setDay" inputmode="numeric" value="' + money(S.dayRate || 350000) + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ຄ່າແຮງຊ່າງ ເຄິ່ງວັນ</label><input class="inp" id="setHalf" inputmode="numeric" value="' + money(S.halfRate || 150000) + '" oninput="fmtNum(this)"></div></div>' +
     '<p class="muted" style="margin-top:6px">ປ່ຽນອັດຕາແລ້ວ ມີຜົນກັບວຽກທີ່ບັນທຶກຫຼັງຈາກນີ້ — ວຽກເກົ່າໃຊ້ອັດຕາຕອນບັນທຶກ</p></div>';
+  h += '<div class="card"><h3>💬 ຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າ</h3><p class="muted">ຊ່ອງທີ່ແອບໃສ່ໃຫ້ເອງ: ' + WA_KEYS.join(' ') + ' · ປ່ອຍວ່າງ = ໃຊ້ຂໍ້ຄວາມຕົ້ນແບບ</p>' +
+    '<label class="f">1) ຕິດຕໍ່ລູກຄ້າເບື້ອງຕົ້ນ</label><textarea class="inp" id="setWaIntro" style="min-height:150px">' + esc(waTpl('intro')) + '</textarea>' +
+    '<label class="f">2) ສົ່ງງານ ຫຼັງປິດວຽກ</label><textarea class="inp" id="setWaDone" style="min-height:150px">' + esc(waTpl('done')) + '</textarea></div>';
   h += '<div class="card"><h3>🔑 ປ່ຽນ PIN ເຈົ້າຂອງ</h3><input class="inp" id="setPin" inputmode="numeric" placeholder="PIN ໃໝ່ (ຕົວເລກ 4-8 ໂຕ) — ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ"></div>';
   h += '<button class="btn pri full" onclick="saveSettings()">💾 ບັນທຶກການຕັ້ງຄ່າ</button>';
   h += '<p class="muted" style="margin-top:12px">📅 Calendar ອັບເດດຢູ່ເບື້ອງຫຼັງທຸກ 1 ນາທີ · ' + (S.calPending ? '⏳ ລໍອັບເດດ ' + S.calPending + ' ລາຍການ' : '✓ ອັບເດດຄົບແລ້ວ') + '</p>';
@@ -631,7 +634,8 @@ function saveSettings() {
   var removed = S.techs.filter(function (t) { return ids.indexOf(t.id) < 0; }).map(function (t) { return { id: t.id, name: t.name, phone: t.phone, email: t.email, active: false }; });
   var sources = $('setSources').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
   act('api_saveSettings', { techs: keep.concat(removed), types: types, sources: sources, reminders: rem, newPin: pin,
-    instRate: num('setInst'), dayRate: num('setDay'), halfRate: num('setHalf') }).then(function () {
+    instRate: num('setInst'), dayRate: num('setDay'), halfRate: num('setHalf'),
+    waIntro: $('setWaIntro').value.trim() === WA_DEF.intro ? '' : $('setWaIntro').value, waDone: $('setWaDone').value.trim() === WA_DEF.done ? '' : $('setWaDone').value }).then(function () {
     if (pin) { ME.pin = pin; LS.set('js_me', JSON.stringify(ME)); }
     DRAFT_TECHS = null; render(); toast('ບັນທຶກແລ້ວ ✓');
   });
@@ -670,6 +674,7 @@ function detailHtml(j, page) {
     '<a class="abtn" href="' + esc(waLink(j)) + '" target="_blank" rel="noopener"><i>💬</i>ແຊ WhatsApp</a>' +
     (S.owner ? '<span class="abtn" onclick="openForm(\'' + esc(j.id) + '\')"><i>✏️</i>ແກ້ໄຂ</span><span class="abtn" onclick="dupJob(\'' + esc(j.id) + '\')"><i>📄</i>ສຳເນົາ</span><span class="abtn" onclick="delJob(\'' + esc(j.id) + '\')" style="color:#dc2626"><i>🗑️</i>ລຶບ</span>' : '') +
     '</div>';
+  if (S.owner && j.phone) h += waButtons({ jobId: j.id });
 
   // ສະຖານະ
   h += '<div class="card"><h3>📌 ອັບເດດສະຖານະ</h3><div class="stgrid">' + Object.keys(STATUS).filter(function (k) { return S.owner || k !== 'cancelled'; }).map(function (k) {
@@ -1352,6 +1357,116 @@ function printReceipt(rc, w) {
 }
 function reprintReceipt(no) { var rc = (S.receipts || []).filter(function (r) { return r.no === no; })[0]; if (rc) printReceipt(rc); }
 
+
+
+/* ================= 💬 ສົ່ງຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າໂດຍກົງ (ເຈົ້າຂອງ) =================
+   ຂໍ້ຄວາມສຳເລັດຮູບ 2 ແບບ (ແກ້ໄດ້ທີ່ ⚙️): ຕິດຕໍ່ເບື້ອງຕົ້ນ · ສົ່ງງານຫຼັງປິດວຽກ
+   ຊ່ອງທີ່ແອບໃສ່ໃຫ້ເອງ: {ຊື່ລູກຄ້າ} {ລາຍລະອຽດ} {ທີ່ຢູ່} {ວັນທີ} {ມູນຄ່າ} {ຍອດຄ້າງ} */
+var WA_DEF = {
+  intro: 'ສະບາຍດີ {ຊື່ລູກຄ້າ} 🙏\nນີ້ແມ່ນ HOME SOLAR (ດອກໄຟໂຊລ່າ & ຕິດຕັ້ງຮົ້ວ) ຂອບໃຈທີ່ສົນໃຈສິນຄ້າ/ບໍລິການຂອງພວກເຮົາ\nສະດວກໃຫ້ພວກເຮົາແນະນຳ ຫຼື ໄປສຳຫຼວດໜ້າງານວັນໃດ ແຈ້ງໄດ້ເລີຍເດີ້\n📞 020 55949459',
+  done: 'ສະບາຍດີ {ຊື່ລູກຄ້າ} 🙏\nທີມງານ HOME SOLAR ຕິດຕັ້ງ {ລາຍລະອຽດ} ຢູ່ {ທີ່ຢູ່} ສຳເລັດແລ້ວ ວັນທີ {ວັນທີ}\nຂອບໃຈທີ່ໃຊ້ບໍລິການ · ສິນຄ້າມີການຮັບປະກັນ ມີບັນຫາຫຍັງແຈ້ງໄດ້ຕະຫຼອດ\n📞 020 55949459'
+};
+var WA_KEYS = ['{ຊື່ລູກຄ້າ}', '{ລາຍລະອຽດ}', '{ທີ່ຢູ່}', '{ວັນທີ}', '{ມູນຄ່າ}', '{ຍອດຄ້າງ}'];
+function waTpl(kind) { var s = kind === 'done' ? S.waDone : S.waIntro; return s && String(s).trim() ? s : WA_DEF[kind]; }
+function waFill(tpl, o) {
+  var dmy = function (s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : (s || ''); };
+  var map = { '{ຊື່ລູກຄ້າ}': o.name || '', '{ລາຍລະອຽດ}': String(o.title || '').split('\n')[0], '{ທີ່ຢູ່}': o.address || '', '{ວັນທີ}': dmy(o.date || today()),
+    '{ມູນຄ່າ}': o.price ? money(o.price) + ' ກີບ' : '', '{ຍອດຄ້າງ}': o.due ? money(o.due) + ' ກີບ' : '0 ກີບ' };
+  return String(tpl).replace(/\{[^}]+\}/g, function (k) { return k in map ? map[k] : k; });
+}
+// ເປີດໜ້າຕ່າງກວດ/ແກ້ຂໍ້ຄວາມ ກ່ອນສົ່ງ · src = {jobId} ຫຼື {custId}
+function waOpen(kind, src) {
+  var o = {};
+  if (src.jobId) { var j = jobById(src.jobId); o = { name: j.customer, phone: j.phone, title: j.title || stripEmoji(j.type), address: j.location, date: j.date, price: j.price, due: j.due }; }
+  else { var c = custById(src.custId), k = custStat(c), lj = k.jobs.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0] || {};
+    o = { name: c.name, phone: c.phone ? '0' + c.phone : '', title: lj.title || lj.type || '', address: c.address, date: lj.date, price: lj.price, due: lj.due }; }
+  var ph = normPhone(o.phone);
+  UI.wa = { kind: kind, phone: ph, text: waFill(waTpl(kind), o) };
+  var h = '<div class="shd"><b>💬 ' + (kind === 'done' ? 'ສົ່ງງານ (ປິດວຽກ)' : 'ຕິດຕໍ່ເບື້ອງຕົ້ນ') + '</b><button class="x" onclick="' + (src.jobId ? 'openJob(\'' + esc(src.jobId) + '\')' : 'openCust(\'' + esc(src.custId) + '\')') + '">✕</button></div><div class="sbody">';
+  h += '<label class="f">ສົ່ງຫາ WhatsApp</label><input class="inp" inputmode="tel" value="' + esc(ph ? '0' + ph : '') + '" placeholder="020 xxxx xxxx" oninput="UI.wa.phone=normPhone(this.value)">';
+  h += '<label class="f">ຂໍ້ຄວາມ (ແກ້ໄດ້ກ່ອນສົ່ງ)</label><textarea class="inp" style="min-height:200px" oninput="UI.wa.text=this.value">' + esc(UI.wa.text) + '</textarea>';
+  h += '<button class="btn gold full" style="margin-top:12px;background:#25D366;color:#fff" onclick="waSend()">💬 ເປີດ WhatsApp ສົ່ງຫາລູກຄ້າ</button>';
+  h += '<p class="muted" style="margin-top:8px">ແກ້ຂໍ້ຄວາມຕົ້ນແບບໄດ້ທີ່ ⚙️ ຕັ້ງຄ່າ → «💬 ຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າ»</p></div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function waSend() {
+  var ph = UI.wa.phone; if (!ph || ph.length < 7) return toast('ໃສ່ເບີ WhatsApp ຂອງລູກຄ້າ', true);
+  window.open('https://wa.me/856' + ph + '?text=' + encodeURIComponent(UI.wa.text), '_blank');
+}
+function waButtons(src) {
+  var a = src.jobId ? '{jobId:\'' + esc(src.jobId) + '\'}' : '{custId:\'' + esc(src.custId) + '\'}';
+  return '<div class="row" style="gap:6px;margin-top:8px"><button class="btn ghost" style="padding:9px 4px;color:#128C7E;border-color:#25D366" onclick="waOpen(\'intro\',' + a + ')">💬 ຕິດຕໍ່ເບື້ອງຕົ້ນ</button>' +
+    '<button class="btn ghost" style="padding:9px 4px;color:#128C7E;border-color:#25D366" onclick="waOpen(\'done\',' + a + ')">💬 ສົ່ງງານ (ປິດວຽກ)</button></div>';
+}
+
+/* ================= 📍 ທີ່ຢູ່ ແຂວງ → ເມືອງ → ບ້ານ (ຂໍ້ມູນຈາກ Pancake: jobs/lao-geo.json) =================
+   18 ແຂວງ · 151 ເມືອງ · 9,323 ບ້ານ · ລະຫັດດຽວກັບ Pancake (ເຊັ່ນ 856_200104022) → ລູກຄ້າເກົ່າໃນ Pancake ມີລະຫັດແລ້ວ
+   ລະຫັດບ້ານ: ແຂວງ = 'p' 8 ຕົວທຳອິດ (856_20xx) · ເມືອງ = district_id · ຮູບແບບຂໍ້ຄວາມຄືກັບ Pancake: "ບ້ານ, ເມືອງ, ແຂວງ" */
+var GEO = null, GEO_WAIT = [];
+function loadGeo(cb) {
+  if (GEO) return cb && cb();
+  if (cb) GEO_WAIT.push(cb);
+  if (GEO_WAIT.length > 1 || loadGeo._busy) return; loadGeo._busy = true;
+  var url = MODE === 'demo' ? 'icons/lao-geo.json' : RC_ASSET + 'lao-geo.json';
+  fetch(url).then(function (r) { return r.json(); }).then(function (g) {
+    var byId = {};
+    g.p.forEach(function (p) { byId[p[0]] = { n: p[1], t: 'p' }; });
+    Object.keys(g.d).forEach(function (pid) { g.d[pid].forEach(function (d) { byId[d[0]] = { n: d[1], t: 'd', p: pid }; }); });
+    Object.keys(g.c).forEach(function (did) { g.c[did].forEach(function (v) { byId[v[0]] = { n: v[1], t: 'v', d: did }; }); });
+    g.byId = byId; GEO = g; loadGeo._busy = false;
+    var w = GEO_WAIT; GEO_WAIT = []; w.forEach(function (f) { f(); });
+  }).catch(function () { loadGeo._busy = false; GEO_WAIT = []; toast('ໂຫຼດລາຍຊື່ ບ້ານ/ເມືອງ/ແຂວງ ບໍ່ໄດ້', true); });
+}
+function geoParts(vid) { // ລະຫັດບ້ານ → {v, d, p}
+  if (!GEO || !vid || !GEO.byId[vid]) return null;
+  var v = GEO.byId[vid], d = GEO.byId[v.d], p = d ? GEO.byId[d.p] : null;
+  return { vid: vid, did: v.d, pid: d ? d.p : '', v: v.n, d: d ? d.n : '', p: p ? p.n : '' };
+}
+function geoText(vid) { var g = geoParts(vid); return g ? [g.v, g.d, g.p].join(', ') : ''; }
+function laoSort(a, b) { return String(a[1]).localeCompare(String(b[1]), 'lo'); }
+// ໂຕເລືອກ 3 ຊັ້ນ + ລາຍລະອຽດ · pre = ຄຳນຳໜ້າ id · vid = ລະຫັດບ້ານເດີມ · full = ຂໍ້ຄວາມທີ່ຢູ່ເດີມ
+function geoPicker(pre, vid, full) {
+  var h = '<div id="' + pre + 'Box"><div class="muted" style="font-size:12px">ກຳລັງໂຫຼດລາຍຊື່ບ້ານ...</div></div>';
+  UI['geo_' + pre] = { vid: vid || '', full: full || '' };
+  setTimeout(function () { loadGeo(function () { geoRender(pre); }); }, 0); // ລໍໃຫ້ HTML ຂຶ້ນໜ້າຈໍກ່ອນ
+  return h;
+}
+function geoRender(pre) {
+  var st = UI['geo_' + pre], box = $(pre + 'Box'); if (!box || !GEO) return;
+  var g = geoParts(st.vid) || {}, pid = st.pid || g.pid || '', did = st.did || g.did || '', vid = st.vid || '';
+  var detail = st.detail != null ? st.detail : (g.v && st.full && st.full.slice(-geoText(vid).length) === geoText(vid) ? st.full.slice(0, -geoText(vid).length).replace(/,\s*$/, '') : (g.v ? '' : st.full));
+  st.detail = detail;
+  var opt = function (list, val, ph) { return '<option value="">' + ph + '</option>' + list.slice().sort(laoSort).map(function (x) { return '<option value="' + x[0] + '"' + (x[0] === val ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join(''); };
+  box.innerHTML = '<div class="row"><div><select class="inp" id="' + pre + 'P" onchange="geoSet(\'' + pre + '\',\'pid\',this.value)">' + opt(GEO.p, pid, '— ແຂວງ —') + '</select></div>' +
+    '<div><select class="inp" id="' + pre + 'D" ' + (pid ? '' : 'disabled') + ' onchange="geoSet(\'' + pre + '\',\'did\',this.value)">' + opt(pid ? GEO.d[pid] || [] : [], did, '— ເມືອງ —') + '</select></div></div>' +
+    '<select class="inp" id="' + pre + 'V" style="margin-top:6px" ' + (did ? '' : 'disabled') + ' onchange="geoSet(\'' + pre + '\',\'vid\',this.value)">' + opt(did ? GEO.c[did] || [] : [], vid, '— ບ້ານ —') + '</select>' +
+    '<input class="inp" id="' + pre + 'X" style="margin-top:6px" placeholder="ລາຍລະອຽດ: ໜ່ວຍ / ຮ່ອມ / ຈຸດສັງເກດ (ຖ້າມີ)" value="' + esc(detail) + '" oninput="UI[\'geo_' + pre + '\'].detail=this.value">';
+}
+function geoSet(pre, k, val) {
+  var st = UI['geo_' + pre];
+  if (k === 'pid') { st.pid = val; st.did = ''; st.vid = ''; }
+  if (k === 'did') { st.pid = st.pid || (geoParts(st.vid) || {}).pid; st.did = val; st.vid = ''; }
+  if (k === 'vid') { var g = geoParts(st.vid) || {}; st.pid = st.pid || g.pid; st.did = st.did || g.did; st.vid = val; }
+  geoRender(pre);
+}
+// ຄ່າທີ່ເລືອກ → {geo: ລະຫັດບ້ານ, text: "ລາຍລະອຽດ, ບ້ານ, ເມືອງ, ແຂວງ"}
+function geoValue(pre) {
+  var st = UI['geo_' + pre]; if (!st) return { geo: '', text: '' };
+  var d = String(st.detail || '').trim();
+  if (!GEO) return { geo: st.vid || '', text: st.full || d }; // ຍັງໂຫຼດບໍ່ທັນ → ຮັກສາຄ່າເດີມ
+  var gt = geoText(st.vid);
+  if (!gt && st.did) gt = [GEO.byId[st.did].n, (GEO.byId[st.pid || (GEO.byId[st.did] || {}).p] || {}).n].filter(Boolean).join(', ');
+  else if (!gt && st.pid) gt = GEO.byId[st.pid].n;
+  return { geo: st.vid || '', text: [d, gt].filter(Boolean).join(', ') };
+}
+// ພິມເບີລູກຄ້າເກົ່າ → ໃສ່ທີ່ຢູ່ໃຫ້ ຖ້າຍັງບໍ່ໄດ້ເລືອກ
+function geoPrefill(pre, vid, full) {
+  var st = UI['geo_' + pre]; if (!st || st.vid || st.pid || (st.detail && st.detail.trim())) return;
+  st.vid = vid || ''; st.full = full || ''; st.detail = null; st.pid = ''; st.did = '';
+  loadGeo(function () { geoRender(pre); });
+}
+
 /* ================= 👥 ຖານລູກຄ້າ · 📣 ແຫຼ່ງທີ່ມາ · 🏆 ລຸ້ນຂາຍດີ (ເຈົ້າຂອງ) =================
    ຂໍ້ມູນ: Pancake (ລູກຄ້າ + ອໍເດີ) + ແອບວຽກ · ຈັບຄູ່ດ້ວຍເບີໂທ · ໂຫຼດຢູ່ເບື້ອງຫຼັງ (CRM)
    ປິດການຂາຍ = ມີອໍເດີ Pancake ສຳເລັດ ຫຼື ວຽກຮົ້ວສຳເລັດ · ຊື້ຊ້ຳ = ຊື້ສຳເລັດ 2 ຄັ້ງຂຶ້ນໄປ */
@@ -1375,6 +1490,7 @@ function custHint(phone, selId, hintId) {
   if (!c) { el.innerHTML = ''; return; }
   var k = custStat(c);
   el.innerHTML = '👤 ລູກຄ້າເກົ່າ: <b>' + esc(c.name) + '</b> · ຊື້ ' + k.buys + ' ຄັ້ງ' + (k.spent ? ' · ' + money(k.spent) + ' ກີບ' : '') + (k.src !== NO_SRC ? ' · ' + esc(k.src) : '');
+  if (selId === 'fSource' && c.geo) geoPrefill('fG', c.geo, c.address); // ທີ່ຢູ່ລູກຄ້າເກົ່າ
   var sel = $(selId); if (sel && !sel.value && k.src !== NO_SRC) { if (![].some.call(sel.options, function (o) { return o.value === k.src; })) sel.add(new Option(k.src, k.src)); sel.value = k.src; }
 }
 function custBadge(cid) { var c = custById(cid); if (!c) return ''; var k = custStat(c); return ' <span class="badge" style="background:#eef4ff;color:#1d4ed8;cursor:pointer" onclick="event.stopPropagation();openCust(\'' + esc(c.id) + '\')">👤 ຊື້ ' + k.buys + ' ຄັ້ງ</span>'; }
@@ -1487,7 +1603,7 @@ function vCust() {
     var c = x.c, k = x.k;
     return '<div class="job" style="--tc:' + (k.repeat ? '#12a150' : k.closed ? '#2563eb' : '#94a3b8') + '" onclick="openCust(\'' + esc(c.id) + '\')"><div class="top"><span class="t">' + esc(k.src) + '</span><span class="sp"></span>' +
       (k.repeat ? '<span class="badge" style="background:#ecfdf3;color:#12a150">🔁 ຊື້ ' + k.buys + ' ຄັ້ງ</span>' : k.closed ? '<span class="badge" style="background:#eef4ff;color:#1d4ed8">✓ ຊື້ແລ້ວ</span>' : '<span class="badge" style="background:#f3f4f6;color:#6b7280">ຍັງບໍ່ຊື້</span>') + '</div>' +
-      '<div class="nm">' + esc(c.name || '(ບໍ່ມີຊື່)') + '</div><div class="m">📞 ' + esc(c.phone ? '0' + c.phone : '—') + (k.spent ? ' · 💰 ' + money(k.spent) : '') + (k.last ? ' · ລ່າສຸດ ' + esc(k.last) : '') + '</div></div>';
+      '<div class="nm">' + esc(c.name || '(ບໍ່ມີຊື່)') + '</div><div class="m">' + (c.address ? '📍 ' + esc(c.address) + '<br>' : '') + '📞 ' + esc(c.phone ? '0' + c.phone : '—') + (k.spent ? ' · 💰 ' + money(k.spent) : '') + (k.last ? ' · ລ່າສຸດ ' + esc(k.last) : '') + '</div></div>';
   }).join('') + (list.length > 200 ? '<p class="muted">ສະແດງ 200 ຄົນທຳອິດ — ຄົ້ນຫາເພື່ອຊອກ</p>' : '');
   return h;
 }
@@ -1504,13 +1620,14 @@ function openCust(id) {
   h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(k.buys, 'ຊື້ສຳເລັດ (ຄັ້ງ)', k.repeat ? '' : 'blue') + dTile(short(k.spent), 'ຍອດຊື້ລວມ', '') + dTile(k.closed ? '✓' : '—', k.closed ? 'ປິດການຂາຍແລ້ວ' : 'ຍັງບໍ່ຊື້', k.closed ? '' : 'amber') + '</div>';
   h += '<label class="f">ຊື່</label><input class="inp" id="cuName" value="' + esc(c.name) + '">';
   h += '<div class="row"><div><label class="f">ເບີໂທ</label><input class="inp" id="cuPhone" inputmode="tel" value="' + esc(c.phone ? '0' + c.phone : '') + '"></div>' +
-    '<div><label class="f">ທີ່ຢູ່</label><input class="inp" id="cuAddr" value="' + esc(c.address) + '"></div></div>';
+    '</div>';
+  h += '<label class="f">📍 ທີ່ຢູ່ (ແຂວງ → ເມືອງ → ບ້ານ)</label>' + geoPicker('cuG', c.geo, c.address);
   h += srcSelect('cuSrc', c.source || (k.src !== NO_SRC ? k.src : ''));
   h += '<label class="f">ຜູ້ແນະນຳ / ລາຍລະອຽດແຫຼ່ງ (ເຊັ່ນ: ຊື່ຄົນ Solaro ທີ່ສົ່ງມາ, ຊື່ຄລິບ TikTok)</label><input class="inp" id="cuSrcNote" value="' + esc(c.sourceNote) + '">';
   h += '<label class="f">ໝາຍເຫດ</label><input class="inp" id="cuNote" value="' + esc(c.note) + '">';
-  h += '<div class="btns"><button class="btn ghost" onclick="openForm(null,null,{customer:' + esc(JSON.stringify(c.name)) + ',phone:\'0' + esc(c.phone) + '\',location:' + esc(JSON.stringify(c.address || '')) + ',source:' + esc(JSON.stringify(k.src !== NO_SRC ? k.src : '')) + '})">＋ ວຽກໃໝ່</button>' +
+  h += '<div class="btns"><button class="btn ghost" onclick="openForm(null,null,{customer:' + esc(JSON.stringify(c.name)) + ',phone:\'0' + esc(c.phone) + '\',location:' + esc(JSON.stringify(c.address || '')) + ',geo:' + esc(JSON.stringify(c.geo || '')) + ',source:' + esc(JSON.stringify(k.src !== NO_SRC ? k.src : '')) + '})">＋ ວຽກໃໝ່</button>' +
     '<button class="btn pri" onclick="saveCust(\'' + esc(c.id) + '\')">💾 ບັນທຶກ</button></div>';
-  if (c.phone) h += '<div class="acts" style="grid-template-columns:repeat(2,1fr)"><a class="abtn" target="_top" href="tel:0' + esc(c.phone) + '"><i>📞</i>ໂທ</a><a class="abtn" target="_blank" rel="noopener" href="https://wa.me/856' + esc(c.phone) + '"><i>💬</i>WhatsApp</a></div>';
+  if (c.phone) h += '<div class="acts" style="grid-template-columns:repeat(2,1fr)"><a class="abtn" target="_top" href="tel:0' + esc(c.phone) + '"><i>📞</i>ໂທ</a><a class="abtn" target="_blank" rel="noopener" href="https://wa.me/856' + esc(c.phone) + '"><i>💬</i>WhatsApp</a></div>' + waButtons({ custId: c.id });
   if (k.jobs.length) h += '<div class="card"><h3>🔧 ວຽກໃນແອບ (' + k.jobs.length + ')</h3>' + k.jobs.map(function (j) {
     return '<div class="eq" onclick="openJob(\'' + esc(j.id) + '\')"><span style="flex:1">' + esc(j.type) + ' · ' + esc(j.date || 'ຍັງບໍ່ນັດ') + '</span><span class="badge" style="background:' + STATUS[j.status].bg + ';color:' + STATUS[j.status].c + '">' + STATUS[j.status].l + '</span></div>'; }).join('') + '</div>';
   h += '<div class="card"><h3>🛒 ອໍເດີ Pancake (' + ol.length + ')</h3>' + (ol.length ? ol.map(function (o) {
@@ -1522,7 +1639,7 @@ function openCust(id) {
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
 }
 function saveCust(id) {
-  var d = { id: id, name: $('cuName').value, phone: $('cuPhone').value, address: $('cuAddr').value, source: $('cuSrc').value, sourceNote: $('cuSrcNote').value, note: $('cuNote').value };
+  var d = { id: id, name: $('cuName').value, phone: $('cuPhone').value, address: geoValue('cuG').text, geo: geoValue('cuG').geo, source: $('cuSrc').value, sourceNote: $('cuSrcNote').value, note: $('cuNote').value };
   busy(true); call('api_saveCustomer', d).then(function (r) { busy(false); CRM = r; toast('ບັນທຶກແລ້ວ ✓'); openCust(id); render(); }).catch(function (e) { busy(false); toast('⚠️ ' + e.message, true); });
 }
 // 📤 ລາຍງານແຫຼ່ງທີ່ມາ → ສົ່ງກັບຕົ້ນທາງ (WhatsApp / PDF)
@@ -2337,7 +2454,7 @@ function openForm(id, copyFrom, prefill) {
     '<div class="muted" id="fCustHint" style="font-size:12.5px"></div>';
   h += srcSelect('fSource', v('source'));
   h += '<label class="f">ລາຍລະອຽດວຽກ</label><textarea class="inp" id="fTitle" placeholder="ເຊັ່ນ: ຕິດໄຟສາດ 600W 4 ດວງ ອ້ອມເຮືອນ + ໄຟທາງເຂົ້າ">' + esc(v('title')) + '</textarea>';
-  h += '<label class="f">ສະຖານທີ່</label><input class="inp" id="fLocation" placeholder="ບ້ານ / ເມືອງ / ແຂວງ" value="' + esc(v('location')) + '">';
+  h += '<label class="f">📍 ສະຖານທີ່ (ແຂວງ → ເມືອງ → ບ້ານ)</label>' + geoPicker('fG', v('geo'), v('location'));
   h += '<label class="f">ລິ້ງ Google Maps</label><input class="inp" id="fMap" inputmode="url" placeholder="ວາງລິ້ງທີ່ລູກຄ້າສົ່ງມາ" value="' + esc(v('mapUrl')) + '">';
   h += '<div class="row"><div><label class="f">ວັນທີ (ວ່າງ = ຍັງບໍ່ນັດ)</label><input class="inp" type="date" id="fDate" value="' + esc(date) + '"></div></div>';
   h += '<div class="row"><div><label class="f">ເລີ່ມ</label><input class="inp" type="time" id="fStart" value="' + esc(v('start', '08:00')) + '"></div>' +
@@ -2460,7 +2577,7 @@ function saveForm(id) {
     .map(function (e) { var o = { t: String(e.t).trim(), done: !!e.done }; if (e.vid) o.vid = e.vid; if (e.qty) o.qty = e.qty; return o; });
   var data = {
     id: id || '', type: $('fType').value, customer: $('fCustomer').value.trim(), phone: $('fPhone').value.trim(),
-    title: $('fTitle').value.trim(), location: $('fLocation').value.trim(), mapUrl: $('fMap').value.trim(),
+    title: $('fTitle').value.trim(), location: geoValue('fG').text, geo: geoValue('fG').geo, mapUrl: $('fMap').value.trim(),
     date: $('fDate').value, start: $('fStart').value, end: $('fEnd').value,
     techIds: Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; }),
     equipment: equipment, price: num('fPrice'), deposit: num('fDeposit'), note: $('fNote').value.trim(),
@@ -2554,11 +2671,12 @@ var MOCK = (function () {
       { oid: 'S4', date: cd(20), status: 'delivered', pancakeCust: 'p4', phone: '2077778888', vid: 'v1', name: 'ສະປອດໄລທ໌ 600W', qty: 2, amount: 2900000 },
       { oid: 'S5', date: cd(1), status: 'canceled', pancakeCust: 'p3', phone: '2055556666', vid: 'v2', name: 'ໄຟເຢືອງທາງ 800W', qty: 1, amount: 2450000 }];
   }
-  function mockCust(name, phone, source) {
+  function mockCust(name, phone, source, geo, loc) {
     var ph = normPhone(phone); if (ph.length < 7) return '';
     var c = db.customers.filter(function (x) { return x.phone === ph; })[0];
     if (!c) { c = { id: 'CU' + Date.now().toString(36), name: name, phone: ph, address: '', source: source || '', sourceNote: '', pancakeId: '', orders: 0, okOrders: 0, amount: 0, firstOrder: '', lastOrder: '', note: '', createdAt: nowF() }; db.customers.push(c); }
     else if (!c.source && source) c.source = source;
+    if (!c.geo && geo) { c.geo = geo; c.address = loc || c.address; }
     return c.id;
   }
   function nextInv() { return Math.max(42, db.receipts.reduce(function (a, r) { return Math.max(a, r.no); }, 0)) + 1; }
@@ -2575,7 +2693,7 @@ var MOCK = (function () {
       owner: !!o, notes: notes, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
       receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [],
-      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
       techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
@@ -2592,8 +2710,8 @@ var MOCK = (function () {
     api_saveJob: function (c, d) {
       need(c); var isNew = !d.id;
       var j = isNew ? { id: 'J' + Date.now().toString(36).toUpperCase(), photosBefore: [], photosAfter: [], collected: 0, createdAt: nowF(), shareKey: newKey() } : find(d.id);
-      ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment', 'source'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
-      if (j.phone) j.customerId = mockCust(j.customer, j.phone, j.source);
+      ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment', 'source', 'geo'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
+      if (j.phone) j.customerId = mockCust(j.customer, j.phone, j.source, j.geo, j.location);
       ['price', 'deposit', 'collected', 'points', 'instFee'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
       if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 350000) + l.half * (db.halfRate || 150000); }, 0); }
       if (j.status === 'pending' && j.date) j.status = 'scheduled';
@@ -2638,7 +2756,7 @@ var MOCK = (function () {
     },
     api_getCRM: function (c) { need(c); return JSON.stringify({ customers: db.customers, sales: db.sales, salesSync: nowF() }); },
     api_syncSales: function (c) { need(c); var o = { customers: db.customers, sales: db.sales, salesSync: nowF(), msg: 'ໂໝດທົດລອງ: ບໍ່ມີອໍເດີໃໝ່' }; return JSON.stringify(o); },
-    api_saveCustomer: function (c, d) { need(c); var x = db.customers.filter(function (y) { return y.id === d.id; })[0]; ['name', 'address', 'source', 'sourceNote', 'note'].forEach(function (k) { if (d[k] !== undefined) x[k] = d[k]; }); if (d.phone) x.phone = normPhone(d.phone); save(); return JSON.stringify({ customers: db.customers, sales: db.sales, salesSync: nowF() }); },
+    api_saveCustomer: function (c, d) { need(c); var x = db.customers.filter(function (y) { return y.id === d.id; })[0]; ['name', 'address', 'source', 'sourceNote', 'note', 'geo'].forEach(function (k) { if (d[k] !== undefined) x[k] = d[k]; }); if (d.phone) x.phone = normPhone(d.phone); save(); return JSON.stringify({ customers: db.customers, sales: db.sales, salesSync: nowF() }); },
     api_getProducts: function (c) { need(c); return JSON.stringify({ products: db.products }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
     api_delExpense: function (c, id, eid) { need(c); var j = find(id); j.expenses = (j.expenses || []).filter(function (e) { return e.id !== eid; }); return all(c); },
@@ -2692,6 +2810,7 @@ var MOCK = (function () {
       need(c);
       if (o.types && o.types.length) db.types = o.types;
       if (o.reminders) db.reminders = o.reminders;
+      if (typeof o.waIntro === 'string') db.waIntro = o.waIntro; if (typeof o.waDone === 'string') db.waDone = o.waDone;
       if (o.techs) db.techs = o.techs.map(function (t) { return { id: t.id || ('t' + Date.now() + Math.floor(Math.random() * 999)), name: t.name, phone: t.phone || '', email: t.email || '', active: t.active !== false }; });
       if (o.newPin) db.pin = String(o.newPin);
       ['instRate', 'dayRate', 'halfRate'].forEach(function (k) { if (o[k] !== undefined) db[k] = o[k]; });
