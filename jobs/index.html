@@ -1051,6 +1051,7 @@ function renderNoteDetail() {
   $('sheet').innerHTML = h;
 }
 function openNoteForm(id) {
+  if (!CRM) loadCRM();
   var n = id ? noteById(id) : null, v = function (k) { return n && n[k] != null ? n[k] : ''; };
   var cat = n ? n.cat : (UI.nf && NCAT[UI.nf] ? UI.nf : 'follow');
   var h = '<div class="shd"><b>' + (n ? '✏️ ແກ້ໄຂໂນດ' : '＋ ໂນດໃໝ່') + '</b><button class="x" onclick="' + (n ? 'openNote(\'' + esc(n.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
@@ -1058,9 +1059,9 @@ function openNoteForm(id) {
     return '<label><input type="radio" name="nCat" value="' + k + '"' + (cat === k ? ' checked' : '') + '> ' + NCAT[k].l + '</label>';
   }).join('') + '</div>';
   h += '<label class="f">ຫົວຂໍ້ *</label><input class="inp" id="nTitle" placeholder="ເຊັ່ນ: ສົນໃຈຊຸດໂຊລ່າ 3000W ຂໍໃບສະເໜີລາຄາ" value="' + esc(v('title')) + '">';
-  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ</label><input class="inp" id="nCustomer" value="' + esc(v('customer')) + '"></div>' +
-    '<div><label class="f">ເບີໂທ</label><input class="inp" id="nPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'nSource\',\'nCustHint\')"></div></div>' +
-    '<div class="muted" id="nCustHint" style="font-size:12.5px"></div>';
+  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ</label><input class="inp" id="nCustomer" placeholder="ພິມຊື່ ຫຼື ເບີ ເລືອກລູກຄ້າເກົ່າໄດ້" value="' + esc(v('customer')) + '" oninput="cfSuggest(\'note\')"></div>' +
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="nPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'nSource\',\'nCustHint\');cfSuggest(\'note\',true)"></div></div>' +
+    '<div class="muted" id="nCustHint" style="font-size:12.5px"></div>' + cfBox('note', v('customer'), v('phone'));
   h += srcSelect('nSource', v('source'));
   h += '<label class="f">ລາຍລະອຽດ</label><textarea class="inp" id="nDetail" placeholder="ລູກຄ້າຢາກໄດ້ຫຍັງ, ລໍຖ້າຫຍັງ, ຕ້ອງເຮັດຫຍັງຕໍ່">' + esc(v('detail')) + '</textarea>';
   h += '<div class="row"><div><label class="f">⏰ ວັນເຕືອນ</label><input class="inp" type="date" id="nDate" value="' + esc(n ? n.remindDate : '') + '"></div>' +
@@ -1567,7 +1568,7 @@ var CRM_ERR = '';
 function crmWait() { return CRM_ERR ? '<div class="empty">⚠️ ໂຫຼດຂໍ້ມູນລູກຄ້າບໍ່ໄດ້: ' + esc(CRM_ERR) + '<br><button class="btn ghost" style="margin-top:8px" onclick="CRM_ERR=\'\';loadCRM(true);render()">ລອງໃໝ່</button></div>' : '<div class="empty">ກຳລັງໂຫຼດຂໍ້ມູນລູກຄ້າ...</div>'; }
 function loadCRM(force) {
   if (CRM_LOADING || (CRM && !force)) return; CRM_LOADING = true;
-  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; CRM_ERR = ''; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
+  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; CRM_ERR = ''; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if ($('fCustSug')) cfSuggest('job'); if ($('nCustSug')) cfSuggest('note'); if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
     .catch(function (e) { CRM_LOADING = false; CRM_ERR = (e && e.message) || 'ໂຫຼດບໍ່ໄດ້'; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if (UI.view === 'dash' || UI.view === 'cust') render(); });
 }
 function normPhone(p) { var d = String(p || '').replace(/\D/g, ''); if (d.indexOf('856') === 0 && d.length > 10) d = d.slice(3); return d.replace(/^0+/, ''); }
@@ -2545,6 +2546,7 @@ function savePO() {
 /* ================= ຟອມ ເພີ່ມ/ແກ້ວຽກ (ເຈົ້າຂອງ) ================= */
 // prefill = {customer, phone, title, price, fromNote} ເມື່ອປ່ຽນໂນດເປັນວຽກ
 function openForm(id, copyFrom, prefill) {
+  if (!CRM) loadCRM();
   var j = id ? jobById(id) : null, src = j || (copyFrom ? jobById(copyFrom) : null) || prefill || null;
   UI.fromNote = !j && prefill ? prefill.fromNote : null;
   UI.fromQuote = !j && prefill ? prefill.fromQuote : null;
@@ -2554,9 +2556,9 @@ function openForm(id, copyFrom, prefill) {
   var techIds = src && src.techIds ? src.techIds : [];
   var h = '<div class="shd"><b>' + (j ? '✏️ ແກ້ໄຂວຽກ' : prefill ? (prefill.fromQuote ? '🧱 ສ້າງວຽກຈາກໃບສະເໜີລາຄາ' : '🔧 ປ່ຽນໂນດເປັນວຽກ') : '＋ ວຽກໃໝ່') + '</b><button class="x" onclick="' + (j ? 'openJob(\'' + esc(j.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<label class="f">ປະເພດວຽກ *</label><select class="inp" id="fType">' + S.types.map(function (t) { return '<option' + (v('type') === t ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join('') + '</select>';
-  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="fCustomer" value="' + esc(v('customer')) + '"></div>' +
-    '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'fSource\',\'fCustHint\')"></div></div>' +
-    '<div class="muted" id="fCustHint" style="font-size:12.5px"></div>';
+  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="fCustomer" placeholder="ພິມຊື່ ຫຼື ເບີ ເລືອກລູກຄ້າເກົ່າໄດ້" value="' + esc(v('customer')) + '" oninput="cfSuggest(\'job\')"></div>' +
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="fPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'fSource\',\'fCustHint\');cfSuggest(\'job\',true)"></div></div>' +
+    '<div class="muted" id="fCustHint" style="font-size:12.5px"></div>' + cfBox('job', v('customer'), v('phone'));
   h += srcSelect('fSource', v('source'));
   h += '<label class="f">ລາຍລະອຽດວຽກ</label><textarea class="inp" id="fTitle" placeholder="ເຊັ່ນ: ຕິດໄຟສາດ 600W 4 ດວງ ອ້ອມເຮືອນ + ໄຟທາງເຂົ້າ">' + esc(v('title')) + '</textarea>';
   h += '<label class="f">📍 ສະຖານທີ່ (ແຂວງ → ເມືອງ → ບ້ານ)</label>' + geoPicker('fG', v('geo'), v('location'));
@@ -2831,7 +2833,35 @@ function custSource() {
   return src;
 }
 function custStatusTxt() { return CRM ? '✓ ຖານລູກຄ້າ ' + ((CRM.customers || []).length) + ' ຄົນ' : (CRM_ERR ? '⚠️ ໂຫຼດຖານລູກຄ້າບໍ່ໄດ້: ' + CRM_ERR : '⏳ ກຳລັງໂຫຼດຖານລູກຄ້າ...'); }
-// ຄົ້ນລູກຄ້າເກົ່າ ຕາມເບີ ຫຼື ຊື່ ທີ່ກຳລັງພິມ → ກົດເລືອກ ຂໍ້ມູນຂຶ້ນອັດຕະໂນມັດ
+/* ---------- ຄົ້ນ/ຕິກເລືອກລູກຄ້າເກົ່າ ໃນຟອມ ວຽກໃໝ່ + ໂນດ (ແບບດຽວກັບບິນຂາຍ) ---------- */
+var CF = { job: { name: 'fCustomer', phone: 'fPhone', sug: 'fCustSug', hint: 'fCustHint', src: 'fSource', geo: 'fG' },
+           note: { name: 'nCustomer', phone: 'nPhone', sug: 'nCustSug', hint: 'nCustHint', src: 'nSource', geo: '' } };
+UI.cf = {};
+function cfRender(k, qnRaw, qpRaw) {
+  var qn = String(qnRaw || '').trim().toLowerCase(), qp = normPhone(qpRaw), list = [];
+  try {
+    list = (qp.length >= 3 || qn.length >= 2) ? custSource().filter(function (x) { return (qp.length >= 3 && String(x.phone).indexOf(qp) >= 0) || (qn.length >= 2 && String(x.name).toLowerCase().indexOf(qn) >= 0); }) : [];
+    list = list.filter(function (x) { return !(String(x.name).trim().toLowerCase() === qn && x.phone === qp); }).slice(0, 6);
+  } catch (e) { return '<div class="muted" style="color:#dc2626">⚠️ ຄົ້ນລູກຄ້າຜິດພາດ: ' + esc(e.message) + '</div>'; }
+  UI.cf[k] = list;
+  return '<div class="muted" style="font-size:12px;margin-top:4px">' + custStatusTxt() + ' · <a href="javascript:void 0" onclick="cfPicker(\'' + k + '\')"><b>👥 ເລືອກຈາກລາຍຊື່ລູກຄ້າ</b></a></div>' +
+    (list.length ? '<div class="card" style="padding:4px 8px;margin:6px 0">' + list.map(function (x, i) {
+      return '<div class="eq" onclick="cfPick(\'' + k + '\',' + i + ')"><span style="flex:1;min-width:0"><b>' + esc(x.name || '(ບໍ່ມີຊື່)') + '</b><br><span class="muted">📞 ' + (x.phone ? '0' + esc(x.phone) : '—') + (x.address ? ' · 📍 ' + esc(x.address) : '') + '</span></span><span class="badge" style="background:#0A1322;color:#fff">ເລືອກ</span></div>'; }).join('') + '</div>' : '');
+}
+function cfBox(k, name, phone) { return '<div id="' + CF[k].sug + '">' + cfRender(k, name, phone) + '</div>'; }
+function cfSuggest(k, fromPhone) {
+  var c = CF[k], box = $(c.sug), n = $(c.name), p = $(c.phone); if (!box || !n || !p) return;
+  if (fromPhone) { var m = custByPhone(p.value); if (m && !n.value.trim()) n.value = m.name; } // ເບີຕົງກັບລູກຄ້າເກົ່າ → ຊື່ຂຶ້ນເອງ
+  box.innerHTML = cfRender(k, n.value, p.value);
+}
+function cfApply(k, x) {
+  var c = CF[k]; $(c.name).value = x.name || ''; $(c.phone).value = x.phone ? '0' + x.phone : '';
+  custHint($(c.phone).value, c.src, c.hint); // ແຫຼ່ງທີ່ມາ + ປ້າຍລູກຄ້າເກົ່າ (ຊື້ຈັກຄັ້ງ)
+  if (c.geo) { UI['geo_' + c.geo] = { vid: x.geo || '', full: x.address || '' }; loadGeo(function () { geoRender(c.geo); }); }
+  cfSuggest(k);
+}
+function cfPick(k, i) { var x = (UI.cf[k] || [])[i]; if (x) cfApply(k, x); }
+function cfPicker(k) { UI.cpTarget = k; odCustPicker(); }// ຄົ້ນລູກຄ້າເກົ່າ ຕາມເບີ ຫຼື ຊື່ ທີ່ກຳລັງພິມ → ກົດເລືອກ ຂໍ້ມູນຂຶ້ນອັດຕະໂນມັດ
 function odSuggest() {
   var box = $('odSug'); if (!box || !UI.od) return;
   try {
@@ -2839,13 +2869,14 @@ function odSuggest() {
     var list = (qp.length >= 3 || qn.length >= 2) ? src.filter(function (x) { return (qp.length >= 3 && String(x.phone).indexOf(qp) >= 0) || (qn.length >= 2 && String(x.name).toLowerCase().indexOf(qn) >= 0); }) : [];
     list = list.filter(function (x) { return !(x.name === UI.od.customer && x.phone === qp); }).slice(0, 6);
     UI.od.sug = list;
-    box.innerHTML = '<div class="muted" style="font-size:12px;margin-top:4px">' + custStatusTxt() + ' · <a href="javascript:void 0" onclick="odCustPicker()"><b>👥 ເລືອກຈາກລາຍຊື່ລູກຄ້າ</b></a></div>' +
+    box.innerHTML = '<div class="muted" style="font-size:12px;margin-top:4px">' + custStatusTxt() + ' · <a href="javascript:void 0" onclick="UI.cpTarget=\'od\';odCustPicker()"><b>👥 ເລືອກຈາກລາຍຊື່ລູກຄ້າ</b></a></div>' +
       (list.length ? '<div class="card" style="padding:4px 8px;margin:6px 0">' + list.map(function (x, i) {
         return '<div class="eq" onclick="odPick(' + i + ')"><span style="flex:1;min-width:0"><b>' + esc(x.name || '(ບໍ່ມີຊື່)') + '</b><br><span class="muted">📞 ' + (x.phone ? '0' + esc(x.phone) : '—') + (x.address ? ' · 📍 ' + esc(x.address) : '') + '</span></span><span class="badge" style="background:#0A1322;color:#fff">ເລືອກ</span></div>'; }).join('') + '</div>' : '');
   } catch (e) { box.innerHTML = '<div class="muted" style="color:#dc2626">⚠️ ຄົ້ນລູກຄ້າຜິດພາດ: ' + esc(e.message) + '</div>'; }
 }
 // ໜ້າຕ່າງລາຍຊື່ລູກຄ້າເຕັມ (ຄົ້ນຫາ + ກົດເລືອກ) — ໃຊ້ໄດ້ເຖິງວ່າພິມແລ້ວບໍ່ຂຶ້ນ
 function odCustPicker() {
+  if (!UI.cpTarget) UI.cpTarget = 'od';
   if (!CRM && !CRM_ERR) loadCRM(true); else if (!CRM) { CRM_ERR = ''; loadCRM(true); }
   var box = $('dlg');
   box.innerHTML = '<div class="dlgc" style="max-width:440px;max-height:82vh;display:flex;flex-direction:column"><b>👥 ເລືອກລູກຄ້າ</b><div class="muted" id="cpStat" style="margin:4px 0"></div>' +
@@ -2853,7 +2884,7 @@ function odCustPicker() {
     '<div class="btns"><button class="btn ghost" onclick="cpClose()">ປິດ</button></div></div>';
   box.classList.add('on'); cpRender(); setTimeout(function () { var q = $('cpQ'); if (q) q.focus(); }, 80);
 }
-function cpClose() { $('dlg').classList.remove('on'); $('dlg').innerHTML = ''; }
+function cpClose() { $('dlg').classList.remove('on'); $('dlg').innerHTML = ''; UI.cpTarget = 'od'; }
 function cpRender() {
   var l = $('cpList'); if (!l) return;
   var q = String($('cpQ').value || '').trim().toLowerCase(), qp = normPhone(q);
@@ -2863,7 +2894,11 @@ function cpRender() {
   l.innerHTML = UI.cpList.map(function (x, i) { return '<div class="eq" onclick="cpPick(' + i + ')"><span style="flex:1;min-width:0"><b>' + esc(x.name || '(ບໍ່ມີຊື່)') + '</b><br><span class="muted">📞 ' + (x.phone ? '0' + esc(x.phone) : '—') + (x.address ? ' · 📍 ' + esc(x.address) : '') + '</span></span></div>'; }).join('') +
     (!UI.cpList.length ? '<div class="muted" style="padding:8px">' + (CRM ? 'ບໍ່ພົບ' : 'ລໍຖ້າໂຫຼດ...') + '</div>' : '');
 }
-function cpPick(i) { var x = (UI.cpList || [])[i]; if (!x) return; UI.od.sug = [x]; odPick(0); cpClose(); }function odPick(i) {
+function cpPick(i) {
+  var x = (UI.cpList || [])[i]; if (!x) return; var t = UI.cpTarget || 'od';
+  if (t === 'od') { UI.od.sug = [x]; odPick(0); } else cfApply(t, x);
+  cpClose();
+}function odPick(i) {
   var x = (UI.od.sug || [])[i]; if (!x) return;
   UI.od.customer = x.name || ''; UI.od.phone = x.phone ? '0' + x.phone : '';
   $('odName').value = UI.od.customer; $('odPhone').value = UI.od.phone;
