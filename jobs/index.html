@@ -2836,14 +2836,14 @@ function custStatusTxt() { return CRM ? '✓ ຖານລູກຄ້າ ' + ((C
 /* ---------- ຄົ້ນ/ຕິກເລືອກລູກຄ້າເກົ່າ ໃນຟອມ ວຽກໃໝ່ + ໂນດ (ແບບດຽວກັບບິນຂາຍ) ---------- */
 var CF = { job: { name: 'fCustomer', phone: 'fPhone', sug: 'fCustSug', hint: 'fCustHint', src: 'fSource', geo: 'fG' },
            note: { name: 'nCustomer', phone: 'nPhone', sug: 'nCustSug', hint: 'nCustHint', src: 'nSource', geo: '' } };
-UI.cf = {};
+UI.cfl = {};
 function cfRender(k, qnRaw, qpRaw) {
   var qn = String(qnRaw || '').trim().toLowerCase(), qp = normPhone(qpRaw), list = [];
   try {
     list = (qp.length >= 3 || qn.length >= 2) ? custSource().filter(function (x) { return (qp.length >= 3 && String(x.phone).indexOf(qp) >= 0) || (qn.length >= 2 && String(x.name).toLowerCase().indexOf(qn) >= 0); }) : [];
     list = list.filter(function (x) { return !(String(x.name).trim().toLowerCase() === qn && x.phone === qp); }).slice(0, 6);
   } catch (e) { return '<div class="muted" style="color:#dc2626">⚠️ ຄົ້ນລູກຄ້າຜິດພາດ: ' + esc(e.message) + '</div>'; }
-  UI.cf[k] = list;
+  UI.cfl[k] = list;
   return '<div class="muted" style="font-size:12px;margin-top:4px">' + custStatusTxt() + ' · <a href="javascript:void 0" onclick="cfPicker(\'' + k + '\')"><b>👥 ເລືອກຈາກລາຍຊື່ລູກຄ້າ</b></a></div>' +
     (list.length ? '<div class="card" style="padding:4px 8px;margin:6px 0">' + list.map(function (x, i) {
       return '<div class="eq" onclick="cfPick(\'' + k + '\',' + i + ')"><span style="flex:1;min-width:0"><b>' + esc(x.name || '(ບໍ່ມີຊື່)') + '</b><br><span class="muted">📞 ' + (x.phone ? '0' + esc(x.phone) : '—') + (x.address ? ' · 📍 ' + esc(x.address) : '') + '</span></span><span class="badge" style="background:#0A1322;color:#fff">ເລືອກ</span></div>'; }).join('') + '</div>' : '');
@@ -2860,7 +2860,7 @@ function cfApply(k, x) {
   if (c.geo) { UI['geo_' + c.geo] = { vid: x.geo || '', full: x.address || '' }; loadGeo(function () { geoRender(c.geo); }); }
   cfSuggest(k);
 }
-function cfPick(k, i) { var x = (UI.cf[k] || [])[i]; if (x) cfApply(k, x); }
+function cfPick(k, i) { var x = (UI.cfl[k] || [])[i]; if (x) cfApply(k, x); }
 function cfPicker(k) { UI.cpTarget = k; odCustPicker(); }// ຄົ້ນລູກຄ້າເກົ່າ ຕາມເບີ ຫຼື ຊື່ ທີ່ກຳລັງພິມ → ກົດເລືອກ ຂໍ້ມູນຂຶ້ນອັດຕະໂນມັດ
 function odSuggest() {
   var box = $('odSug'); if (!box || !UI.od) return;
