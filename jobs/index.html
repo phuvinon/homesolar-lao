@@ -776,7 +776,7 @@ function detailHtml(j, page) {
         ((j.labor || []).length ? ' <span class="muted">(' + j.labor.map(function (l) { return techName(l.tid) + ' ' + (l.full ? l.full + ' ວັນ' : '') + (l.half ? (l.full ? ' + ' : '') + l.half + ' ເຄິ່ງວັນ' : ''); }).join(', ') + ')</span>' : '') + '</span>' : '') +
       '</div>' +
       (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') +
-      (isFenceJob(j) ? fdJobCard(j) : ordsOfJob(j.id) + '<button class="btn pri full" style="margin-top:8px" onclick="openOrderFromJob(\'' + esc(j.id) + '\')">🧾 ອອກບິນຂາຍ (ເລືອກຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)</button><button class="btn ghost full" style="margin-top:6px;font-size:13px" onclick="openReceiptForm(\'' + esc(j.id) + '\')">ໃບເກັບເງິນແບບເກົ່າ (ບໍ່ຕັດສະຕ໊ອກ)</button>') +
+      (isFenceJob(j) ? fdJobCard(j) : ordsOfJob(j.id) + '<button class="btn pri full" style="margin-top:8px" onclick="openOrderFromJob(\'' + esc(j.id) + '\')">🧾 ອອກບິນຂາຍ (ເລືອກຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)</button>') +
       receiptsOf(j.id).map(function (r) {
         return '<div class="eq" onclick="reprintReceipt(' + r.no + ')"><span style="flex:1">🧾 ' + esc(rcNo(r)) + ' · ' + esc(r.date) + '</span><b>' + money(r.total) + '</b><span class="badge" style="background:#eef4ff;color:#1d4ed8">🖨️ ພິມຄືນ</span></div>';
       }).join('') + '</div>';
@@ -872,8 +872,8 @@ function setStatus(id, s) {
     // ປິດວຽກ (ເຈົ້າຂອງ) ແລະ ຍັງບໍ່ເຄີຍອອກໃບ → ຖາມອອກໃບເກັບເງິນເລີຍ
     if (s === 'done' && S.owner && isFenceJob(j) && j.due > 0) {
       setTimeout(function () { ask({ title: '🧾 ອອກໃບເກັບເງິນຮົ້ວເລີຍບໍ່?', msg: j.customer + ' · ຄ້າງ ' + money(j.due) + ' ກີບ', ok: 'ອອກໃບເກັບເງິນ' }).then(function (y) { if (y) openFenceDoc('full', id); }); }, 400);
-    } else if (s === 'done' && S.owner && !isFenceJob(j) && j.price > 0 && !receiptsOf(id).length) {
-      setTimeout(function () { ask({ title: '🧾 ອອກໃບເກັບເງິນເລີຍບໍ່?', msg: j.customer + ' · ' + money(j.price) + ' ກີບ', ok: 'ອອກໃບເກັບເງິນ' }).then(function (y) { if (y) openReceiptForm(id); }); }, 400);
+    } else if (s === 'done' && S.owner && !isFenceJob(j) && j.price > 0 && !receiptsOf(id).length && !(S.orders || []).some(function (o) { return o.jobId === id && o.status !== 'cancelled'; })) {
+      setTimeout(function () { ask({ title: '🧾 ອອກບິນຂາຍເລີຍບໍ່?', msg: j.customer + ' · ' + money(j.price) + ' ກີບ (ເລືອກສິນຄ້າຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)', ok: 'ອອກບິນ' }).then(function (y) { if (y) openOrderFromJob(id); }); }, 400);
     }
   };
   if (s === 'done' && j.due > 0) return ask({ title: 'ປິດວຽກເລີຍບໍ່?', msg: 'ວຽກນີ້ຍັງຄ້າງເກັບເງິນ ' + money(j.due) + ' ກີບ\n(ບັນທຶກເງິນໄດ້ພາຍຫຼັງ)', ok: 'ປິດວຽກ' }).then(function (y) { if (y) go(); });
