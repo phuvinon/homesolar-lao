@@ -700,6 +700,7 @@ function vSettings() {
   h += '<div class="card"><h3>💬 ຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າ</h3><p class="muted">ຊ່ອງທີ່ແອບໃສ່ໃຫ້ເອງ: ' + WA_KEYS.join(' ') + ' · ປ່ອຍວ່າງ = ໃຊ້ຂໍ້ຄວາມຕົ້ນແບບ</p>' +
     '<label class="f">1) ຕິດຕໍ່ລູກຄ້າເບື້ອງຕົ້ນ</label><textarea class="inp" id="setWaIntro" style="min-height:150px">' + esc(waTpl('intro')) + '</textarea>' +
     '<label class="f">2) ສົ່ງງານ ຫຼັງປິດວຽກ</label><textarea class="inp" id="setWaDone" style="min-height:150px">' + esc(waTpl('done')) + '</textarea></div>';
+  h += '<div class="card"><h3>🔄 ວັນຕັດຍອດ (ຍ້າຍຈາກ Pancake ມາແອບ)</h3><p class="muted">ວ່າງ = ຍັງແລ່ນຄູ່ກັນ: ຍອດຂາຍໃນສະໝຸດເງິນ/ລຸ້ນຂາຍດີ/ລູກຄ້າ ໃຊ້ Pancake. ໃສ່ວັນທີ = ບິນຂອງແອບທີ່ວັນທີ ≥ ວັນນັ້ນ ຈະເຂົ້າທຸກຢ່າງແທນ ແລະ ບິນ Pancake ວັນທີ່ ≥ ວັນນັ້ນ ຖືກຂ້າມ (ບໍ່ນັບຊ້ຳ). <b>ຢ່າເປີດບິນໃນ Pancake ຫຼັງວັນນີ້.</b></p><input class="inp" type="date" id="setCut" value="' + esc(S.salesCutover || '') + '"></div>';
   h += '<div class="card"><h3>🔑 ປ່ຽນ PIN ເຈົ້າຂອງ</h3><input class="inp" id="setPin" inputmode="numeric" placeholder="PIN ໃໝ່ (ຕົວເລກ 4-8 ໂຕ) — ປ່ອຍວ່າງ = ບໍ່ປ່ຽນ"></div>';
   h += '<button class="btn pri full" onclick="saveSettings()">💾 ບັນທຶກການຕັ້ງຄ່າ</button>';
   h += '<p class="muted" style="margin-top:12px">📅 Calendar ອັບເດດຢູ່ເບື້ອງຫຼັງທຸກ 1 ນາທີ · ' + (S.calPending ? '⏳ ລໍອັບເດດ ' + S.calPending + ' ລາຍການ' : '✓ ອັບເດດຄົບແລ້ວ') + '</p>';
@@ -717,7 +718,7 @@ function saveSettings() {
   var sources = $('setSources').value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean);
   act('api_saveSettings', { techs: keep.concat(removed), types: types, sources: sources, reminders: rem, newPin: pin,
     instRate: num('setInst'), dayRate: num('setDay'), halfRate: num('setHalf'),
-    waIntro: $('setWaIntro').value.trim() === WA_DEF.intro ? '' : $('setWaIntro').value, waDone: $('setWaDone').value.trim() === WA_DEF.done ? '' : $('setWaDone').value }).then(function () {
+    salesCutover: $('setCut').value || '', waIntro: $('setWaIntro').value.trim() === WA_DEF.intro ? '' : $('setWaIntro').value, waDone: $('setWaDone').value.trim() === WA_DEF.done ? '' : $('setWaDone').value }).then(function () {
     if (pin) { ME.pin = pin; LS.set('js_me', JSON.stringify(ME)); }
     DRAFT_TECHS = null; render(); toast('ບັນທຶກແລ້ວ ✓');
   });
@@ -1588,11 +1589,12 @@ function custStat(c) {
   var fj = fenceDoneOf(c.id), jobs = S.jobs.filter(function (j) { return j.customerId === c.id; });
   var withSrc = jobs.filter(function (j) { return j.source; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; })[0];
   // ວຽກອື່ນ (ດອກໄຟ…) ທີ່ສຳເລັດ: ປົກກະຕິມີບິນ Pancake ແລ້ວ → ນັບສະເພາະຕອນທີ່ຈັບຄູ່ບິນບໍ່ໄດ້ເລີຍ (ກັນນັບຊ້ຳ)
-  var lj = (c.okOrders || 0) ? [] : jobs.filter(function (j) { return j.status === 'done' && !/ຮົ້ວ/.test(j.type); });
+  var aos = liveOrders().filter(function (o) { return o.customerId === c.id; }), ordJobs = {}; aos.forEach(function (o) { if (o.jobId) ordJobs[o.jobId] = 1; }); // ບິນຂາຍໃນແອບ (ຫຼັງວັນຕັດຍອດ)
+  var lj = (c.okOrders || 0) ? [] : jobs.filter(function (j) { return j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !ordJobs[j.id]; });
   var done = fj.concat(lj);
-  var buys = (c.okOrders || 0) + done.length, spent = (c.amount || 0) + done.reduce(function (a, j) { return a + (j.price || 0); }, 0);
+  var buys = (c.okOrders || 0) + done.length + aos.length, spent = (c.amount || 0) + done.reduce(function (a, j) { return a + (j.price || 0); }, 0) + aos.reduce(function (a, o) { return a + o.total; }, 0);
   var first = [c.firstOrder, String(c.createdAt || '').slice(0, 10)].concat(jobs.map(function (j) { return String(j.createdAt || '').slice(0, 10); })).filter(Boolean).sort()[0] || '';
-  var last = [c.lastOrder].concat(done.map(function (j) { return j.date; })).filter(Boolean).sort().pop() || '';
+  var last = [c.lastOrder].concat(done.map(function (j) { return j.date; })).concat(aos.map(function (o) { return o.date; })).filter(Boolean).sort().pop() || '';
   return { buys: buys, spent: spent, closed: buys > 0, repeat: buys >= 2, src: c.source || (withSrc && withSrc.source) || NO_SRC, first: first, last: last, jobs: jobs };
 }
 // ລີດທີ່ຍັງບໍ່ເປັນລູກຄ້າ (ໂນດຕິດຕາມ ທີ່ເບີໂທບໍ່ກົງກັບລູກຄ້າໃດ)
@@ -1632,6 +1634,10 @@ function modelStats(per) {
     if (/^ຄ່າ/.test(s.name)) return; // ຄ່າຕິດຕັ້ງ/ຄ່າສົ່ງ ແມ່ນບໍລິການ ບໍ່ແມ່ນລຸ້ນສິນຄ້າ
     var k = s.vid || s.name, r = by[k] = by[k] || { name: s.name, qty: 0, amount: 0, orders: {} };
     r.qty += s.qty; r.amount += s.amount; r.orders[s.oid] = 1;
+  });
+  liveOrders().forEach(function (o) { // ບິນຂາຍໃນແອບ (ຫຼັງວັນຕັດຍອດ)
+    if (!periodOk(o.date, per)) return;
+    o.items.forEach(function (it) { if (/^ຄ່າ/.test(it.name)) return; var k = it.vid || it.name, r = by[k] = by[k] || { name: it.name, qty: 0, amount: 0, orders: {} }; r.qty += it.qty; r.amount += it.qty * it.price; r.orders[o.id] = 1; });
   });
   return Object.keys(by).map(function (k) { var r = by[k]; r.n = Object.keys(r.orders).length; return r; }).sort(function (a, b) { return b.qty - a.qty || b.amount - a.amount; });
 }
@@ -2704,6 +2710,10 @@ var ORD_ST = { draft: { l: 'ຮ່າງ', c: '#475467', bg: '#eaecf0' }, confir
 var PAY_M = ['ເງິນສົດ', 'ໂອນ', 'COD'];
 var MV_L = { open: 'ຍອດເປີດ', count: 'ນັບສະຕ໊ອກ', sale: 'ຂາຍ', void: 'ຍົກເລີກບິນ (ຄືນ)', purchase: 'ຮັບເຄື່ອງ', adjust: 'ປັບແກ້' };
 function orderById(id) { return (S.orders || []).filter(function (o) { return o.id === id; })[0]; }
+// ບິນທີ່ນັບເປັນຍອດຂາຍຈິງຂອງແອບ: ຢືນຢັນ/ສຳເລັດ ແລະ ວັນທີ ≥ ວັນຕັດຍອດ (ກ່ອນຕັດຍອດ Pancake ເປັນແຫຼ່ງ — ກັນນັບຊ້ຳຕອນແລ່ນຄູ່)
+function liveOrders() { var c = S.salesCutover; return !c ? [] : (S.orders || []).filter(function (o) { return (o.status === 'confirmed' || o.status === 'done') && o.date >= c; }); }
+function codOpen() { return (S.orders || []).filter(function (o) { return o.status === 'confirmed' && o.payMethod === 'COD' && ordDue(o) > 0; }); }
+function daysAgo(d) { return Math.max(0, Math.round((parseYmd(today()) - parseYmd(d)) / 86400000)); }
 function ordDue(o) { return o.status === 'cancelled' || o.status === 'draft' ? 0 : Math.max(0, o.total - o.paid); }
 function stockNow(p) { var a = (S.stockApp || {})[p.vid]; return a === undefined ? null : a; }
 function availOf(p) { var a = stockNow(p); return a === null ? p.stock : a; }
@@ -2723,6 +2733,11 @@ function printOrder(id) {
   printReceipt(orderAsReceipt(o), w);
 }
 
+// ເງິນທີ່ຮັບຕາມບິນ > ທີ່ວຽກບັນທຶກໄວ້ (ມັດຈຳ + ເກັບແລ້ວ) → ເພີ່ມເຂົ້າ «ເກັບໜ້າງານແລ້ວ» ຂອງວຽກ
+function syncJobPay(jid, paid) {
+  var j = jobById(jid); if (!j) return; var r = (j.deposit || 0) + (j.collected || 0), diff = Math.round(paid - r); if (diff <= 0) return;
+  call('api_recordPay', jid, diff).then(function (d) { apply(d); }).catch(function (e) { toast('⚠️ ບິນຖືກບັນທຶກແລ້ວ ແຕ່ອັບເດດຍອດເກັບຂອງວຽກບໍ່ໄດ້ — ກົດ ＋ ບັນທຶກເງິນທີ່ເກັບໄດ້ ໃນໜ້າວຽກ', true); });
+}
 function ordsOfJob(jid) {
   return (S.orders || []).filter(function (o) { return o.jobId === jid && o.status !== 'cancelled'; }).map(function (o) {
     var st = ORD_ST[o.status] || ORD_ST.draft;
@@ -2743,21 +2758,25 @@ function vOrders() {
   os.forEach(function (o) { if (live(o)) { if (o.date === t) dayT += o.total; if (o.date.slice(0, 7) === m) monT += o.total; due += ordDue(o); } if (o.status === 'draft') drafts++; });
   var f = UI.of || 'all', q = (UI.oq || '').toLowerCase();
   var list = os.filter(function (o) {
+    if (f === 'cod' && !(o.status === 'confirmed' && o.payMethod === 'COD' && ordDue(o) > 0)) return false;
     if (f === 'due' && !(ordDue(o) > 0)) return false;
     if (f !== 'all' && f !== 'due' && o.status !== f) return false;
     return !q || (o.customer + ' ' + o.phone + ' ' + o.no + ' ' + o.items.map(function (i) { return i.name; }).join(' ')).toLowerCase().indexOf(q) >= 0;
   });
   var h = '<button class="btn gold full" style="margin-bottom:10px" onclick="openOrderForm()">＋ ເປີດບິນຂາຍໃໝ່</button>';
   h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(short(dayT), 'ຂາຍມື້ນີ້', '') + dTile(short(monT), 'ຂາຍເດືອນນີ້', '') + dTile(short(due), 'ຄ້າງເກັບ', due ? 'amber' : '') + '</div>';
+  var cod = codOpen(), codSum = cod.reduce(function (a, o) { return a + ordDue(o); }, 0), codOld = cod.reduce(function (a, o) { return Math.max(a, daysAgo(o.date)); }, 0);
+  if (cod.length) h += '<div class="card" style="border-left:5px solid ' + (codOld > 7 ? '#dc2626' : '#d97706') + ';cursor:pointer" onclick="UI.of=\'cod\';render()"><b>🚚 COD ລໍຮັບເງິນຈາກຂົນສົ່ງ</b><div class="muted" style="margin-top:2px">' + cod.length + ' ບິນ · ' + money(codSum) + ' ກີບ · ເກົ່າສຸດ ' + codOld + ' ມື້' + (codOld > 7 ? ' · ⚠️ ຕາມເງິນຈາກຂົນສົ່ງ' : '') + '</div></div>';
+  h += S.salesCutover ? '<p class="muted" style="margin-bottom:6px">✓ ຍອດຂາຍແອບເຂົ້າສະໝຸດເງິນ/ລຸ້ນຂາຍດີ/ລູກຄ້າ ຕັ້ງແຕ່ ' + esc(S.salesCutover) + '</p>' : '<div class="card" style="background:var(--soft)"><b>🔄 ກຳລັງແລ່ນຄູ່ກັນກັບ Pancake</b><p class="muted" style="margin-top:2px">ບິນໃນແອບຍັງບໍ່ເຂົ້າສະໝຸດເງິນ / ລຸ້ນຂາຍດີ / ຍອດລູກຄ້າ (ກັນນັບຊ້ຳ) ຈົນກວ່າຈະຕັ້ງ <b>ວັນຕັດຍອດ</b> ໃນ ⚙️ ຕັ້ງຄ່າ</p></div>';
   h += '<input class="search" placeholder="🔎 ຊື່ / ເບີ / ເລກບິນ / ສິນຄ້າ" value="' + esc(UI.oq || '') + '" oninput="UI.oq=this.value;clearTimeout(window._oq);window._oq=setTimeout(function(){render();var e=document.querySelector(\'.search\');e.focus();e.setSelectionRange(e.value.length,e.value.length)},300)">';
-  h += '<div class="filters">' + [['all', 'ທັງໝົດ'], ['due', '💰 ຄ້າງເກັບ'], ['draft', 'ຮ່າງ' + (drafts ? ' (' + drafts + ')' : '')], ['confirmed', 'ລໍເກັບເງິນ'], ['done', 'ສຳເລັດ'], ['cancelled', 'ຍົກເລີກ']].map(function (o) {
+  h += '<div class="filters">' + [['all', 'ທັງໝົດ'], ['due', '💰 ຄ້າງເກັບ'], ['cod', '🚚 COD ລໍ'], ['draft', 'ຮ່າງ' + (drafts ? ' (' + drafts + ')' : '')], ['confirmed', 'ລໍເກັບເງິນ'], ['done', 'ສຳເລັດ'], ['cancelled', 'ຍົກເລີກ']].map(function (o) {
     return '<button class="fchip' + (f === o[0] ? ' on' : '') + '" onclick="UI.of=\'' + o[0] + '\';render()">' + o[1] + '</button>'; }).join('') + '</div>';
   if (!list.length) return h + '<div class="empty">ຍັງບໍ່ມີບິນ — ກົດ ＋ ເປີດບິນຂາຍໃໝ່</div>';
   return h + list.slice(0, 100).map(function (o) {
     var st = ORD_ST[o.status] || ORD_ST.draft, d = ordDue(o);
     return '<div class="job" style="--tc:' + st.c + '" onclick="openOrder(\'' + esc(o.id) + '\')"><div class="top"><span class="t">' + esc(rcNo(o)) + '</span><span class="muted">' + esc(o.date) + '</span><span class="sp"></span><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span></div>' +
       '<div class="nm">' + esc(o.customer) + '</div><div class="m">' + esc(o.items.map(function (i) { return i.name + ' ×' + i.qty; }).join(', ')) + '</div>' +
-      '<div style="display:flex;gap:8px;align-items:center;margin-top:3px"><b>' + money(o.total) + ' ກີບ</b><span class="badge" style="background:var(--soft);color:var(--muted)">' + esc(o.payMethod) + '</span>' + (d ? '<span class="due">ຄ້າງ ' + money(d) + '</span>' : '') + '</div></div>';
+      '<div style="display:flex;gap:8px;align-items:center;margin-top:3px"><b>' + money(o.total) + ' ກີບ</b><span class="badge" style="background:var(--soft);color:var(--muted)">' + esc(o.payMethod) + '</span>' + (d ? '<span class="due">ຄ້າງ ' + money(d) + '</span>' : '') + (o.status === 'confirmed' && o.payMethod === 'COD' && d ? '<span class="badge" style="background:' + (daysAgo(o.date) > 7 ? '#fee4e2;color:#b42318' : '#fdecc8;color:#a15c00') + '">COD ລໍ ' + daysAgo(o.date) + ' ມື້</span>' : '') + '</div></div>';
   }).join('') + (list.length > 100 ? '<p class="muted">ສະແດງ 100 ບິນລ່າສຸດ — ຄົ້ນຫາເພື່ອຊອກ</p>' : '');
 }
 
@@ -2768,7 +2787,7 @@ function openOrderFromJob(jobId) {
     var p = prodByVid(e.vid) || {}; return { vid: e.vid, name: p.name || e.t, variant: p.variant || '', qty: e.qty || 1, price: p.retail || 0, list: p.retail || 0 };
   });
   if (j.instFee > 0) items.push({ vid: '', name: 'ຄ່າຕິດຕັ້ງ' + (j.points ? ' ' + j.points + ' ຈຸດ' : ''), variant: '', qty: 1, price: j.instFee, list: 0 });
-  openOrderForm(null, { jobId: j.id, customer: j.customer, phone: j.phone, address: j.location, geo: j.geo, items: items, paid: j.deposit || 0 });
+  openOrderForm(null, { jobId: j.id, customer: j.customer, phone: j.phone, address: j.location, geo: j.geo, items: items, paid: items.reduce(function (a, it) { return a + it.qty * it.price; }, 0) }); // ເກັບເງິນໜ້າງານ = ຈ່າຍຄົບຕອນອອກບິນ (ແກ້ໄດ້)
 }
 function openOrderForm(id, pre) {
   ensureProducts(); if (!CRM) loadCRM();
@@ -2857,6 +2876,7 @@ function odSave(confirm) {
       discount: d.discount, shipFee: d.shipFee, paid: d.paid, items: d.items, confirm: !!confirm }).then(function (r) {
       var nid = d.id || ((r.orders || []).filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
       toast(confirm ? 'ຢືນຢັນບິນ ແລະ ຕັດສະຕ໊ອກແລ້ວ ✓' : 'ບັນທຶກຮ່າງແລ້ວ ✓'); if (CRM) loadCRM(true);
+      if (confirm && d.jobId) syncJobPay(d.jobId, d.paid); // ເງິນທີ່ຮັບໃນບິນ → ຍອດເກັບຂອງວຽກ (ວຽກບໍ່ຄ້າງຊ້ຳ)
       if (nid) openOrder(nid); else closeSheet();
     });
   };
@@ -2900,7 +2920,7 @@ function ordPay(id) {
   var o = orderById(id), d = ordDue(o);
   ask({ title: '💰 ຮັບເງິນຈັກກີບ?', msg: 'ຄ້າງ ' + money(d) + ' ກີບ', input: 'money', value: money(d), ok: 'ບັນທຶກ' }).then(function (v) {
     var n = Number(String(v || '').replace(/[^\d]/g, '')); if (!n) return;
-    act('api_payOrder', id, n).then(function () { toast('ບັນທຶກຮັບເງິນແລ້ວ ✓'); openOrder(id); });
+    act('api_payOrder', id, n).then(function () { toast('ບັນທຶກຮັບເງິນແລ້ວ ✓'); var o2 = orderById(id); if (o2 && o2.jobId) syncJobPay(o2.jobId, o2.paid); openOrder(id); });
   });
 }
 
@@ -3080,7 +3100,7 @@ var MOCK = (function () {
       owner: !!o, notes: notes, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
       receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
-      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
       techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
@@ -3152,6 +3172,7 @@ var MOCK = (function () {
       ['date', 'customer', 'phone', 'address', 'geo', 'payMethod', 'jobId', 'note'].forEach(function (k) { if (d[k] !== undefined) o[k] = String(d[k]).trim(); });
       ['discount', 'shipFee', 'paid'].forEach(function (k) { o[k] = Math.max(0, Math.round(Number(d[k]) || 0)); });
       if (!o.customer) throw new Error('ກະລຸນາໃສ່ຊື່ລູກຄ້າ');
+      var cu0 = (db.customers || []).filter(function (x) { return x.phone && x.phone === normPhone(o.phone); })[0]; if (cu0) o.customerId = cu0.id;
       o.items = (d.items || []).filter(function (it) { return it.name && it.qty > 0; }).map(function (it) { return { vid: it.vid || '', name: it.name, variant: it.variant || '', qty: Number(it.qty), price: Number(it.price) || 0, cost: 0 }; });
       if (!o.items.length) throw new Error('ກະລຸນາເລືອກສິນຄ້າຢ່າງໜ້ອຍ 1 ລາຍການ');
       ordTotal(o); if (o.paid > o.total) throw new Error('ຊຳລະແລ້ວຫຼາຍກວ່າຍອດບິນ');
@@ -3227,6 +3248,7 @@ var MOCK = (function () {
       need(c);
       if (o.types && o.types.length) db.types = o.types;
       if (o.reminders) db.reminders = o.reminders;
+      if (typeof o.salesCutover === 'string') db.salesCutover = o.salesCutover;
       if (typeof o.waIntro === 'string') db.waIntro = o.waIntro; if (typeof o.waDone === 'string') db.waDone = o.waDone;
       if (o.techs) db.techs = o.techs.map(function (t) { return { id: t.id || ('t' + Date.now() + Math.floor(Math.random() * 999)), name: t.name, phone: t.phone || '', email: t.email || '', active: t.active !== false }; });
       if (o.newPin) db.pin = String(o.newPin);
