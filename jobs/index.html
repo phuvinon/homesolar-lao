@@ -389,13 +389,17 @@ function mergeDelta(d) {
 }
 /* ສິນຄ້າ Pancake ໂຫຼດຢູ່ເບື້ອງຫຼັງ ຫຼັງເປີດແອບ (ບໍ່ໃຫ້ການເປີດແອບຊ້າ) */
 var PROD_LOADING = false;
+var PROD_ERR = '';
 function loadProducts() {
   if (PROD_LOADING) return; PROD_LOADING = true;
   call('api_getProducts').then(function (r) {
     PROD_LOADING = false; S.products = r.products || []; if (r.stockApp) S.stockApp = r.stockApp;
+    PROD_ERR = '';
     if (!$('sheet').classList.contains('on')) render();
     else if ($('fEqList') && typeof jobEqRender === 'function') jobEqRender();
-  }).catch(function () { PROD_LOADING = false; });
+    if ($('odResults') && UI.od) odSearch($('odSearch').value); // ຟອມບິນຂາຍເປີດຢູ່ ຕອນສິນຄ້າໂຫຼດສຳເລັດ → ສະແດງລາຍການທັນທີ
+    if ($('cntList')) cntRender();
+  }).catch(function (e) { PROD_LOADING = false; PROD_ERR = (e && e.message) || 'ໂຫຼດບໍ່ໄດ້'; if ($('odResults') && UI.od) odSearch($('odSearch').value); });
 }
 function act(fn) {
   var args = arguments; busy(true);
@@ -1563,7 +1567,7 @@ var CRM_ERR = '';
 function crmWait() { return CRM_ERR ? '<div class="empty">⚠️ ໂຫຼດຂໍ້ມູນລູກຄ້າບໍ່ໄດ້: ' + esc(CRM_ERR) + '<br><button class="btn ghost" style="margin-top:8px" onclick="CRM_ERR=\'\';loadCRM(true);render()">ລອງໃໝ່</button></div>' : '<div class="empty">ກຳລັງໂຫຼດຂໍ້ມູນລູກຄ້າ...</div>'; }
 function loadCRM(force) {
   if (CRM_LOADING || (CRM && !force)) return; CRM_LOADING = true;
-  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
+  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; if ($('odSug') && UI.od) odSuggest(); if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
     .catch(function (e) { CRM_LOADING = false; CRM_ERR = (e && e.message) || 'ໂຫຼດບໍ່ໄດ້'; if (UI.view === 'dash' || UI.view === 'cust') render(); });
 }
 function normPhone(p) { var d = String(p || '').replace(/\D/g, ''); if (d.indexOf('856') === 0 && d.length > 10) d = d.slice(3); return d.replace(/^0+/, ''); }
@@ -2798,7 +2802,7 @@ function openOrderForm(id, pre) {
   var d = UI.od, h = '<div class="shd"><b>' + (id ? '✏️ ແກ້ບິນຮ່າງ' : '🛒 ເປີດບິນຂາຍ') + '</b><button class="x" onclick="' + (id ? 'openOrder(\'' + esc(id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<div class="row"><div><label class="f">ເບີໂທ (ພິມແລ້ວດຶງລູກຄ້າເກົ່າໃຫ້)</label><input class="inp" id="odPhone" inputmode="tel" value="' + esc(d.phone) + '" oninput="odPhone(this.value)"></div>' +
     '<div><label class="f">ວັນທີ</label><input class="inp" type="date" value="' + esc(d.date) + '" onchange="UI.od.date=this.value"></div></div>';
-  h += '<label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="odName" value="' + esc(d.customer) + '" oninput="UI.od.customer=this.value">';
+  h += '<label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="odName" placeholder="ພິມຊື່ ຫຼື ເບີ ແລ້ວເລືອກລູກຄ້າເກົ່າໄດ້" value="' + esc(d.customer) + '" oninput="UI.od.customer=this.value;odSuggest()"><div id="odSug"></div>';
   h += '<label class="f">📍 ທີ່ຢູ່ສົ່ງ</label>' + geoPicker('odG', d.geo, d.address);
   h += '<label class="f">ເພີ່ມສິນຄ້າ (ແຄັດຕະລັອກ — ກົດເພື່ອເພີ່ມ ລາຄາຂຶ້ນອັດຕະໂນມັດ)</label><input class="inp" id="odSearch" placeholder="🔎 ພິມຊື່ ຫຼື ລະຫັດ ເຊັ່ນ 600w, solaro, ຕັ່ງ" oninput="odSearch(this.value)"><div id="odResults" style="max-height:220px;overflow-y:auto;margin-top:4px"></div>';
   h += '<div id="odItems" style="margin-top:10px"></div><button class="btn ghost full" style="margin-top:6px" onclick="UI.od.items.push({vid:\'\',name:\'\',variant:\'\',qty:1,price:0,list:0});odRender()">＋ ລາຍການອື່ນ (ບໍ່ຢູ່ໃນແຄັດຕະລັອກ ເຊັ່ນ ຄ່າຕິດຕັ້ງ)</button>';
@@ -2812,12 +2816,32 @@ function openOrderForm(id, pre) {
   h += '<p class="muted" style="margin-top:8px">ຢືນຢັນແລ້ວ ແກ້ລາຍການບໍ່ໄດ້ (ເພື່ອສະຕ໊ອກຖືກ) — ຖ້າຜິດໃຫ້ຍົກເລີກ (ສະຕ໊ອກຄືນເອງ) ແລ້ວເປີດບິນໃໝ່</p></div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
-  odRender(); odSearch('');
+  odRender(); odSearch(''); odSuggest();
 }
 function odPhone(v) {
-  UI.od.phone = v; var c = custByPhone(v); if (!c) return;
+  UI.od.phone = v; odSuggest(); var c = custByPhone(v); if (!c) return;
   if (!UI.od.customer.trim()) { UI.od.customer = c.name; $('odName').value = c.name; }
   if (!UI.od.address && c.address) geoPrefill('odG', c.geo, c.address);
+}
+// ຄົ້ນລູກຄ້າເກົ່າ (ຖານລູກຄ້າ Pancake+ແອບ + ລູກຄ້າຈາກວຽກ) ຕາມເບີ ຫຼື ຊື່ ທີ່ກຳລັງພິມ → ກົດເລືອກ ຂໍ້ມູນຂຶ້ນອັດຕະໂນມັດ
+function odSuggest() {
+  var box = $('odSug'); if (!box || !UI.od) return;
+  var qn = String(UI.od.customer || '').trim().toLowerCase(), qp = normPhone(UI.od.phone), src = [], seen = {};
+  (CRM ? CRM.customers : []).forEach(function (c) { seen[c.phone] = 1; src.push({ name: c.name, phone: c.phone, address: c.address, geo: c.geo }); });
+  (S.jobs || []).forEach(function (j) { var p = normPhone(j.phone); if (p && !seen[p]) { seen[p] = 1; src.push({ name: j.customer, phone: p, address: j.location, geo: j.geo }); } });
+  var list = (qp.length >= 3 || qn.length >= 2) ? src.filter(function (x) { return (qp.length >= 3 && String(x.phone).indexOf(qp) >= 0) || (qn.length >= 2 && String(x.name).toLowerCase().indexOf(qn) >= 0); }) : [];
+  list = list.filter(function (x) { return !(x.name === UI.od.customer && x.phone === qp); }).slice(0, 6);
+  UI.od.sug = list;
+  box.innerHTML = list.length ? '<div class="card" style="padding:4px 8px;margin:6px 0"><div class="muted" style="font-size:12px">👥 ລູກຄ້າເກົ່າ — ກົດເລືອກ</div>' + list.map(function (x, i) {
+    return '<div class="eq" onclick="odPick(' + i + ')"><span style="flex:1;min-width:0"><b>' + esc(x.name || '(ບໍ່ມີຊື່)') + '</b><br><span class="muted">📞 ' + (x.phone ? '0' + esc(x.phone) : '—') + (x.address ? ' · 📍 ' + esc(x.address) : '') + '</span></span><span class="badge" style="background:#0A1322;color:#fff">ເລືອກ</span></div>'; }).join('') + '</div>'
+    : (!CRM && (qp.length >= 3 || qn.length >= 2) ? '<div class="muted" style="font-size:12px">ກຳລັງໂຫຼດຖານລູກຄ້າ...</div>' : '');
+}
+function odPick(i) {
+  var x = (UI.od.sug || [])[i]; if (!x) return;
+  UI.od.customer = x.name || ''; UI.od.phone = x.phone ? '0' + x.phone : '';
+  $('odName').value = UI.od.customer; $('odPhone').value = UI.od.phone;
+  UI['geo_odG'] = { vid: x.geo || '', full: x.address || '' }; loadGeo(function () { geoRender('odG'); });
+  UI.od.sug = []; $('odSug').innerHTML = '';
 }
 function odPaidAll() { var k = odCalc(); UI.od.paid = k.total; $('odPaid').value = money(k.total); odTotals(); }
 function odCalc() {
@@ -2828,11 +2852,22 @@ function odCalc() {
 function odSearch(q) {
   q = String(q || '').toLowerCase().trim();
   var inO = {}; UI.od.items.forEach(function (it) { if (it.vid) inO[it.vid] = 1; });
-  var ps = (S.products || []).filter(function (p) { return !q || (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.category).toLowerCase().indexOf(q) >= 0; });
-  $('odResults').innerHTML = ps.slice(0, 50).map(function (p) {
-    return '<div class="eq" onclick="odAdd(\'' + esc(p.vid) + '\')" style="' + (inO[p.vid] ? 'opacity:.5' : '') + '"><span style="flex:1;min-width:0">' + esc(prodLabel(p)) +
-      '<div class="muted" style="font-size:12px">' + esc(p.sku) + ' · ສະຕ໊ອກ ' + stockBadge(p) + '</div></span><b style="white-space:nowrap">' + money(p.retail) + '</b><span class="badge" style="background:#0A1322;color:#fff">' + (inO[p.vid] ? '✓' : '＋') + '</span></div>';
-  }).join('') + (!ps.length ? '<div class="muted" style="padding:6px">' + ((S.products || []).length ? 'ບໍ່ພົບ' : 'ກຳລັງໂຫຼດສິນຄ້າ...') + '</div>' : '');
+  var all = S.products || [], cats = [];
+  all.forEach(function (p) { String(p.category || '').split(',').forEach(function (c) { c = c.trim(); if (c && cats.indexOf(c) < 0) cats.push(c); }); });
+  var cat = UI.odCat || '';
+  var ps = all.filter(function (p) { return (!q || (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.category).toLowerCase().indexOf(q) >= 0) && (!cat || String(p.category).indexOf(cat) >= 0); });
+  var chips = cats.length > 1 ? '<div class="filters" style="margin:0 0 4px">' + [''].concat(cats).map(function (c) { return '<button class="fchip' + (cat === c ? ' on' : '') + '" onclick="UI.odCat=\'' + esc(c).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\';odSearch($(\'odSearch\').value)">' + (c ? esc(c) : 'ທັງໝົດ') + '</button>'; }).join('') + '</div>' : '';
+  $('odResults').innerHTML = chips + ps.slice(0, 60).map(function (p) {
+    return '<div class="eq" onclick="odToggle(\'' + esc(p.vid) + '\')"><span style="font-size:20px">' + (inO[p.vid] ? '☑️' : '⬜') + '</span><span style="flex:1;min-width:0">' + esc(prodLabel(p)) +
+      '<div class="muted" style="font-size:12px">' + esc(p.sku) + ' · ສະຕ໊ອກ ' + stockBadge(p) + '</div></span><b style="white-space:nowrap">' + money(p.retail) + '</b></div>';
+  }).join('') + (!ps.length ? (PROD_ERR ? '<div class="muted" style="padding:6px;color:#dc2626">⚠️ ໂຫຼດສິນຄ້າບໍ່ໄດ້: ' + esc(PROD_ERR) + ' <a href="javascript:void 0" onclick="PROD_ERR=\'\';loadProducts();odSearch(\'\')">ລອງໃໝ່</a></div>'
+    : '<div class="muted" style="padding:6px">' + (all.length ? 'ບໍ່ພົບ' : 'ກຳລັງໂຫຼດສິນຄ້າ...') + '</div>') : '');
+}
+// ຕິກ = ເພີ່ມ (ລາຄາແຄັດຕະລັອກຂຶ້ນອັດຕະໂນມັດ) · ຕິກອີກຄັ້ງ = ເອົາອອກ
+function odToggle(vid) {
+  var i = -1; UI.od.items.forEach(function (it, k) { if (it.vid === vid) i = k; });
+  if (i >= 0) UI.od.items.splice(i, 1); else odAdd(vid);
+  odRender(); odSearch($('odSearch').value);
 }
 function odAdd(vid) {
   var p = prodByVid(vid); if (!p) return;
