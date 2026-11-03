@@ -2801,6 +2801,7 @@ function openOrderForm(id, pre) {
   UI.od = { id: id || '', date: src.date || today(), customer: src.customer || '', phone: src.phone || '', address: src.address || '', geo: src.geo || '', payMethod: src.payMethod || PAY_M[0],
     jobId: src.jobId || '', note: src.note || '', discount: src.discount || 0, shipFee: src.shipFee || 0, paid: src.paid || 0,
     items: (src.items || []).map(function (it) { var p = prodByVid(it.vid); return { vid: it.vid || '', name: it.name, variant: it.variant || '', qty: it.qty, price: it.price, list: it.list != null ? it.list : (p ? p.retail : 0) }; }) };
+  UI.od.paidAuto = !id && !!(src.paid > 0); // ເປີດຈາກວຽກ (ເກັບເງິນໜ້າງານ): ຮັບເງິນຄົບ ຕາມຍອດບິນ
   var d = UI.od, h = '<div class="shd"><b>' + (id ? '✏️ ແກ້ບິນຮ່າງ' : '🛒 ເປີດບິນຂາຍ') + '</b><button class="x" onclick="' + (id ? 'openOrder(\'' + esc(id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<div class="row"><div><label class="f">ເບີໂທ (ພິມແລ້ວດຶງລູກຄ້າເກົ່າໃຫ້)</label><input class="inp" id="odPhone" inputmode="tel" value="' + esc(d.phone) + '" oninput="odPhone(this.value)"></div>' +
     '<div><label class="f">ວັນທີ</label><input class="inp" type="date" value="' + esc(d.date) + '" onchange="UI.od.date=this.value"></div></div>';
@@ -2811,7 +2812,7 @@ function openOrderForm(id, pre) {
   h += '<div class="row"><div><label class="f">ສ່ວນຫຼຸດ (ກີບ)</label><input class="inp" inputmode="numeric" value="' + (d.discount ? money(d.discount) : '') + '" oninput="fmtNum(this);UI.od.discount=Number(this.value.replace(/[^\\d]/g,\'\'))||0;odTotals()"></div>' +
     '<div><label class="f">ຄ່າຂົນສົ່ງ (ກີບ)</label><input class="inp" inputmode="numeric" value="' + (d.shipFee ? money(d.shipFee) : '') + '" oninput="fmtNum(this);UI.od.shipFee=Number(this.value.replace(/[^\\d]/g,\'\'))||0;odTotals()"></div></div>';
   h += '<label class="f">ຊຳລະແບບ</label><div class="tpick">' + PAY_M.map(function (m) { return '<label><input type="radio" name="odPay" ' + (d.payMethod === m ? 'checked' : '') + ' onchange="UI.od.payMethod=\'' + m + '\'"> ' + m + '</label>'; }).join('') + '</div>';
-  h += '<label class="f">ຮັບເງິນແລ້ວ (ກີບ) <a href="javascript:void 0" onclick="odPaidAll()" style="margin-left:6px">ຄົບຍອດ</a></label><input class="inp" id="odPaid" inputmode="numeric" value="' + (d.paid ? money(d.paid) : '') + '" oninput="fmtNum(this);UI.od.paid=Number(this.value.replace(/[^\\d]/g,\'\'))||0;odTotals()">';
+  h += '<label class="f">ຮັບເງິນແລ້ວ (ກີບ) <a href="javascript:void 0" onclick="odPaidAll()" style="margin-left:6px">ຄົບຍອດ</a></label><input class="inp" id="odPaid" inputmode="numeric" value="' + (d.paid ? money(d.paid) : '') + '" oninput="fmtNum(this);UI.od.paidAuto=false;UI.od.paid=Number(this.value.replace(/[^\\d]/g,\'\'))||0;odTotals()">';
   h += '<label class="f">ໝາຍເຫດ (ຂຶ້ນໃນບິນ)</label><input class="inp" value="' + esc(d.note) + '" oninput="UI.od.note=this.value">';
   h += '<div id="odTotal" class="card" style="margin-top:12px;background:#0A1322;color:#fff;border:0"></div>';
   h += '<div class="btns"><button class="btn ghost" onclick="odSave(false)">💾 ບັນທຶກຮ່າງ</button><button class="btn gold" onclick="odSave(true)">✅ ຢືນຢັນ + ຕັດສະຕ໊ອກ</button></div>';
@@ -2905,7 +2906,7 @@ function cpPick(i) {
   UI['geo_odG'] = { vid: x.geo || '', full: x.address || '' }; loadGeo(function () { geoRender('odG'); });
   odSuggest();
 }
-function odPaidAll() { var k = odCalc(); UI.od.paid = k.total; $('odPaid').value = money(k.total); odTotals(); }
+function odPaidAll() { UI.od.paidAuto = true; var k = odCalc(); UI.od.paid = k.total; $('odPaid').value = money(k.total); odTotals(); }
 function odCalc() {
   var d = UI.od, sub = d.items.reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0);
   var total = Math.max(0, sub - (d.discount || 0) + (d.shipFee || 0));
@@ -2955,6 +2956,7 @@ function odRender() {
 }
 function odTotals() {
   var k = odCalc(), el = $('odTotal'); if (!el) return;
+  if (UI.od.paidAuto) { UI.od.paid = k.total; var pe = $('odPaid'); if (pe) pe.value = k.total ? money(k.total) : ''; k = odCalc(); } // «ຮັບເງິນຄົບ» ຕາມຍອດບິນ ເວລາປ່ຽນສ່ວນຫຼຸດ/ລາຍການ
   el.innerHTML = '<div class="info" style="grid-template-columns:1fr auto;font-size:14px"><span>ລວມສິນຄ້າ</span><b>' + money(k.sub) + '</b>' +
     (UI.od.discount ? '<span>ສ່ວນຫຼຸດ</span><b>-' + money(UI.od.discount) + '</b>' : '') + (UI.od.shipFee ? '<span>ຄ່າຂົນສົ່ງ</span><b>+' + money(UI.od.shipFee) + '</b>' : '') +
     '<span style="font-size:17px;color:#F6C453"><b>ລວມທັງໝົດ</b></span><b style="font-size:17px;color:#F6C453">' + money(k.total) + ' ກີບ</b>' +
@@ -2965,7 +2967,7 @@ function odSave(confirm) {
   d.address = g.text; d.geo = g.geo;
   if (!d.customer.trim()) return toast('ກະລຸນາໃສ່ຊື່ລູກຄ້າ', true);
   if (!d.items.some(function (it) { return it.qty > 0 && String(it.name).trim(); })) return toast('ກະລຸນາເລືອກສິນຄ້າ', true);
-  var k = odCalc(); if (d.paid > k.total) return toast('ຮັບເງິນແລ້ວ ຫຼາຍກວ່າຍອດບິນ', true);
+  var k = odCalc(); if (d.paid > k.total) { d.paid = k.total; toast('ປັບ «ຮັບເງິນແລ້ວ» ໃຫ້ເທົ່າຍອດບິນ ' + money(k.total)); }
   var short = d.items.filter(function (it) { var p = it.vid ? prodByVid(it.vid) : null; return p && it.qty > availOf(p); }).map(function (it) { return it.name; });
   var go = function () {
     var before = (S.orders || []).map(function (x) { return x.id; });
@@ -2975,7 +2977,7 @@ function odSave(confirm) {
       toast(confirm ? 'ຢືນຢັນບິນ ແລະ ຕັດສະຕ໊ອກແລ້ວ ✓' : 'ບັນທຶກຮ່າງແລ້ວ ✓'); if (CRM) loadCRM(true);
       if (confirm && d.jobId) syncJobPay(d.jobId, d.paid); // ເງິນທີ່ຮັບໃນບິນ → ຍອດເກັບຂອງວຽກ (ວຽກບໍ່ຄ້າງຊ້ຳ)
       if (nid) openOrder(nid); else closeSheet();
-    });
+    }).catch(function (e) { ask({ title: '⚠️ ອອກບິນບໍ່ສຳເລັດ', msg: (e && e.message) || String(e), ok: 'ຮັບຊາບ' }); }); // ຂໍ້ຄວາມຜິດພາດຢູ່ຕິດໜ້າຈໍ (ບໍ່ຫາຍໄວ)
   };
   if (confirm && short.length) ask({ title: '⚠️ ສະຕ໊ອກບໍ່ພໍ', msg: short.join(', ') + '\nຢືນຢັນຕໍ່ ສະຕ໊ອກຈະຕິດລົບ — ກວດນັບສະຕ໊ອກຈິງພາຍຫຼັງ', ok: 'ຢືນຢັນຕໍ່' }).then(function (y) { if (y) go(); });
   else go();
