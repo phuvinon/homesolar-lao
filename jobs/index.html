@@ -2794,7 +2794,7 @@ function syncJobCost(jid, extraItems) {
     ops.push({ add: { cat: '🧱 ວັດສະດຸ/ເຄື່ອງ', name: name, amount: amount, date: j.date || today() } }); added++; total += amount;
   });
   Object.keys(have).forEach(function (k) { have[k].forEach(function (e) { ops.push({ del: e.id }); }); }); // ເອົາສິນຄ້າອອກຈາກວຽກ → ລຶບແຖວຕົ້ນທຶນ
-  if (zero.length) toast('⚠️ ບໍ່ມີທຶນ: ' + zero.join(', ') + ' — ໃສ່ທຶນໃນ Pancake ຫຼື ເພີ່ມລາຍຈ່າຍເອງ', true);
+  if (zero.length) toast('⚠️ ບໍ່ມີທຶນ: ' + zero.join(', ') + ' — ໃສ່ທຶນທີ່ ຂາຍ → ສະຕ໊ອກ → 💲 ແກ້ຕົ້ນທຶນສິນຄ້າ ຫຼື ເພີ່ມລາຍຈ່າຍເອງ', true);
   if (!ops.length) return Promise.resolve();
   var go = function () {
     COST_LOCK[jid] = true; var last = null;
@@ -3357,7 +3357,7 @@ function vStock() {
     if (f === 'diff' && !(a !== null && a !== p.stock)) return false;
     return !q || (p.name + ' ' + p.variant + ' ' + p.sku).toLowerCase().indexOf(q) >= 0;
   }).sort(function (a, b) { return availOf(a) - availOf(b); });
-  var h = '<button class="btn gold full" style="margin-bottom:10px" onclick="openStockCount()">📋 ນັບສະຕ໊ອກ' + (notCounted === ps.length && ps.length ? ' / ຕັ້ງຍອດເປີດ' : '') + '</button>';
+  var h = '<button class="btn gold full" style="margin-bottom:8px" onclick="openStockCount()">📋 ນັບສະຕ໊ອກ' + (notCounted === ps.length && ps.length ? ' / ຕັ້ງຍອດເປີດ' : '') + '</button><button class="btn ghost full" style="margin-bottom:10px" onclick="openCostEditor()">💲 ແກ້ຕົ້ນທຶນສິນຄ້າ</button>';
   if (ps.length && notCounted === ps.length) h += '<div class="card" style="background:var(--soft)"><b>ຍັງບໍ່ໄດ້ຕັ້ງຍອດເປີດ</b><p class="muted" style="margin-top:4px">ນັບສະຕ໊ອກຈິງແລ້ວພິມຈຳນວນ — ແອບຈະເລີ່ມຕັດ/ເພີ່ມສະຕ໊ອກຈາກຍອດນັ້ນ. ກ່ອນນັ້ນສະແດງຍອດ Pancake ເປັນຕົວອ້າງອີງ (ບໍ່ຖືກຕັດໂດຍບິນໃນແອບ).</p></div>';
   h += '<input class="search" placeholder="🔎 ຄົ້ນຫາສິນຄ້າ" value="' + esc(UI.sq || '') + '" oninput="UI.sq=this.value;clearTimeout(window._sq);window._sq=setTimeout(function(){render();var e=document.querySelector(\'.search\');e.focus();e.setSelectionRange(e.value.length,e.value.length)},300)">';
   h += '<div class="filters">' + [['all', 'ທັງໝົດ'], ['low', '⚠️ ໃກ້ໝົດ'], ['nc', 'ຍັງບໍ່ນັບ (' + notCounted + ')'], ['diff', 'ບໍ່ກົງ Pancake']].map(function (o) {
@@ -3368,10 +3368,66 @@ function vStock() {
     var a = stockNow(p), diff = a !== null && a !== p.stock;
     return '<div class="job" style="--tc:' + (availOf(p) <= LOW_STOCK ? '#dc2626' : a === null ? '#94a3b8' : '#12a150') + '" onclick="openStockHist(\'' + esc(p.vid) + '\')"><div class="top"><span class="t">' + esc(p.sku) + '</span><span class="sp"></span>' +
       (diff ? '<span class="badge" style="background:#fff4dc;color:#8a5a00">Pancake ' + p.stock + '</span>' : '') + '</div><div class="nm">' + esc(prodLabel(p)) + '</div>' +
-      '<div class="m">ສະຕ໊ອກ ' + stockBadge(p) + ' · ຂາຍ ' + money(p.retail) + ' · ທຶນ ' + money(p.cost) + '</div></div>';
+      '<div class="m">ສະຕ໊ອກ ' + stockBadge(p) + ' · ຂາຍ ' + money(p.retail) + ' · ທຶນ ' + money(p.cost) + (p.costManual ? ' <span class="muted" style="font-size:11px">(ແກ້ເອງ)</span>' : '') + '</div></div>';
   }).join('');
 }
-function openStockCount() {
+/* ---------- 💲 ຕົ້ນທຶນສິນຄ້າ (ແອບເກັບເອງ — ບໍ່ເຊື່ອທຶນຂອງ Pancake) ---------- */
+function openCostEditor() {
+  ensureProducts(); UI.ce = {};
+  var h = '<div class="shd"><b>💲 ຕົ້ນທຶນສິນຄ້າ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
+    '<p class="muted" style="margin-bottom:8px">ໃສ່ຕົ້ນທຶນຕໍ່ໜ່ວຍທີ່ຖືກຕ້ອງ (ກີບ). ໃຊ້ໃນ ລາຍຈ່າຍວຽກ ແລະ ກຳໄລບິນ. ຊ່ອງທີ່ບໍ່ແຕະ = ບໍ່ປ່ຽນ. ລຶບເປັນວ່າງ = ກັບໄປໃຊ້ທຶນຈາກ Pancake.</p>' +
+    '<input class="inp" id="ceQ" placeholder="🔎 ຄົ້ນຫາ" oninput="ceRender()"><div id="ceList" style="margin-top:6px"></div>' +
+    '<div class="btns"><button class="btn ghost" onclick="closeSheet()">ຍົກເລີກ</button><button class="btn gold" onclick="ceSave()">💾 ບັນທຶກຕົ້ນທຶນ</button></div></div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0; ceRender();
+}
+function ceRender() {
+  var q = ($('ceQ').value || '').toLowerCase();
+  $('ceList').innerHTML = (S.products || []).filter(function (p) { return !q || (p.name + ' ' + p.variant + ' ' + p.sku).toLowerCase().indexOf(q) >= 0; }).map(function (p) {
+    var cur = UI.ce[p.vid] != null ? UI.ce[p.vid] : (p.cost ? money(p.cost) : '');
+    return '<div class="eq" style="cursor:default"><span style="flex:1;min-width:0;font-size:14px">' + esc(prodLabel(p)) +
+      '<div class="muted" style="font-size:12px">ຂາຍ ' + money(p.retail) + ' · ' + (p.costManual ? '✎ ແກ້ເອງ (Pancake ' + money(p.costPancake) + ')' : 'ທຶນຈາກ Pancake') + '</div></span>' +
+      '<input class="inp" style="width:120px;text-align:right" inputmode="numeric" value="' + esc(cur) + '" oninput="fmtNum(this);UI.ce[\'' + esc(p.vid) + '\']=this.value"></div>';
+  }).join('');
+}
+function ceSave() {
+  var map = {}, ps = S.products || [];
+  Object.keys(UI.ce).forEach(function (vid) {
+    var p = prodByVid(vid), v = Number(String(UI.ce[vid]).replace(/[^\d]/g, '')) || 0;
+    if (p && v !== (p.cost || 0)) map[vid] = v;
+  });
+  if (!Object.keys(map).length) return toast('ບໍ່ມີຕົ້ນທຶນທີ່ປ່ຽນ', true);
+  var old = {}; ps.forEach(function (p) { old[p.vid] = p.cost; });
+  act('api_setCosts', map).then(function () { closeSheet(); render(); recostExpenses(Object.keys(map)); });
+}
+function costOne(vid) {
+  var p = prodByVid(vid); if (!p) return;
+  ask({ title: '💲 ຕົ້ນທຶນ ' + prodLabel(p), msg: 'ໃສ່ຕົ້ນທຶນຕໍ່ໜ່ວຍ (ກີບ) · ວ່າງ = ໃຊ້ທຶນຈາກ Pancake', input: 'money', value: p.cost ? money(p.cost) : '', ok: 'ບັນທຶກ' }).then(function (v) {
+    if (v === null || v === undefined) return;
+    var n = Number(String(v).replace(/[^\d]/g, '')) || 0, m = {}; m[vid] = n;
+    act('api_setCosts', m).then(function () { openStockHist(vid); recostExpenses([vid]); });
+  });
+}
+// ປັບແຖວ «⚙️ ຕົ້ນທຶນ» ທີ່ບັນທຶກໄວ້ໃນລາຍຈ່າຍວຽກເກົ່າ ໃຫ້ຕາມຕົ້ນທຶນໃໝ່ (ປ່ຽນສະເພາະຍອດເງິນ — ບໍ່ແຕະລາຍການອື່ນ)
+function recostExpenses(vids) {
+  var key = {}; vids.forEach(function (v) { key[v.slice(0, 8)] = v; });
+  var ops = [];
+  (S.jobs || []).forEach(function (j) {
+    (j.expenses || []).forEach(function (e) {
+      var m = AUTO_RX.exec(e.name || ''); if (!m || !key[m[3]]) return;
+      var p = prodByVid(key[m[3]]); if (!p) return;
+      var uc = unitCost(p), q = Number(m[2]); if (!(uc.v > 0) || !q) return;
+      var amount = uc.v * q; if (Number(e.amount) === amount) return;
+      ops.push({ jid: j.id, del: e.id, add: { cat: e.cat || '🧱 ວັດສະດຸ/ເຄື່ອງ', name: '⚙️ ຕົ້ນທຶນ: ' + prodLabel(p) + (uc.est ? ' ~75%' : '') + ' ×' + q + ' [' + m[3] + ']', amount: amount, date: e.date || j.date || today() } });
+    });
+  });
+  if (!ops.length) return;
+  var last = null;
+  ops.reduce(function (pr, op) {
+    return pr.then(function () { return call('api_delExpense', op.jid, op.del); }).then(function () { return call('api_addExpense', op.jid, op.add); }).then(function (d) { last = d; });
+  }, Promise.resolve()).then(function () { if (last) apply(last); toast('💸 ປັບຍອດຕົ້ນທຶນໃນລາຍຈ່າຍວຽກເກົ່າ ' + ops.length + ' ແຖວ ✓'); })
+    .catch(function (e) { toast('⚠️ ປັບລາຍຈ່າຍວຽກເກົ່າບໍ່ສຳເລັດ: ' + ((e && e.message) || e), true); });
+}function openStockCount() {
   ensureProducts(); UI.cnt = UI.cnt || {};
   var h = '<div class="shd"><b>📋 ນັບສະຕ໊ອກ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
   h += '<p class="muted" style="margin-bottom:8px">ພິມຈຳນວນທີ່ນັບໄດ້ຈິງ (ຊ່ອງທີ່ວ່າງ = ບໍ່ປ່ຽນ) · ຄັ້ງທຳອິດ = ຍອດເປີດ · ຄັ້ງຕໍ່ໄປ = ແອບຄຳນວນສ່ວນຕ່າງໃຫ້ ແລະ ເກັບປະຫວັດ</p>';
@@ -3401,7 +3457,7 @@ function openStockHist(vid) {
   var p = prodByVid(vid); if (!p) return;
   var h = '<div class="shd"><b>📦 ' + esc(prodLabel(p)) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">' +
     '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(stockNow(p) === null ? '—' : stockNow(p), 'ສະຕ໊ອກແອບ', stockNow(p) === null ? 'amber' : '') + dTile(p.stock, 'Pancake', 'blue') + dTile(short(p.retail), 'ລາຄາຂາຍ', '') + '</div>' +
-    '<div class="btns"><button class="btn ghost" onclick="stockAdjust(\'' + esc(vid) + '\')">± ປັບແກ້ (ເສຍ/ແຖມ/ຜິດ)</button></div><div class="card" id="mvBox"><h3>ປະຫວັດເຄື່ອນໄຫວ</h3><div class="muted">ກຳລັງໂຫຼດ...</div></div></div>';
+    '<div class="btns"><button class="btn ghost" onclick="stockAdjust(\'' + esc(vid) + '\')">± ປັບແກ້ (ເສຍ/ແຖມ/ຜິດ)</button><button class="btn ghost" onclick="costOne(\'' + esc(vid) + '\')">💲 ທຶນ ' + money(p.cost) + '</button></div><div class="card" id="mvBox"><h3>ປະຫວັດເຄື່ອນໄຫວ</h3><div class="muted">ກຳລັງໂຫຼດ...</div></div></div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
   call('api_getMoves', vid).then(function (r) {
@@ -3637,6 +3693,7 @@ var MOCK = (function () {
       (counts || []).forEach(function (x) { var q = Math.round(Number(x.qty)); if (isNaN(q) || q < 0) return; var dl = q - (cur[x.vid] || 0); if (x.vid in init && dl === 0) return; mvAdd(x.vid, dl, x.vid in init ? 'count' : 'open', '', note || (x.vid in init ? 'ນັບສະຕ໊ອກ' : 'ຍອດເປີດ'), c); n++; });
       if (!n) throw new Error('ບໍ່ມີຍອດທີ່ປ່ຽນ'); return all(c);
     },
+    api_setCosts: function (c, map) { need(c); Object.keys(map || {}).forEach(function (vid) { var p = db.products.filter(function (x) { return x.vid === vid; })[0]; if (!p) return; var v = Math.round(Number(map[vid]) || 0); if (v > 0) { if (!p.costManual) p.costPancake = p.cost; p.cost = v; p.costManual = true; } else if (p.costManual) { p.cost = p.costPancake; delete p.costManual; } }); return all(c); },
     api_stockAdjust: function (c, vid, q, note) { need(c); if (!(vid in stockAppMap())) throw new Error('ສິນຄ້ານີ້ຍັງບໍ່ໄດ້ຕັ້ງຍອດເປີດ'); mvAdd(vid, Math.round(q), 'adjust', '', note, c); return all(c); },
     api_getMoves: function (c, vid) { need(c); ordInit(); return JSON.stringify({ moves: db.moves.filter(function (m) { return m.vid === vid; }).slice(-80).reverse() }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
