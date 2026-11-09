@@ -1581,7 +1581,7 @@ var CRM_ERR = '';
 function crmWait() { return CRM_ERR ? '<div class="empty">⚠️ ໂຫຼດຂໍ້ມູນລູກຄ້າບໍ່ໄດ້: ' + esc(CRM_ERR) + '<br><button class="btn ghost" style="margin-top:8px" onclick="CRM_ERR=\'\';loadCRM(true);render()">ລອງໃໝ່</button></div>' : '<div class="empty">ກຳລັງໂຫຼດຂໍ້ມູນລູກຄ້າ...</div>'; }
 function loadCRM(force) {
   if (CRM_LOADING || (CRM && !force)) return; CRM_LOADING = true;
-  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; CRM_ERR = ''; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if ($('fCustSug')) cfSuggest('job'); if ($('nCustSug')) cfSuggest('note'); if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust')) render(); })
+  call('api_getCRM').then(function (r) { CRM_LOADING = false; CRM = r; CRM_ERR = ''; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if ($('fCustSug')) cfSuggest('job'); if ($('nCustSug')) cfSuggest('note'); if (!$('sheet').classList.contains('on') && (UI.view === 'dash' || UI.view === 'cust' || UI.view === 'sales')) render(); })
     .catch(function (e) { CRM_LOADING = false; CRM_ERR = (e && e.message) || 'ໂຫຼດບໍ່ໄດ້'; if ($('cpList')) cpRender(); if ($('odSug') && UI.od) odSuggest(); if (UI.view === 'dash' || UI.view === 'cust') render(); });
 }
 function normPhone(p) { var d = String(p || '').replace(/\D/g, ''); if (d.indexOf('856') === 0 && d.length > 10) d = d.slice(3); return d.replace(/^0+/, ''); }
@@ -2825,8 +2825,8 @@ function ordsOfJob(jid) {
 function vSales() {
   ensureProducts();
   var tab = UI.salesTab || 'orders';
-  var h = '<div class="seg"><button class="' + (tab === 'orders' ? 'on' : '') + '" onclick="UI.salesTab=\'orders\';render()">🛒 ບິນຂາຍ</button><button class="' + (tab === 'stock' ? 'on' : '') + '" onclick="UI.salesTab=\'stock\';render()">📦 ສະຕ໊ອກ</button>' + (Array.isArray(S.claims) ? '<button class="' + (tab === 'claims' ? 'on' : '') + '" onclick="UI.salesTab=\'claims\';render()">🛡️ ຮັບປະກັນ' + (function () { var n = S.claims.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length; return n ? ' (' + n + ')' : ''; })() + '</button>' : '') + '</div>';
-  return h + (tab === 'stock' ? vStock() : tab === 'claims' && Array.isArray(S.claims) ? vClaims() : vOrders());
+  var h = '<div class="seg"><button class="' + (tab === 'orders' ? 'on' : '') + '" onclick="UI.salesTab=\'orders\';render()">🛒 ບິນຂາຍ</button><button class="' + (tab === 'stock' ? 'on' : '') + '" onclick="UI.salesTab=\'stock\';render()">📦 ສະຕ໊ອກ</button><button class="' + (tab === 'cmp' ? 'on' : '') + '" onclick="UI.salesTab=\'cmp\';render()">⚖️ ປຽບທຽບ</button>' + (Array.isArray(S.claims) ? '<button class="' + (tab === 'claims' ? 'on' : '') + '" onclick="UI.salesTab=\'claims\';render()">🛡️ ຮັບປະກັນ' + (function () { var n = S.claims.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length; return n ? ' (' + n + ')' : ''; })() + '</button>' : '') + '</div>';
+  return h + (tab === 'cmp' ? vCompare() : tab === 'stock' ? vStock() : tab === 'claims' && Array.isArray(S.claims) ? vClaims() : vOrders());
 }
 function vOrders() {
   var os = (S.orders || []).slice().sort(function (a, b) { return a.date === b.date ? b.no - a.no : (a.date < b.date ? 1 : -1); });
@@ -3427,6 +3427,82 @@ function recostExpenses(vids) {
     return pr.then(function () { return call('api_delExpense', op.jid, op.del); }).then(function () { return call('api_addExpense', op.jid, op.add); }).then(function (d) { last = d; });
   }, Promise.resolve()).then(function () { if (last) apply(last); toast('💸 ປັບຍອດຕົ້ນທຶນໃນລາຍຈ່າຍວຽກເກົ່າ ' + ops.length + ' ແຖວ ✓'); })
     .catch(function (e) { toast('⚠️ ປັບລາຍຈ່າຍວຽກເກົ່າບໍ່ສຳເລັດ: ' + ((e && e.message) || e), true); });
+}/* ================= ⚖️ ປຽບທຽບ ແອບ vs Pancake (ຂັ້ນ 3 ຂອງການຍ້າຍ) =================
+   ຍອດຂາຍ: ຈັບຄູ່ບິນ (ເບີໂທ + ສິນຄ້າ/ຈຳນວນ ຄືກັນ + ວັນທີຫ່າງ ≤ 2 ມື້) ລະຫວ່າງບິນແອບ (ຢືນຢັນ/ສຳເລັດ) ກັບ ບິນ Pancake (ບໍ່ຍົກເລີກ)
+   ສະຕ໊ອກ: ຕ່າງຈິງ = ແອບ − Pancake · ອະທິບາຍໄດ້ = (ສິນຄ້າໃນບິນ Pancake ທີ່ບໍ່ມີໃນແອບ) − (ບິນແອບທີ່ບໍ່ມີໃນ Pancake) · ທີ່ເຫຼືອ = ອະທິບາຍບໍ່ໄດ້ (ຍອດເປີດຕ່າງກັນ / ປັບແກ້) */
+function cmpStart() { return LS.get('js_cmp_start') || firstAppSaleDate() || today(); }
+function firstAppSaleDate() { var d = (S.orders || []).filter(function (o) { return o.status === 'confirmed' || o.status === 'done'; }).map(function (o) { return o.date; }).sort()[0]; return d || ''; }
+function daysBetween(a, b) { return Math.round(Math.abs(parseYmd(a) - parseYmd(b)) / 86400000); }
+function physSig(items) { // items = [{vid,name,qty}] — ບໍ່ນັບແຖວບໍລິການ (ຄ່າ…) ແລະ ລາຍການທີ່ບໍ່ມີ vid
+  var m = {}; items.forEach(function (it) { if (!it.vid || /^ຄ່າ/.test(it.name || '') || !(Number(it.qty) > 0)) return; m[it.vid] = (m[it.vid] || 0) + Number(it.qty); });
+  return { map: m, sig: Object.keys(m).sort().map(function (k) { return k + ':' + m[k]; }).join(',') };
+}
+function cmpData() {
+  var start = cmpStart(), by = {};
+  (CRM.sales || []).forEach(function (s) {
+    if (!isSale(s.status) || String(s.date) < start) return;
+    var o = by[s.oid] = by[s.oid] || { oid: s.oid, date: s.date, phone: normPhone(s.phone), amount: 0, items: [], st: s.status };
+    o.amount += Number(s.amount) || 0; o.items.push({ vid: s.vid, name: s.name, qty: s.qty });
+  });
+  var pcs = Object.keys(by).map(function (k) { var o = by[k], p = physSig(o.items); o.sig = p.sig; o.map = p.map; return o; });
+  var apps = (S.orders || []).filter(function (o) { return (o.status === 'confirmed' || o.status === 'done') && o.date >= start; }).map(function (o) {
+    var p = physSig(o.items); return { o: o, sig: p.sig, map: p.map, phone: normPhone(o.phone) };
+  });
+  var matched = 0;
+  apps.forEach(function (a) {
+    var best = null;
+    pcs.forEach(function (c) {
+      if (c.used || c.sig !== a.sig) return; var dd = daysBetween(a.o.date, c.date); if (dd > 2) return;
+      if (a.phone && c.phone && a.phone !== c.phone) return;
+      if (!best || dd < best.dd) best = { c: c, dd: dd };
+    });
+    if (best) { best.c.used = true; a.used = true; matched++; }
+  });
+  var pcOnly = pcs.filter(function (c) { return !c.used; }), appOnly = apps.filter(function (a) { return !a.used; });
+  var exp = {}; // ຕ່າງທີ່ຄາດ = Pancake ຂາຍຫຼາຍກວ່າ → ແອບເຫຼືອຫຼາຍກວ່າ
+  pcOnly.forEach(function (c) { Object.keys(c.map).forEach(function (v) { exp[v] = (exp[v] || 0) + c.map[v]; }); });
+  appOnly.forEach(function (a) { Object.keys(a.map).forEach(function (v) { exp[v] = (exp[v] || 0) - a.map[v]; }); });
+  var sumPc = pcs.reduce(function (t, c) { return t + c.amount; }, 0), sumApp = apps.reduce(function (t, a) { return t + a.o.total - (a.o.shipFee || 0); }, 0);
+  return { start: start, pcs: pcs, apps: apps, matched: matched, pcOnly: pcOnly, appOnly: appOnly, exp: exp, sumPc: sumPc, sumApp: sumApp };
+}
+function vCompare() {
+  if (!CRM) { if (!CRM_ERR) loadCRM(); return crmWait(); }
+  ensureProducts();
+  var D = cmpData(), ps = S.products || [], notCounted = ps.filter(function (p) { return stockNow(p) === null; }).length;
+  var h = '<div class="card"><h3>⚖️ ປຽບທຽບ ແອບ vs Pancake</h3><label class="f">ນັບຕັ້ງແຕ່ວັນທີ (ວັນເລີ່ມແລ່ນຄູ່)</label><input class="inp" type="date" value="' + esc(D.start) + '" onchange="LS.set(\'js_cmp_start\',this.value);render()">' +
+    '<p class="muted" style="margin-top:6px">ຂໍ້ມູນ Pancake ອັບເດດ ' + esc(CRM.salesSync || '—') + ' · <a href="javascript:void 0" onclick="syncCRM()">🔄 ດຶງໃໝ່</a></p></div>';
+  // ສະຫຼຸບຄວາມພ້ອມ
+  var unmatchedRecent = D.pcOnly.concat(D.appOnly.map(function (a) { return { date: a.o.date }; })).filter(function (x) { return daysBetween(today(), x.date) <= 14; }).length;
+  var chk = [[notCounted === 0 && ps.length > 0, 'ນັບສະຕ໊ອກຄົບທຸກລຸ້ນ' + (notCounted ? ' (ຍັງເຫຼືອ ' + notCounted + ')' : '')],
+    [D.pcOnly.length === 0, 'ບໍ່ມີບິນ Pancake ທີ່ຂາດໃນແອບ' + (D.pcOnly.length ? ' (' + D.pcOnly.length + ')' : '')],
+    [D.appOnly.length === 0, 'ບໍ່ມີບິນແອບທີ່ຂາດໃນ Pancake' + (D.appOnly.length ? ' (' + D.appOnly.length + ')' : '')],
+    [unmatchedRecent === 0, 'ບໍ່ມີບິນບໍ່ກົງໃນ 14 ມື້ຫຼ້າສຸດ'],
+    [D.apps.length >= 10, 'ມີບິນໃນແອບພໍ (' + D.apps.length + ' ບິນ · ຢ່າງໜ້ອຍ 10)']];
+  var ready = chk.every(function (c) { return c[0]; });
+  h += '<div class="card" style="border-left:5px solid ' + (ready ? '#12a150' : '#d97706') + '"><h3>' + (ready ? '✅ ພ້ອມຕັດ Pancake ໄດ້' : '⏳ ຍັງບໍ່ພ້ອມຕັດ Pancake') + '</h3>' +
+    chk.map(function (c) { return '<div style="padding:2px 0">' + (c[0] ? '✅' : '⬜') + ' ' + esc(c[1]) + '</div>'; }).join('') + '</div>';
+  var diffAmt = D.sumApp - D.sumPc;
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(D.matched, 'ບິນກົງກັນ', '') + dTile(D.pcOnly.length, 'ມີສະເພາະ Pancake', D.pcOnly.length ? 'amber' : '') + dTile(D.appOnly.length, 'ມີສະເພາະແອບ', D.appOnly.length ? 'amber' : '') + '</div>';
+  h += '<div class="card"><h3>💰 ຍອດຂາຍ (ບໍ່ລວມຄ່າສົ່ງ)</h3><div class="info" style="grid-template-columns:1fr auto"><span>Pancake (' + D.pcs.length + ' ບິນ)</span><b>' + money(D.sumPc) + '</b><span>ແອບ (' + D.apps.length + ' ບິນ)</span><b>' + money(D.sumApp) + '</b>' +
+    '<span>ຕ່າງກັນ</span><b style="color:' + (Math.abs(diffAmt) < 1 ? '#12a150' : '#dc2626') + '">' + (diffAmt > 0 ? '+' : '') + money(diffAmt) + '</b></div><p class="muted" style="margin-top:4px">ຍອດຕ່າງນ້ອຍໆ ອາດມາຈາກສ່ວນຫຼຸດ/ຄ່າຕິດຕັ້ງ ທີ່ໃສ່ຕ່າງກັນ — ໃຫ້ເບິ່ງບິນທີ່ບໍ່ກົງກ່ອນ</p></div>';
+  var row = function (title, color, list, fmt) {
+    return '<div class="card" style="border-left:5px solid ' + color + '"><h3>' + title + ' (' + list.length + ')</h3>' + (list.length ? list.slice(0, 40).map(fmt).join('') : '<div class="muted">ບໍ່ມີ ✓</div>') + (list.length > 40 ? '<p class="muted">ສະແດງ 40 ອັນທຳອິດ</p>' : '') + '</div>';
+  };
+  h += row('🅿️ ມີໃນ Pancake ແຕ່ບໍ່ມີໃນແອບ', '#d97706', D.pcOnly.slice().sort(function (a, b) { return a.date < b.date ? 1 : -1; }), function (c) {
+    return '<div class="eq" style="cursor:default"><span style="flex:1;font-size:13.5px">' + esc(c.date) + ' · ' + esc(c.oid) + (c.phone ? ' · 0' + esc(c.phone) : '') + '<br><span class="muted">' + esc(c.items.map(function (i) { return i.name + ' ×' + i.qty; }).join(', ')) + '</span></span><b>' + money(c.amount) + '</b></div>'; });
+  h += row('📱 ມີໃນແອບ ແຕ່ບໍ່ມີໃນ Pancake', '#2563eb', D.appOnly.slice().sort(function (a, b) { return a.o.date < b.o.date ? 1 : -1; }), function (a) {
+    return '<div class="eq" onclick="openOrder(\'' + esc(a.o.id) + '\')"><span style="flex:1;font-size:13.5px">' + esc(a.o.date) + ' · ' + esc(rcNo(a.o)) + ' · ' + esc(a.o.customer) + '<br><span class="muted">' + esc(a.o.items.map(function (i) { return i.name + ' ×' + i.qty; }).join(', ')) + '</span></span><b>' + money(a.o.total) + '</b></div>'; });
+  // ສະຕ໊ອກ
+  var rows = ps.map(function (p) {
+    var app = stockNow(p), pc = p.stock, real = app === null ? null : app - pc, ex = D.exp[p.vid] || 0;
+    return { p: p, app: app, pc: pc, real: real, ex: ex, un: real === null ? null : real - ex };
+  }).filter(function (r) { return r.app !== null && (r.real !== 0 || r.ex !== 0); }).sort(function (a, b) { return Math.abs(b.un) - Math.abs(a.un); });
+  var okN = ps.filter(function (p) { var a = stockNow(p); return a !== null && a === p.stock; }).length;
+  h += '<div class="card"><h3>📦 ສະຕ໊ອກ ແອບ vs Pancake</h3><p class="muted" style="margin-bottom:6px">ກົງກັນ ' + okN + ' / ' + ps.length + ' ລຸ້ນ' + (notCounted ? ' · ຍັງບໍ່ນັບ ' + notCounted + ' ລຸ້ນ (ບໍ່ນັບໃນຕາຕະລາງ)' : '') + '</p>' +
+    (rows.length ? '<div class="tw"><table><tr><th>ສິນຄ້າ</th><th class="num">ແອບ</th><th class="num">Pancake</th><th class="num">ຕ່າງ</th><th class="num">ບິນບໍ່ກົງ</th><th class="num">ອະທິບາຍບໍ່ໄດ້</th></tr>' +
+      rows.map(function (r) { return '<tr><td>' + esc(prodLabel(r.p)) + '</td><td class="num">' + r.app + '</td><td class="num">' + r.pc + '</td><td class="num">' + (r.real > 0 ? '+' : '') + r.real + '</td><td class="num">' + (r.ex > 0 ? '+' : '') + r.ex + '</td><td class="num"><b style="color:' + (r.un === 0 ? '#12a150' : '#dc2626') + '">' + (r.un > 0 ? '+' : '') + r.un + '</b></td></tr>'; }).join('') + '</table></div>' +
+      '<p class="muted" style="margin-top:8px">ຕ່າງ = ແອບ − Pancake · ບິນບໍ່ກົງ = ສ່ວນຕ່າງທີ່ອະທິບາຍໄດ້ດ້ວຍບິນຂ້າງເທິງ · <b>ອະທິບາຍບໍ່ໄດ້ ≠ 0</b> = ຍອດເປີດ/ການປັບແກ້ຕ່າງກັນ. ຖ້າຕົວເລກນີ້ <b>ຄົງທີ່</b> ຕັ້ງແຕ່ມື້ນັບສະຕ໊ອກ ແປວ່າສະຕ໊ອກ Pancake ເຄີຍຜິດມາກ່ອນ (ແອບຖືກ ເພາະນັບຈິງ) — ບໍ່ແມ່ນບັນຫາຂອງແອບ.</p>' : '<div class="muted">ທຸກລຸ້ນທີ່ນັບແລ້ວ ກົງກັບ Pancake ✓</div>') + '</div>';
+  return h;
 }function openStockCount() {
   ensureProducts(); UI.cnt = UI.cnt || {};
   var h = '<div class="shd"><b>📋 ນັບສະຕ໊ອກ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
