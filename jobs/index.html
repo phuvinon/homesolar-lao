@@ -764,6 +764,13 @@ function detailHtml(j, page) {
     (S.owner ? '<span class="abtn" onclick="openForm(\'' + esc(j.id) + '\')"><i>✏️</i>ແກ້ໄຂ</span><span class="abtn" onclick="dupJob(\'' + esc(j.id) + '\')"><i>📄</i>ສຳເນົາ</span><span class="abtn" onclick="delJob(\'' + esc(j.id) + '\')" style="color:#dc2626"><i>🗑️</i>ລຶບ</span>' : '') +
     '</div>';
   if (S.owner && j.phone) h += waButtons({ jobId: j.id });
+  if (S.owner && Array.isArray(S.claims)) { // v26: ເຄລມຈາກປະຫວັດວຽກ — ດຶງຂໍ້ມູນໃຫ້ເອງ
+    var jc = claimsOfJob(j.id);
+    h += '<div class="card" style="border-left:5px solid #f7941d"><h3>🛡️ ຮັບປະກັນ / ເຄລມ</h3>' +
+      jc.map(function (c) { var st = CL_ST[c.status] || CL_ST.broken; return '<div class="eq" onclick="openClaim(\'' + esc(c.id) + '\')"><span style="flex:1">' + esc(c.product) + (c.qty > 1 ? ' ×' + c.qty : '') + '<br><span class="muted">ແຈ້ງ ' + esc(c.date) + (c.replDate ? ' · ປ່ຽນ ' + esc(c.replDate) : '') + '</span></span><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span></div>'; }).join('') +
+      '<button class="btn gold full" style="margin-top:8px" onclick="claimFromJob(\'' + esc(j.id) + '\')">🛡️ ' + (/ສ້ອມແປງ|ຮັບປະກັນ/.test(j.type) ? 'ບັນທຶກເປັນເຄລມ (ວຽກປ່ຽນດອກໄຟ)' : 'ລູກຄ້າແຈ້ງດອກໄຟເພ → ເຄລມ') + '</button>' +
+      '<p class="muted" style="margin-top:6px;font-size:12.5px">ດຶງຊື່ · ເບີ · ສິນຄ້າ · ວັນຊື້ ໃຫ້ເອງ ແລ້ວໄປຂຶ້ນໃນແຖບ ຂາຍ → ຮັບປະກັນ</p></div>';
+  }
 
   // ສະຖານະ
   h += '<div class="card"><h3>📌 ອັບເດດສະຖານະ</h3><div class="stgrid">' + Object.keys(STATUS).filter(function (k) { return S.owner || k !== 'cancelled'; }).map(function (k) {
@@ -802,7 +809,7 @@ function detailHtml(j, page) {
   h += '<div class="card"><h3>✨ ຮູບຫຼັງຕິດຕັ້ງ <span class="muted">(' + j.photosAfter.length + ')</span></h3>' + photoGrid(j, 'after') + '</div>';
 
   // ບັນທຶກ + ປະຫວັດ
-  h += '<div class="card"><h3>🗒️ ບັນທຶກ / ປະຫວັດວຽກ</h3>' +
+  h += '<div class="card"><h3>🗒️ ບັນທຶກ / ປະຫວັດວຽກ' + (S.owner && Array.isArray(S.claims) ? ' <button class="btn ghost" style="float:right;padding:3px 10px;font-size:13px" onclick="claimFromJob(\'' + esc(j.id) + '\')">🛡️ ເຄລມ</button>' : '') + '</h3>' +
     '<div class="row"><input class="inp" id="noteIn" placeholder="ຂຽນບັນທຶກ ເຊັ່ນ: ລູກຄ້າຂໍເລື່ອນ 30 ນາທີ"><button class="btn pri" style="flex:none" onclick="addNote(\'' + esc(j.id) + '\')">ສົ່ງ</button></div>' +
     '<div class="tl" style="margin-top:12px">' + (logs.length ? logs.map(function (l) {
       return '<div class="it' + (l.action === 'note' ? ' note' : '') + '"><small>' + esc(l.time) + ' · ' + esc(l.who) + '</small>' + esc(l.detail) + '</div>';
@@ -3179,7 +3186,7 @@ function renderClaimDetail() {
   var h = '<div class="shd" style="border-top:5px solid ' + st.c + '"><b>🛡️ ເຄລມ</b><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
   h += '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + esc(c.product) + (c.qty > 1 ? ' ×' + c.qty : '') + '</div><div class="info">' +
     '<span class="k">👤</span><span>' + esc(c.customer || '—') + '</span>' + (c.phone ? '<span class="k">📞</span><span>' + esc(c.phone) + '</span>' : '') +
-    '<span class="k">📅</span><span>ແຈ້ງບັນຫາ ' + esc(c.date) + '</span>' +
+    '<span class="k">📅</span><span>ລູກຄ້າແຈ້ງ ' + esc(c.date) + '</span>' +
     '<span class="k">🏭</span><span>ຕົ້ນທາງ: <b>' + esc(supName(c.supplierId)) + '</b></span>' +
     (c.origDate || c.origRef ? '<span class="k">🧾</span><span>' + (c.origRef ? esc(c.origRef) + ' · ' : '') + (c.origDate ? 'ຊື້ ' + esc(c.origDate) : '') + (c.origDate ? '<br><span class="muted">' + esc(claimWarranty(c)) + '</span>' : '') + '</span>' : '') +
     (c.issue ? '<span class="k">⚠️</span><span style="white-space:pre-wrap">' + esc(c.issue) + '</span>' : '') +
@@ -3267,11 +3274,12 @@ function claimReplaced(id) {
   var c = claimById(id), rvid = c.replVid || c.vid, p = rvid ? prodByVid(rvid) : null;
   var uc = p ? unitCost(p) : { v: 0 }, cost = uc.v * (c.qty || 1);
   var cut = !!(p && stockNow(p) !== null && c.stockOut !== 'TRUE');
+  var already = c.status === 'replaced'; // ສ້າງຈາກຟອມເປັນ «ປ່ຽນແລ້ວ» ເລີຍ → ກົດຍົກເລີກ = ບໍ່ຕັດສະຕັອກ ແຕ່ຍັງບັນທຶກຕົ້ນທຶນ
   ask({ title: '✅ ປ່ຽນໃຫ້ລູກຄ້າແລ້ວ?', msg: c.product + ' ×' + (c.qty || 1) + (c.customer ? ' · ' + c.customer : '') + '\n' +
-    (cut ? '• ຕັດສະຕັອກ ' + prodLabel(p) + ' −' + (c.qty || 1) + ' (ເຫດຜົນ: ປ່ຽນຮັບປະກັນ)\n' : (p ? '' : '• ບໍ່ພົບສິນຄ້າໃນລະບົບ — ຈະບໍ່ຕັດສະຕັອກ\n')) +
+    (cut ? '• ຕັດສະຕັອກ ' + prodLabel(p) + ' −' + (c.qty || 1) + ' (ເຫດຜົນ: ປ່ຽນຮັບປະກັນ)\n  ⚠️ ຖ້າປ່ຽນໄປກ່ອນວັນນັບສະຕັອກແລ້ວ ໃຫ້ກົດ «ຍົກເລີກ» ແລ້ວເຄລມຈະຖືກບັນທຶກໂດຍບໍ່ຕັດສະຕັອກຊ້ຳ\n' : (p ? '' : '• ບໍ່ພົບສິນຄ້າໃນລະບົບ — ຈະບໍ່ຕັດສະຕັອກ\n')) +
     (cost ? '• ບັນທຶກຕົ້ນທຶນທີ່ຮ້ານຮັບພາລະ ≈ ' + money(cost) + ' ກີບ' : '• ບໍ່ມີຕົ້ນທຶນ'), ok: 'ຢືນຢັນ ປ່ຽນແລ້ວ' }).then(function (y) {
-    if (!y) return;
-    act('api_setClaimStatus', id, 'replaced', { replDate: today(), replVid: rvid || '', replProduct: p ? prodLabel(p) : (c.replProduct || c.product), cost: cost, stockOut: cut })
+    if (!y) { if (already && !c.cost && cost) act('api_setClaimStatus', id, 'replaced', { replDate: c.replDate || today(), replVid: rvid || '', replProduct: p ? prodLabel(p) : (c.replProduct || c.product), cost: cost, stockOut: false }).catch(function () { }); return; }
+    act('api_setClaimStatus', id, 'replaced', { replDate: c.replDate || today(), replVid: rvid || '', replProduct: p ? prodLabel(p) : (c.replProduct || c.product), cost: cost, stockOut: cut })
       .then(function () { if (cut) return act('api_stockAdjust', rvid, -(c.qty || 1), 'ປ່ຽນຮັບປະກັນ ' + id + (c.customer ? ' · ' + c.customer : '')); })
       .then(function () { toast('🟢 ປ່ຽນແລ້ວ ✓' + (cut ? ' · ຕັດສະຕັອກແລ້ວ' : '')); })
       .catch(function () { /* act ສະແດງຂໍ້ຜິດພາດແລ້ວ */ });
@@ -3283,10 +3291,43 @@ function delClaim(id) {
     if (y) act('api_deleteClaim', id).then(function () { closeSheet(); toast('ລຶບແລ້ວ'); });
   });
 }
+/* v26: ເຄລມຈາກປະຫວັດວຽກ / ບິນ — ດຶງຊື່ ເບີ ສິນຄ້າ ວັນຊື້ ໃຫ້ເອງ ບໍ່ຕ້ອງພິມຊ້ຳ */
+function phoneKey(p) { return String(p || '').replace(/\D/g, '').slice(-8); }
+function findPurchase(phone, vid, before) { // ຫາວັນທີລູກຄ້າຊື້ສິນຄ້ານີ້ (ຈາກວຽກຂາຍ/ບິນໃນແອບ + Pancake) ລ່າສຸດກ່ອນວັນແຈ້ງ
+  var k = phoneKey(phone); if (!k || !vid) return null; var best = null;
+  var take = function (date, ref) { if (date && (!before || date <= before) && (!best || date > best.date)) best = { date: date, ref: ref }; };
+  (S.jobs || []).forEach(function (j) { if (j.status === 'cancelled' || /ສ້ອມແປງ|ຮັບປະກັນ/.test(j.type) || phoneKey(j.phone) !== k) return; if ((j.equipment || []).some(function (e) { return e.vid === vid; })) take(j.date, j.id); });
+  (S.orders || []).forEach(function (o) { if (o.status === 'cancelled' || o.status === 'draft' || phoneKey(o.phone) !== k) return; if ((o.items || []).some(function (i) { return i.vid === vid; })) take(o.date, rcNo(o)); });
+  if (CRM && CRM.sales) CRM.sales.forEach(function (s) { if (s.vid === vid && phoneKey(s.phone) === k && isSale(s.status)) take(String(s.date).slice(0, 10), 'Pancake'); });
+  return best;
+}
+function claimItemsOf(list) { // [{vid,qty,name}] ຈາກອຸປະກອນວຽກ / ລາຍການບິນ
+  return (list || []).filter(function (e) { return e.vid && (e.qty || 1) > 0; }).map(function (e) { var p = prodByVid(e.vid); return { vid: e.vid, qty: e.qty || 1, name: p ? prodLabel(p) : (e.name || e.t || '') }; });
+}
+function claimsOfJob(jid) { return (S.claims || []).filter(function (c) { return c.origRef === jid || String(c.note || '').indexOf(jid) >= 0; }); }
+function claimFromJob(jid) {
+  var j = jobById(jid); if (!j) return;
+  var items = claimItemsOf(j.equipment), isRepair = /ສ້ອມແປງ|ຮັບປະກັນ/.test(j.type), first = items[0] || {};
+  var pre = { customer: j.customer, phone: j.phone, items: items, vid: first.vid || '', product: first.name || '', qty: first.qty || 1, supplierId: first.vid ? supplierGuess(first.vid) : '' };
+  if (isRepair) { // ວຽກປ່ຽນ/ສ້ອມ/ຮັບປະກັນ: ດອກໄຟທີ່ເພ ຖືກປ່ຽນໃນວຽກນີ້ ແລ້ວ
+    var ex = (S.claims || []).filter(function (c) { return String(c.note || '').indexOf('ຈາກວຽກ ' + j.id) >= 0; })[0];
+    if (ex) { toast('ວຽກນີ້ບັນທຶກເຄລມໄວ້ແລ້ວ'); return openClaim(ex.id); }
+    pre.date = j.date || today(); pre.replDate = pre.date; pre.status = 'replaced'; pre.issue = j.title || ''; pre.note = 'ຈາກວຽກ ' + j.id;
+    var pu = first.vid ? findPurchase(j.phone, first.vid, pre.date) : null; if (pu) { pre.origDate = pu.date; pre.origRef = pu.ref; }
+  } else { // ວຽກຂາຍ/ຕິດຕັ້ງເດີມ ທີ່ລູກຄ້າຊື້ໄປ: ຕອນນີ້ລູກຄ້າແຈ້ງດອກເພ
+    pre.date = today(); pre.origDate = j.date || ''; pre.origRef = j.id; pre.status = 'broken';
+  }
+  openClaimForm(null, pre);
+}
 function claimFromOrder(oid) {
   var o = orderById(oid); if (!o) return;
-  var it = (o.items || []).filter(function (x) { return x.vid; })[0] || {};
-  openClaimForm(null, { customer: o.customer, phone: o.phone, origRef: rcNo(o), origDate: o.date, vid: it.vid || '', product: it.name ? it.name + (it.variant ? ' — ' + it.variant : '') : '', qty: 1 });
+  var items = claimItemsOf(o.items), first = items[0] || {};
+  openClaimForm(null, { customer: o.customer, phone: o.phone, origRef: rcNo(o), origDate: o.date, items: items, vid: first.vid || '', product: first.name || '', qty: 1, supplierId: first.vid ? supplierGuess(first.vid) : '', date: today(), status: 'broken' });
+}
+function clUseItem(i) { // ກົດເລືອກສິນຄ້າຈາກວຽກ/ບິນ
+  var it = (UI.cl.items || [])[i]; if (!it) return;
+  UI.cl.vid = it.vid; UI.cl.product = it.name; $('clSP').innerHTML = '✅ ' + esc(it.name); $('clQty').value = it.qty || 1;
+  var g = supplierGuess(it.vid), se = $('clSup'); if (g && se && !UI.cl.supTouched) se.value = g;
 }
 function clPickList(which) {
   var q = ($('clQ' + which).value || '').toLowerCase(), ps = (S.products || []).filter(function (p) { return !q || (p.name + ' ' + p.variant + ' ' + p.sku).toLowerCase().indexOf(q) >= 0; }).slice(0, 25);
@@ -3298,6 +3339,8 @@ function clPick(which, vid) {
   if (which === 'P') {
     UI.cl.vid = vid; UI.cl.product = prodLabel(p);
     var g = supplierGuess(vid), se = $('clSup'); if (g && se && !UI.cl.supTouched) se.value = g; // ເດົາຕົ້ນທາງຈາກ PO ລ່າສຸດ (ແກ້ໄດ້)
+    var od = $('clOrigDate'), orf = $('clOrigRef'), pu = od && !od.value ? findPurchase(($('clPhone') || {}).value, vid, ($('clDate') || {}).value) : null; // ຫາວັນຊື້ໃຫ້ເອງ
+    if (pu) { od.value = pu.date; if (orf && !orf.value) orf.value = pu.ref; }
   } else { UI.cl.replVid = vid; UI.cl.replProduct = prodLabel(p); }
   $('clS' + which).innerHTML = '✅ ' + esc(prodLabel(p)); $('clL' + which).innerHTML = ''; $('clQ' + which).value = '';
 }
@@ -3305,19 +3348,21 @@ function openClaimForm(id, pre) {
   ensureProducts();
   var c = id ? claimById(id) : null; pre = pre || {};
   var v = function (k) { return c && c[k] != null ? c[k] : (pre[k] != null ? pre[k] : ''); };
-  UI.cl = { vid: v('vid'), product: v('product'), qty: Number(v('qty')) || 1, replVid: c ? c.replVid : '', replProduct: c ? c.replProduct : '' };
+  UI.cl = { vid: v('vid'), product: v('product'), qty: Number(v('qty')) || 1, replVid: c ? c.replVid : '', replProduct: c ? c.replProduct : '', items: pre.items || [] };
   var h = '<div class="shd"><b>' + (c ? '✏️ ແກ້ໄຂເຄລມ' : '🛡️ ບັນທຶກເຄລມ / ປ່ຽນຮັບປະກັນ') + '</b><button class="x" onclick="' + (c ? 'openClaim(\'' + esc(c.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
   h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="clCustomer" value="' + esc(v('customer')) + '"></div>' +
     '<div><label class="f">ເບີໂທ</label><input class="inp" id="clPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'clNoSel\',\'clHint\')"></div></div><div class="muted" id="clHint" style="font-size:12.5px"></div>';
-  h += '<label class="f">🔆 ສິນຄ້າທີ່ມີບັນຫາ *</label><div id="clSP" style="font-weight:700;margin-bottom:4px">' + (UI.cl.product ? '✅ ' + esc(UI.cl.product) : '<span class="muted">ຍັງບໍ່ໄດ້ເລືອກ — ຄົ້ນຫາແລ້ວກົດເລືອກ</span>') + '</div>' +
+  h += '<label class="f">🔆 ສິນຄ້າທີ່ມີບັນຫາ *</label>' + (UI.cl.items.length > 1 ? '<div class="muted" style="font-size:12.5px">ເລືອກຈາກວຽກ/ບິນເດີມ:</div><div class="filters">' + UI.cl.items.map(function (it, i) { return '<button class="fchip" onclick="clUseItem(' + i + ')">' + esc(it.name) + (it.qty > 1 ? ' ×' + it.qty : '') + '</button>'; }).join('') + '</div>' : '') +
+    '<div id="clSP" style="font-weight:700;margin-bottom:4px">' + (UI.cl.product ? '✅ ' + esc(UI.cl.product) : '<span class="muted">ຍັງບໍ່ໄດ້ເລືອກ — ຄົ້ນຫາແລ້ວກົດເລືອກ</span>') + '</div>' +
     '<input class="inp" id="clQP" placeholder="🔎 ຄົ້ນຫາສິນຄ້າ ເຊັ່ນ aura, 600w" oninput="clPickList(\'P\')"><div id="clLP" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>';
   var supSel = v('supplierId') || (!c ? supplierGuess(UI.cl.vid) : '');
   h += '<label class="f">🏭 ຕົ້ນທາງ (ສິນຄ້ານີ້ສັ່ງຈາກໃສ)</label><select class="inp" id="clSup" onchange="UI.cl.supTouched=true"><option value="">— ບໍ່ລະບຸ —</option>' +
     (S.suppliers || []).filter(function (s) { return s.active !== false || s.id === supSel; }).map(function (s) { return '<option value="' + esc(s.id) + '"' + (s.id === supSel ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select>';
   h += '<div class="row"><div><label class="f">ຈຳນວນຊິ້ນ</label><input class="inp" id="clQty" inputmode="numeric" value="' + UI.cl.qty + '"></div>' +
-    '<div><label class="f">📅 ວັນທີແຈ້ງບັນຫາ</label><input class="inp" type="date" id="clDate" value="' + esc(v('date') || today()) + '"></div></div>';
+    '<div><label class="f">📅 ວັນທີລູກຄ້າແຈ້ງ</label><input class="inp" type="date" id="clDate" value="' + esc(v('date') || today()) + '"></div></div>';
   h += '<div class="row"><div><label class="f">🧾 ວັນທີລູກຄ້າຊື້</label><input class="inp" type="date" id="clOrigDate" value="' + esc(v('origDate')) + '"></div>' +
-    '<div><label class="f">ເລກບິນ / ວຽກ</label><input class="inp" id="clOrigRef" placeholder="ເຊັ່ນ #86 ຫຼື J261101-XXXX" value="' + esc(v('origRef')) + '"></div></div>';
+    '<div><label class="f">ເລກບິນ / ວຽກ ທີ່ຊື້</label><input class="inp" id="clOrigRef" placeholder="ເຊັ່ນ #86 ຫຼື J261101-XXXX" value="' + esc(v('origRef')) + '"></div></div>';
+  h += '<label class="f">🔄 ວັນທີເຄລມ / ປ່ຽນໃຫ້ລູກຄ້າ (ປ່ອຍວ່າງ = ຍັງບໍ່ປ່ຽນ)</label><input class="inp" type="date" id="clReplDate" value="' + esc(v('replDate')) + '">';
   h += '<label class="f">⚠️ ອາການ / ບັນຫາ</label><textarea class="inp" id="clIssue" placeholder="ເຊັ່ນ: ບໍ່ຕິດ ຫຼັງຝົນ, ແບັດເສື່ອມ ເປີດໄດ້ 3 ຊົ່ວໂມງ">' + esc(v('issue')) + '</textarea>';
   h += '<label class="f">📌 ສະຖານະ</label><div class="tpick">' + Object.keys(CL_ST).map(function (k) {
     return '<label><input type="radio" name="clSt" value="' + k + '"' + ((c ? c.status : (pre.status || 'broken')) === k ? ' checked' : '') + '> ' + CL_ST[k].l + '</label>'; }).join('') + '</div>' +
@@ -3331,7 +3376,7 @@ function openClaimForm(id, pre) {
 }
 function saveClaim(id) {
   var data = { id: id || '', customer: $('clCustomer').value.trim(), phone: $('clPhone').value.trim(), vid: UI.cl.vid || '', product: UI.cl.product || '', qty: Number($('clQty').value.replace(/[^\d]/g, '')) || 1,
-    date: $('clDate').value, origDate: $('clOrigDate').value, origRef: $('clOrigRef').value.trim(), issue: $('clIssue').value.trim(), note: $('clNote').value.trim(),
+    date: $('clDate').value, replDate: $('clReplDate').value, origDate: $('clOrigDate').value, origRef: $('clOrigRef').value.trim(), issue: $('clIssue').value.trim(), note: $('clNote').value.trim(),
     supplierId: $('clSup').value, status: (document.querySelector('input[name=clSt]:checked') || {}).value || 'broken', replVid: UI.cl.replVid || '', replProduct: UI.cl.replProduct || '' };
   if (!data.customer && !data.phone) return toast('ກະລຸນາໃສ່ຊື່ ຫຼື ເບີໂທລູກຄ້າ', true);
   if (!data.product) return toast('ກະລຸນາເລືອກສິນຄ້າທີ່ມີບັນຫາ', true);
