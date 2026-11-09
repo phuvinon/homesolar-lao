@@ -1875,7 +1875,7 @@ function expCard(j) {
     Object.keys(byCat).map(function (c) { return '<span>' + esc(c) + '</span><b>' + money(byCat[c]) + '</b>'; }).join('') +
     (k.pay ? '<span>👷 ຄ່າແຮງຊ່າງ (ຈາກວັນເຮັດວຽກ)</span><b>' + money(k.pay) + '</b>' : '') + '</div>';
   h += (j.expenses || []).slice().reverse().map(function (e) {
-    return '<div class="eq"><span style="flex:1">' + esc(e.cat.split(' ')[0]) + ' ' + esc(e.name) + '<br><span class="muted">' + esc(e.date) + '</span></span><b>' + money(e.amount) + '</b>' +
+    return '<div class="eq"><span style="flex:1">' + esc(e.cat.split(' ')[0]) + ' ' + esc(expName(e)) + '<br><span class="muted">' + esc(e.date) + (AUTO_RX.test(e.name) ? ' · ອັດຕະໂນມັດ' : '') + '</span></span><b>' + money(e.amount) + '</b>' +
       '<button class="btn ghost" style="flex:none;padding:2px 9px;color:#dc2626" onclick="delExpense(\'' + esc(j.id) + '\',\'' + esc(e.id) + '\')">✕</button></div>';
   }).join('');
   h += '<div class="card" style="padding:8px 10px;margin-top:8px;background:#f8fafc">' +
@@ -2571,7 +2571,7 @@ function openForm(id, copyFrom, prefill) {
   }).join('') + '</div>';
   // ອຸປະກອນ: ຕິກເລືອກຈາກລາຍການສິນຄ້າ Pancake (ຄືໜ້າສັ່ງເຄື່ອງ) + ພິມເພີ່ມເອງໄດ້
   UI.jobEq = (src && src.equipment ? src.equipment : []).map(function (e) { return { t: e.t, qty: e.qty || 0, vid: e.vid || '', done: j ? !!e.done : false }; });
-  h += '<label class="f">🔧 ອຸປະກອນ / ດອກໄຟທີ່ຕ້ອງເອົາໄປ</label><div id="fEqSel"></div>' +
+  h += '<label class="f">🔧 ອຸປະກອນ / ດອກໄຟທີ່ຕ້ອງເອົາໄປ</label>' + (S.owner ? '<div class="muted" style="font-size:12px;margin:-2px 0 4px">💸 ບັນທຶກແລ້ວ ແອບເພີ່ມ «ຕົ້ນທຶນ» ຂອງສິນຄ້າທີ່ຕິກ ເຂົ້າລາຍຈ່າຍວຽກໃຫ້ເອງ</div>' : '') + '<div id="fEqSel"></div>' +
     '<input class="inp" id="fEqSearch" placeholder="🔎 ຄົ້ນຫາສິນຄ້າ ເຊັ່ນ 600w, solaro, ເສົາ" oninput="jobEqList(this.value)" style="margin-top:6px">' +
     '<div id="fEqList" style="max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>' +
     '<div class="row" style="margin-top:6px"><input class="inp" id="fEqFree" placeholder="ພິມເພີ່ມເອງ ເຊັ່ນ ລົດ, ສາຍໄຟ 50 ແມັດ"><button class="btn ghost" style="flex:none" onclick="jobEqFree()">＋ ເພີ່ມ</button></div>';
@@ -2700,10 +2700,12 @@ function saveForm(id) {
   if (data.price && data.deposit > data.price) return toast('ມັດຈຳຫຼາຍກວ່າມູນຄ່າວຽກ', true);
   if (data.price && data.collected != null && data.deposit + data.collected > data.price) return toast("ມັດຈຳ + ເກັບແລ້ວ ຫຼາຍກວ່າມູນຄ່າວຽກ", true);
   var before = S.jobs.map(function (x) { return x.id; });
+  var eqBefore = old ? eqSig(old.equipment) : '';
   act('api_saveJob', data).then(function (d) {
     var nid = id || (d.jobs.filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
     toast(id ? 'ແກ້ໄຂແລ້ວ ✓' : 'ເພີ່ມວຽກແລ້ວ ✓');
     if (CRM) loadCRM(true); // ລູກຄ້າໃໝ່ຈາກວຽກນີ້ → ຂຶ້ນໃນຖານລູກຄ້າເລີຍ
+    if (nid && S.owner && eqSig(data.equipment) !== eqBefore) syncJobCost(nid); // v24: ອຸປະກອນປ່ຽນ → ຕົ້ນທຶນເຂົ້າລາຍຈ່າຍວຽກເອງ
     if (nid) openJob(nid); else closeSheet();
   });
 }
@@ -2743,6 +2745,62 @@ function printOrder(id) {
 function syncJobPay(jid, paid) {
   var j = jobById(jid); if (!j) return; var r = (j.deposit || 0) + (j.collected || 0), diff = Math.round(paid - r); if (diff <= 0) return;
   call('api_recordPay', jid, diff).then(function (d) { apply(d); }).catch(function (e) { toast('⚠️ ບິນຖືກບັນທຶກແລ້ວ ແຕ່ອັບເດດຍອດເກັບຂອງວຽກບໍ່ໄດ້ — ກົດ ＋ ບັນທຶກເງິນທີ່ເກັບໄດ້ ໃນໜ້າວຽກ', true); });
+}
+/* ================= 💸 v24: ຕົ້ນທຶນສິນຄ້າ → ລາຍຈ່າຍວຽກ ອັດຕະໂນມັດ (ເຈົ້າຂອງເທົ່ານັ້ນ) =================
+   ເມື່ອ ຕິກອຸປະກອນໃນວຽກ (ບັນທຶກວຽກ) ຫຼື ຢືນຢັນບິນທີ່ຜູກກັບວຽກ → ແອບນັບຈຳນວນສິນຄ້າ × ຕົ້ນທຶນ ແລ້ວໃສ່ເປັນ 1 ແຖວຕໍ່ສິນຄ້າ ໃນລາຍຈ່າຍວຽກ
+   ແຖວອັດຕະໂນມັດຮູ້ຈັກຈາກຊື່: «⚙️ ຕົ້ນທຶນ: <ສິນຄ້າ> ×<ຈຳນວນ> [<vid 8 ໂຕ>]» — ແກ້ອຸປະກອນ/ຈຳນວນ → ແຖວນັ້ນຖືກປ່ຽນ/ລຶບຕາມ (ບໍ່ແຕະແຖວທີ່ພິມເອງ)
+   ຕົ້ນທຶນ = ຊ່ອງ «ທຶນ» ຂອງສິນຄ້າ (Pancake) · ທຶນ=0 → ໃຊ້ ລາຄາຂາຍ × 75% (ກົດກຳໄລ 25%) ແລະ ໝາຍ «~75%» · ລາຍການພິມເອງ (ບໍ່ມີ vid) ບໍ່ນັບ */
+var AUTO_RX = /^⚙️ ຕົ້ນທຶນ: (.*) ×(\d+) \[([^\]]{1,8})\]$/;
+var COST_LOCK = {};
+function expName(e) { var m = AUTO_RX.exec(e.name || ''); return m ? '⚙️ ຕົ້ນທຶນ: ' + m[1] + ' ×' + m[2] : e.name; }
+function eqSig(eq) {
+  var m = {}; (eq || []).forEach(function (e) { if (e.vid && Number(e.qty) > 0) m[e.vid] = Math.max(m[e.vid] || 0, Number(e.qty)); });
+  return Object.keys(m).sort().map(function (v) { return v + ':' + m[v]; }).join(',');
+}
+function unitCost(p) {
+  var c = Number(p.cost) || 0; if (c > 0) return { v: Math.round(c), est: false };
+  var r = Number(p.retail) || 0; return r > 0 ? { v: Math.round(r * 0.75), est: true } : { v: 0, est: false };
+}
+function syncJobCost(jid, extraItems) {
+  if (!S.owner || COST_LOCK[jid]) return Promise.resolve();
+  var j = jobById(jid); if (!j) return Promise.resolve();
+  if (!(S.products || []).length) { toast('⚠️ ສິນຄ້າຍັງໂຫຼດບໍ່ແລ້ວ — ຕົ້ນທຶນຍັງບໍ່ເຂົ້າລາຍຈ່າຍວຽກ (ກົດບັນທຶກວຽກອີກຄັ້ງ ຫຼັງສິນຄ້າໂຫຼດ)', true); return Promise.resolve(); }
+  var want = {};
+  (j.equipment || []).concat(extraItems || []).forEach(function (e) { if (e.vid && Number(e.qty) > 0) want[e.vid] = Math.max(want[e.vid] || 0, Math.round(Number(e.qty))); });
+  var have = {}, manualMat = 0, hadAuto = false;
+  (j.expenses || []).forEach(function (e) { var m = AUTO_RX.exec(e.name || ''); if (m) { hadAuto = true; (have[m[3]] = have[m[3]] || []).push(e); } else if (e.cat === '🧱 ວັດສະດຸ/ເຄື່ອງ') manualMat++; });
+  var ops = [], added = 0, total = 0, zero = [];
+  Object.keys(want).forEach(function (vid) {
+    var p = prodByVid(vid); if (!p) return;
+    var uc = unitCost(p), q = want[vid], key = vid.slice(0, 8);
+    if (!(uc.v > 0)) { zero.push(prodLabel(p)); return; }
+    var name = '⚙️ ຕົ້ນທຶນ: ' + prodLabel(p) + (uc.est ? ' ~75%' : '') + ' ×' + q + ' [' + key + ']', amount = uc.v * q;
+    var ex = have[key] || [];
+    if (ex.length === 1 && ex[0].name === name && Number(ex[0].amount) === amount) { delete have[key]; return; } // ຖືກຕ້ອງແລ້ວ
+    ex.forEach(function (e) { ops.push({ del: e.id }); }); delete have[key];
+    ops.push({ add: { cat: '🧱 ວັດສະດຸ/ເຄື່ອງ', name: name, amount: amount, date: j.date || today() } }); added++; total += amount;
+  });
+  Object.keys(have).forEach(function (k) { have[k].forEach(function (e) { ops.push({ del: e.id }); }); }); // ເອົາສິນຄ້າອອກຈາກວຽກ → ລຶບແຖວຕົ້ນທຶນ
+  if (zero.length) toast('⚠️ ບໍ່ມີທຶນ: ' + zero.join(', ') + ' — ໃສ່ທຶນໃນ Pancake ຫຼື ເພີ່ມລາຍຈ່າຍເອງ', true);
+  if (!ops.length) return Promise.resolve();
+  var go = function () {
+    COST_LOCK[jid] = true; var last = null;
+    return ops.reduce(function (pr, op) {
+      return pr.then(function () {
+        return (op.del ? call('api_delExpense', jid, op.del) : call('api_addExpense', jid, op.add)).then(function (d) { last = d; });
+      });
+    }, Promise.resolve()).then(function () {
+      COST_LOCK[jid] = false; if (last) apply(last);
+      toast('💸 ຕົ້ນທຶນເຂົ້າລາຍຈ່າຍວຽກແລ້ວ' + (added ? ' · ' + added + ' ລາຍການ ≈ ' + money(total) + ' ກີບ' : '') + ' ✓');
+    }).catch(function (e) {
+      COST_LOCK[jid] = false; toast('⚠️ ເພີ່ມຕົ້ນທຶນເຂົ້າລາຍຈ່າຍບໍ່ສຳເລັດ: ' + ((e && e.message) || e) + ' — ເບິ່ງລາຍຈ່າຍວຽກ ຫຼືກົດບັນທຶກອີກຄັ້ງ', true); refresh();
+    });
+  };
+  if (added && manualMat && !hadAuto) {
+    // ວຽກນີ້ມີລາຍຈ່າຍວັດສະດຸທີ່ພິມເອງແລ້ວ ແລະ ຍັງບໍ່ເຄີຍມີແຖວອັດຕະໂນມັດ → ຖາມກ່ອນ ກັນລົງຕົ້ນທຶນຊ້ຳ
+    return ask({ title: '💸 ເພີ່ມຕົ້ນທຶນສິນຄ້າເຂົ້າລາຍຈ່າຍ?', msg: 'ວຽກນີ້ມີລາຍຈ່າຍ «ວັດສະດຸ/ເຄື່ອງ» ທີ່ໃສ່ເອງແລ້ວ ' + manualMat + ' ແຖວ.\nແອບຈະເພີ່ມຕົ້ນທຶນອັດຕະໂນມັດ ' + added + ' ລາຍການ ≈ ' + money(total) + ' ກີບ — ຖ້າທຶນສິນຄ້າເຫຼົ່ານັ້ນໃສ່ເອງແລ້ວ ໃຫ້ກົດ «ຍົກເລີກ» ເພື່ອບໍ່ໃຫ້ຊ້ຳ.', ok: 'ເພີ່ມຕົ້ນທຶນ' }).then(function (y) { return y ? go() : null; });
+  }
+  return go();
 }
 function ordsOfJob(jid) {
   return (S.orders || []).filter(function (o) { return o.jobId === jid && o.status !== 'cancelled'; }).map(function (o) {
@@ -2976,6 +3034,7 @@ function odSave(confirm) {
       var nid = d.id || ((r.orders || []).filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
       toast(confirm ? 'ຢືນຢັນບິນ ແລະ ຕັດສະຕ໊ອກແລ້ວ ✓' : 'ບັນທຶກຮ່າງແລ້ວ ✓'); if (CRM) loadCRM(true);
       if (confirm && d.jobId) syncJobPay(d.jobId, d.paid); // ເງິນທີ່ຮັບໃນບິນ → ຍອດເກັບຂອງວຽກ (ວຽກບໍ່ຄ້າງຊ້ຳ)
+      if (confirm && d.jobId) syncJobCost(d.jobId, d.items); // v24: ຢືນຢັນບິນ → ຕົ້ນທຶນສິນຄ້າໃນບິນເຂົ້າລາຍຈ່າຍວຽກເອງ
       if (nid) openOrder(nid); else closeSheet();
     }).catch(function (e) { ask({ title: '⚠️ ອອກບິນບໍ່ສຳເລັດ', msg: (e && e.message) || String(e), ok: 'ຮັບຊາບ' }); }); // ຂໍ້ຄວາມຜິດພາດຢູ່ຕິດໜ້າຈໍ (ບໍ່ຫາຍໄວ)
   };
