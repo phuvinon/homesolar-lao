@@ -514,7 +514,7 @@ function render() {
   $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
   var v = { dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings, cust: vCust, sales: vSales }[UI.view] || vToday;
   $('app').innerHTML = (S.owner && isJobView ? jobSeg() : '') + v();
-  if (UI.openId) { if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
+  if (UI.openId) { if (isClaimId(UI.openId)) { if (claimById(UI.openId)) renderClaimDetail(); else closeSheet(); } else if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
   else if (UI.openNote) { if (noteById(UI.openNote)) renderNoteDetail(); else closeSheet(); }
   else if (UI.openPO) { if (poById(UI.openPO)) renderPODetail(); else closeSheet(); }
 }
@@ -1106,7 +1106,7 @@ function noteToJob(id) {
   var n = noteById(id);
   openForm(null, null, { customer: n.customer, phone: n.phone, source: n.source, title: n.title + (n.detail ? '\n' + n.detail : ''), price: n.value || 0, fromNote: n.id });
 }
-function fabClick() { if (UI.view === 'notes') openNoteForm(); else if (UI.view === 'po') openPOForm(); else if (UI.view === 'sales') (UI.salesTab === 'stock' ? openStockCount() : openOrderForm()); else openForm(); }
+function fabClick() { if (UI.view === 'notes') openNoteForm(); else if (UI.view === 'po') openPOForm(); else if (UI.view === 'sales') (UI.salesTab === 'stock' ? openStockCount() : UI.salesTab === 'claims' ? openClaimForm() : openOrderForm()); else openForm(); }
 
 /* ================= 📦 ໃບກຽມເຄື່ອງອອກສາງ (ເຈົ້າຂອງ): ຕິກເລືອກວຽກ → ລວມລາຍການ → ແຊໃຫ້ຊ່າງ ================= */
 var LS_RANGES = [['today', 'ມື້ນີ້'], ['2', 'ມື້ນີ້ + ມື້ອື່ນ'], ['7', '7 ມື້'], ['all', 'ທຸກວຽກທີ່ຍັງບໍ່ແລ້ວ']];
@@ -1189,7 +1189,7 @@ function lsPrint() {
     'table{width:100%;border-collapse:collapse;margin:6px 0 14px}th{background:#0A1322;color:#fff;padding:6px;text-align:left;font-size:12px}td{border-bottom:1px solid #ddd;padding:6px;vertical-align:top}' +
     '.ck{width:16px;height:16px;border:1.5px solid #333;border-radius:3px;display:inline-block}.r{text-align:right}h2{font-size:15px;margin:12px 0 4px;border-left:4px solid #F6C453;padding-left:8px}' +
     '.job{border:1px solid #ddd;border-radius:8px;padding:6px 10px;margin-bottom:8px;page-break-inside:avoid}.note{background:#fff8e6;border-radius:8px;padding:8px 10px;margin-top:8px}' +
-    '.sig{display:flex;justify-content:space-between;margin-top:30px}.sig div{width:40%;text-align:center;border-top:1px dashed #999;padding-top:4px;color:#555}</style></head><body>' +
+    '.sig{display:flex;justify-content:space-between;margin-top:30px}.sig div{width:40%;text-align:center;border-top:1px dashed #999;padding-top:4px;color:#555}' + PRINT_BAR_CSS + '</style></head><body>' + printBar() +
     '<h1>📦 ໃບກຽມເຄື່ອງອອກສາງ — HOME SOLAR</h1><div class="sub">ພິມວັນທີ ' + d.getDate() + '/' + (d.getMonth() + 1) + '/' + d.getFullYear() + ' · ' + sel.length + ' ວຽກ</div>' +
     '<h2>ລວມເຄື່ອງຕ້ອງກຽມ</h2><table><tr><th style="width:28px">✓</th><th>ລາຍການ</th><th class="r" style="width:70px">ຈຳນວນ</th><th>ສຳລັບວຽກ</th></tr>' +
     agg.map(function (a) { return '<tr><td><span class="ck"></span></td><td>' + esc(a.t) + '</td><td class="r"><b>' + (a.hasQty ? a.qty : '—') + '</b></td><td>' + esc(a.jobs.join(', ')) + '</td></tr>'; }).join('') + '</table>' +
@@ -1269,6 +1269,11 @@ function vDash() {
   // ວຽກ
   h += '<div class="sec">🔧 ວຽກຕິດຕັ້ງ</div><div class="kpis">' + dTile(tdy.length, 'ວຽກມື້ນີ້', 'blue', "go('today')") + dTile(next7.length, '7 ມື້ຂ້າງໜ້າ', '', "go('week')") +
     dTile(over.length, 'ເລີຍກຳນົດ', 'red', "go('today')") + dTile(wait.length, 'ລໍຖ້ານັດ/ເລື່ອນ', 'amber', "go('today')") + '</div>';
+  (function () { // v25: ເຄລມ/ປ່ຽນຮັບປະກັນ (ສະແດງເມື່ອເຊີບເວີຮອງຮັບ — ສົ່ງ claims ມາ)
+    if (!Array.isArray(S.claims)) return;
+    var cl = S.claims, w = cl.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length, rm = cl.filter(function (c) { return c.status === 'replaced' && claimMonth(c) === pre; }).length;
+    h += '<div class="sec">🛡️ ຮັບປະກັນ / ປ່ຽນດອກໄຟ</div><div class="kpis">' + dTile(w, 'ລໍປ່ຽນ', w ? 'red' : '', "UI.salesTab='claims';go('sales')") + dTile(rm, 'ປ່ຽນແລ້ວ ເດືອນນີ້', 'blue', "UI.salesTab='claims';UI.clf='replaced';go('sales')") + dTile(cl.length, 'ທັງໝົດທີ່ບັນທຶກ', '', "UI.salesTab='claims';UI.clf='';go('sales')") + '</div>';
+  })();
   var days = []; for (var i = 0; i < 7; i++) { var dd = addDays(new Date(), i), ds = ymd(dd); days.push({ l: (i === 0 ? 'ມື້ນີ້' : i === 1 ? 'ມື້ອື່ນ' : DOW[dd.getDay()] + ' ' + dd.getDate()), v: js.filter(function (j) { return j.date === ds && j.status !== 'cancelled'; }).length, go: "UI.cursor=new Date();go('week')" }); }
   h += '<div class="card"><h3>📆 ວຽກ 7 ມື້ຂ້າງໜ້າ</h3>' + dBars(days) + '</div>';
   var techLoad = activeTechs().map(function (tc) { return { l: tc.name, v: next7.filter(function (j) { return j.techIds.indexOf(tc.id) >= 0; }).length }; }).sort(function (a, b) { return b.v - a.v; });
@@ -1396,6 +1401,14 @@ function issueReceipt() {
     printReceipt(rc, w); openJob(d.jobId);
   }).catch(function () { if (w) w.close(); });
 }
+/* v25: ໜ້າພິມ/ໃບເກັບເງິນເປີດໃນໜ້າຕ່າງໃໝ່ (ມືຖື/ແອບບໍ່ມີປຸ່ມກັບ) → ແຖບ «ກັບໄປໜ້າຫຼັກ» ເທິງສຸດ (ບໍ່ຕິດຕອນພິມ) */
+var PRINT_BAR_CSS = '.bar{position:sticky;top:0;z-index:9;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px;margin:0 0 12px;background:#155a94}.bar button{font:inherit;font-weight:700;font-size:15px;padding:10px 18px;border-radius:10px;border:0;cursor:pointer}@media print{.bar{display:none}}';
+function printBar() {
+  var appUrl = location.origin && location.origin !== 'null' ? location.origin + location.pathname : location.href.split('#')[0].split('?')[0];
+  if (appUrl.length > 300 || /^(data|blob):/.test(appUrl)) appUrl = ''; // ໜ້າທີ່ບໍ່ມີ URL ປົກກະຕິ (ເຊັ່ນ preview) — ບໍ່ຝັງ URL ຍາວ
+  return '<div class="bar"><button style="background:#fff;color:#155a94" onclick="goBack()">← ກັບໄປໜ້າຫຼັກ</button><button style="background:#f7941d;color:#fff" onclick="window.print()">🖨️ ພິມ / ບັນທຶກ PDF</button></div>' +
+    '<script>var APP=' + JSON.stringify(appUrl) + ';function goBack(){try{if(window.opener&&!window.opener.closed){window.close();setTimeout(function(){location.href=APP},500);return}}catch(e){}if(history.length>1){history.back();return}if(APP)location.href=APP}<\/script>';
+}
 function printReceipt(rc, w) {
   var k = rcCalc(rc), dt = String(rc.date || today()).split('-');
   var rows = rc.items.map(function (it, i) {
@@ -1421,7 +1434,7 @@ function printReceipt(rc, w) {
     '.warranty ol{margin:0 0 4px 18px;padding:0}.warranty li{margin-bottom:3px;font-size:11px;line-height:1.3;text-align:justify}.warranty .note{font-size:10.5px;line-height:1.3;color:#333;border-top:1px dashed var(--line);padding-top:3px;margin-top:1px}' +
     '.warranty .note b{color:#b23b3b}.warranty .close{font-size:11px;line-height:1.3;margin-top:3px;text-align:center;color:var(--navy);font-weight:600}';
   var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(rcNo(rc)) + ' ' + esc(rc.customer) + ' — HOME SOLAR</title>' +
-    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
     '<div class="head"><div class="brand"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="name">HOME SOLAR</div><div class="tag">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div></div>' +
     '<div class="contact">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
     '<div class="doc-title"><h1>ໃບເກັບເງິນ</h1></div>' +
@@ -1835,7 +1848,7 @@ function srcReportPrint() {
     '.mrow{display:grid;grid-template-columns:42% 1fr 40px;gap:8px;align-items:center;padding:3px 0;font-size:11.5px}.mbar{height:9px;background:#e3e8ee;border-radius:4px;overflow:hidden}.mbar i{display:block;height:100%;background:var(--navy)}' +
     '.foot{margin-top:14px;border-top:1px dashed var(--line);padding-top:8px;font-size:10.5px;color:#5b6b7b;display:flex;justify-content:space-between;gap:12px}.thanks{text-align:center;color:var(--navy);font-weight:700;margin-top:10px;font-size:13px}';
   var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ລາຍງານລູກຄ້າ ' + esc(srcName) + ' ' + today() + '</title>' +
-    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
     '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div class="brand"><div class="nm">HOME SOLAR</div><div class="tg">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
     '<h1><span>ລາຍງານລູກຄ້າທີ່ໄດ້ຮັບການແນະນຳ</span></h1>' +
     '<div class="partner">' + (logo ? '<img src="' + logo + '" alt="' + esc(srcName) + '">' : '<div class="pbig">' + esc(r.src) + '</div>') +
@@ -2107,7 +2120,7 @@ function fdPrint(r, w) {
   var bank = '<div class="box"><div class="t">ບັນຊີທະນາຄານການຄ້າຕ່າງປະເທດລາວ (BCEL)</div>' + FENCE_SHOP.bank.map(function (b) { return '<div class="r"><span>' + b[0] + '</span><span>' + b[1] + '</span></div>'; }).join('') + '</div>';
   var sig = function (role, nm) { return '<div class="sig"><div class="role">' + role + '</div><div class="line"></div><div class="cap">ຊື່ແຈ້ງ / ວັນທີ</div><div class="nm">' + esc(nm || '') + '</div></div>'; };
   var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(id) + ' ' + esc(r.customer) + ' — ' + FD_T[r.kind] + '</title>' +
-    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
     '<div class="head"><div class="brand"><img src="' + RC_ASSET + 'fence-logo.png" alt="Phusiri Trading"><div class="full">' + FENCE_SHOP.co + '</div></div>' +
     '<div class="contact"><div style="font-weight:700;color:var(--navy);font-size:13px">' + FENCE_SHOP.name + '</div><div>' + FENCE_SHOP.addr + '</div><div>ໂທ: ' + FENCE_SHOP.tel + '</div></div></div>' +
     '<div class="doc-title"><h1>' + FD_T[r.kind] + '</h1></div><div class="doc-sub">' + FD_SUB[r.kind] + '</div>' +
@@ -2257,7 +2270,7 @@ function duePrint() {
     'h3{font-size:13.5px;color:var(--navy);margin:14px 0 6px}.sm{font-size:11px;color:#5b6b7b;font-weight:400}table{width:100%;border-collapse:collapse}th{background:var(--navy);color:#fff;font-size:11.5px;padding:6px;text-align:left}' +
     'td{padding:6px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:nth-child(even) td{background:#f8fafc}tfoot td{background:var(--soft);font-weight:600}.n{text-align:right;white-space:nowrap}.sm2{font-size:11px}' +
     '.sign{display:flex;justify-content:space-between;margin-top:30px}.sign div{width:42%;text-align:center;border-top:1px dotted #8fa0b0;padding-top:5px;font-size:12px}';
-  w.document.write('<!doctype html><html lang="lo"><head><meta charset="utf-8"><title>ບິນຄ້າງຈ່າຍ ' + today() + '</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body><div class="sheet">' +
+  w.document.write('<!doctype html><html lang="lo"><head><meta charset="utf-8"><title>ບິນຄ້າງຈ່າຍ ' + today() + '</title><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
     '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div class="nm">HOME SOLAR</div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
     '<h1>ສະຫຼຸບບິນຄ້າງຈ່າຍຜູ້ສະໜອງ</h1><div class="sub">' + sel.length + ' ບິນ · ' + Object.keys(by).length + ' ຜູ້ສະໜອງ · ວັນທີ ' + dmy(today()) + '</div>' +
     '<div class="tot"><span>💰 ລວມທີ່ຈະຈ່າຍ</span><b>' + money(tot) + ' ກີບ</b></div>' + body +
@@ -2429,7 +2442,7 @@ function printPO(id) {
     'table{width:100%;border-collapse:collapse}th{background:#0A1322;color:#fff;font-weight:700;padding:7px 6px;font-size:12px}td{border-bottom:1px solid #e3e3e3;padding:7px 6px;vertical-align:top}' +
     'small{color:#666}.c{text-align:center}.r{text-align:right;white-space:nowrap}.tot{margin-left:auto;width:55%;margin-top:10px}.tot td{border:0;padding:4px 6px}.tot .g td{font-size:16px;font-weight:800;border-top:2px solid #0A1322}' +
     '.sig{display:flex;justify-content:space-between;margin-top:50px}.sig div{width:40%;text-align:center;border-top:1px dashed #999;padding-top:6px;color:#555}' +
-    '.note{margin-top:12px;padding:8px 10px;background:#fff8e6;border-radius:8px}</style></head><body>' +
+    '.note{margin-top:12px;padding:8px 10px;background:#fff8e6;border-radius:8px}' + PRINT_BAR_CSS + '</style></head><body>' + printBar() +
     '<div class="hd"><div class="brand"><b>☀️ ' + esc(SHOP.name) + '</b><div>' + esc(SHOP.sub) + '</div><div>📞 ' + esc(SHOP.phone) + '</div></div>' +
     '<div class="tt"><b>ໃບສັ່ງຊື້ສິນຄ້າ</b><div>PURCHASE ORDER</div><div><b style="font-size:14px;color:#151a23">' + esc(p.id) + '</b></div></div></div>' +
     '<div class="box"><div><small>ເຖິງ (ຜູ້ສະໜອງ)</small><br><b>' + esc(s.name || '') + '</b>' + (s.phone ? '<br>📞 ' + esc(s.phone) : '') + (s.address ? '<br>' + esc(s.address) : '') + '</div>' +
@@ -2812,8 +2825,8 @@ function ordsOfJob(jid) {
 function vSales() {
   ensureProducts();
   var tab = UI.salesTab || 'orders';
-  var h = '<div class="seg"><button class="' + (tab === 'orders' ? 'on' : '') + '" onclick="UI.salesTab=\'orders\';render()">🛒 ບິນຂາຍ</button><button class="' + (tab === 'stock' ? 'on' : '') + '" onclick="UI.salesTab=\'stock\';render()">📦 ສະຕ໊ອກ</button></div>';
-  return h + (tab === 'stock' ? vStock() : vOrders());
+  var h = '<div class="seg"><button class="' + (tab === 'orders' ? 'on' : '') + '" onclick="UI.salesTab=\'orders\';render()">🛒 ບິນຂາຍ</button><button class="' + (tab === 'stock' ? 'on' : '') + '" onclick="UI.salesTab=\'stock\';render()">📦 ສະຕ໊ອກ</button>' + (Array.isArray(S.claims) ? '<button class="' + (tab === 'claims' ? 'on' : '') + '" onclick="UI.salesTab=\'claims\';render()">🛡️ ຮັບປະກັນ' + (function () { var n = S.claims.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length; return n ? ' (' + n + ')' : ''; })() + '</button>' : '') + '</div>';
+  return h + (tab === 'stock' ? vStock() : tab === 'claims' && Array.isArray(S.claims) ? vClaims() : vOrders());
 }
 function vOrders() {
   var os = (S.orders || []).slice().sort(function (a, b) { return a.date === b.date ? b.no - a.no : (a.date < b.date ? 1 : -1); });
@@ -3060,6 +3073,7 @@ function openOrder(id) {
   if (o.status === 'draft') h += '<button class="btn ghost" onclick="openOrderForm(\'' + esc(o.id) + '\')">✏️ ແກ້</button><button class="btn gold" onclick="ordStatus(\'' + esc(o.id) + '\',\'confirmed\')">✅ ຢືນຢັນ + ຕັດສະຕ໊ອກ</button><button class="btn danger" onclick="ordDel(\'' + esc(o.id) + '\')">🗑 ລຶບ</button>';
   if (o.status === 'confirmed') h += '<button class="btn gold" onclick="ordPay(\'' + esc(o.id) + '\')">＋ ຮັບເງິນ</button><button class="btn pri" onclick="ordStatus(\'' + esc(o.id) + '\',\'done\')">✓ ສຳເລັດ (ຮັບຄົບ)</button>';
   if (o.status !== 'draft') h += '<button class="btn ghost" onclick="printOrder(\'' + esc(o.id) + '\')">🖨️ ພິມບິນ</button>';
+  if (Array.isArray(S.claims) && (o.status === 'confirmed' || o.status === 'done')) h += '<button class="btn ghost" onclick="claimFromOrder(\'' + esc(o.id) + '\')">🛡️ ແຈ້ງເຄລມ/ປ່ຽນ</button>';
   if (o.status === 'confirmed' || o.status === 'done') h += '<button class="btn danger" onclick="ordCancel(\'' + esc(o.id) + '\')">❌ ຍົກເລີກບິນ</button>';
   h += '</div>';
   if (o.stockOut === 'TRUE') h += '<p class="muted" style="margin-top:8px">📦 ຕັດສະຕ໊ອກແລ້ວ ' + o.items.filter(function (i) { return i.vid; }).length + ' ລາຍການ</p>';
@@ -3082,6 +3096,256 @@ function ordPay(id) {
   });
 }
 
+/* ================= 🛡️ v25: ເຄລມ / ປ່ຽນຮັບປະກັນ (ເຈົ້າຂອງເທົ່ານັ້ນ) =================
+   ລູກຄ້າຊື້ໄປແລ້ວມີບັນຫາ → ບັນທຶກ: ສິນຄ້າ · ຈຳນວນ · ວັນທີຊື້ · ອາການ · ສະຖານະ (ດອກໄຟເພ → ຂໍປ່ຽນໃໝ່ → ປ່ຽນແລ້ວ / ບໍ່ຮັບປະກັນ)
+   ກົດ «ປ່ຽນແລ້ວ» → ຕັດສະຕັອກດອກໄຟໃໝ່ທີ່ປ່ຽນໃຫ້ (ຖ້ານັບແລ້ວ) + ບັນທຶກຕົ້ນທຶນທີ່ຮ້ານຮັບພາລະ · ເບິ່ງຍ້ອນຫຼັງ/ພາບລວມໄດ້ໃນແຖບ ຂາຍ → 🛡️ ຮັບປະກັນ */
+var CL_ST = {
+  broken: { l: '🔴 ດອກໄຟເພ', c: '#b42318', bg: '#fee4e2' },
+  requested: { l: '🟡 ຂໍປ່ຽນໃໝ່', c: '#a15c00', bg: '#fdecc8' },
+  replaced: { l: '🟢 ປ່ຽນແລ້ວ', c: '#067647', bg: '#d1fadf' },
+  rejected: { l: '⚪ ບໍ່ຮັບປະກັນ', c: '#475467', bg: '#eaecf0' }
+};
+function claimById(id) { return (S.claims || []).filter(function (c) { return c.id === id; })[0]; }
+function isClaimId(id) { return /^C\d{6}-/.test(String(id || '')); }
+function claimWarranty(c) { // ອາຍຸຕັ້ງແຕ່ວັນຊື້ (ປະກັນ 2 ປີ ຕາມໃບເກັບເງິນ)
+  if (!c.origDate) return '';
+  var a = parseYmd(c.origDate), b = parseYmd(c.date || today()), m = (b.getFullYear() - a.getFullYear()) * 12 + b.getMonth() - a.getMonth();
+  if (b.getDate() < a.getDate()) m--;
+  m = Math.max(0, m);
+  return 'ຊື້ມາ ' + m + ' ເດືອນ' + (m <= 24 ? ' · ✅ ຢູ່ໃນປະກັນ 2 ປີ' : ' · ⚠️ ເກີນປະກັນ 2 ປີ');
+}
+function claimMonth(c) { return String(c.replDate || c.date || '').slice(0, 7); }
+// ເຄລມຕົ້ນທາງ (Solaro / Family Solar) — ສິນຄ້າມາຈາກຜູ້ສະໜອງໃດ: ເດົາຈາກໃບສັ່ງຊື້ (PO) ລ່າສຸດທີ່ມີສິນຄ້ານີ້ · ແກ້ໄດ້ໃນຟອມ
+var CL_SUP = { '': { l: 'ຍັງບໍ່ສົ່ງຕົ້ນທາງ', c: '#475467', bg: '#eaecf0' }, sent: { l: '📤 ສົ່ງເຄລມຕົ້ນທາງແລ້ວ', c: '#1d4ed8', bg: '#dbe7ff' }, done: { l: '✅ ຕົ້ນທາງດຳເນີນການແລ້ວ', c: '#067647', bg: '#d1fadf' } };
+function supName(id) { var s = (S.suppliers || []).filter(function (x) { return x.id === id; })[0]; return s ? s.name : (id ? id : 'ບໍ່ລະບຸຕົ້ນທາງ'); }
+function supplierGuess(vid) {
+  if (!vid) return '';
+  var l = (S.pos || []).filter(function (po) { return po.status !== 'cancelled' && po.status !== 'draft' && (po.items || []).some(function (it) { return it.vid === vid; }); })
+    .sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); })[0];
+  return l ? l.supplierId : '';
+}
+function vClaims() {
+  var all = (S.claims || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var f = UI.clf || '', q = (UI.clq || '').toLowerCase(), pre = today().slice(0, 7);
+  var wait = all.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; });
+  var rep = all.filter(function (c) { return c.status === 'replaced'; });
+  var repM = rep.filter(function (c) { return claimMonth(c) === pre; });
+  var lost = rep.reduce(function (a, c) { return a + (c.cost || 0); }, 0);
+  var h = '<div class="kpis">' + dTile(wait.length, 'ລໍປ່ຽນ', wait.length ? 'red' : '', "UI.clf='wait';render()") + dTile(repM.length, 'ປ່ຽນແລ້ວ ເດືອນນີ້', 'blue', "UI.clf='replaced';render()") +
+    dTile(rep.length, 'ປ່ຽນແລ້ວ ທັງໝົດ', '', "UI.clf='replaced';render()") + dTile(short(lost), 'ຕົ້ນທຶນທີ່ຮ້ານຮັບ', 'amber') + '</div>';
+  h += '<button class="btn gold full" style="margin-bottom:10px" onclick="openSupClaim()">📄 ໃບເຄລມສົ່ງຕົ້ນທາງ (Solaro / Family Solar) — PDF</button>';
+  h += '<div class="filters">' + [['', 'ທັງໝົດ'], ['wait', '⏳ ລໍປ່ຽນ'], ['broken', CL_ST.broken.l], ['requested', CL_ST.requested.l], ['replaced', CL_ST.replaced.l], ['rejected', CL_ST.rejected.l]].map(function (o) {
+    return '<button class="fchip' + (f === o[0] ? ' on' : '') + '" onclick="UI.clf=\'' + o[0] + '\';render()">' + o[1] + '</button>'; }).join('') + '</div>';
+  h += '<input class="search" id="clSearch" placeholder="🔎 ຊື່ລູກຄ້າ / ເບີ / ສິນຄ້າ / ອາການ" value="' + esc(UI.clq || '') + '" oninput="UI.clq=this.value;clearTimeout(window._clq);window._clq=setTimeout(function(){render();var e=$(\'clSearch\');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length)}},300)">';
+  // ພາບລວມ: ຕາມສິນຄ້າ + ຕາມເດືອນ
+  if (all.length) {
+    var byP = {}, byM = {};
+    all.forEach(function (c) {
+      var k = c.product || '—'; byP[k] = byP[k] || { n: 0, rep: 0, cost: 0 }; byP[k].n += c.qty || 1; if (c.status === 'replaced') { byP[k].rep += c.qty || 1; byP[k].cost += c.cost || 0; }
+      var m = String(c.date || '').slice(0, 7); byM[m] = (byM[m] || 0) + (c.qty || 1);
+    });
+    var pk = Object.keys(byP).sort(function (a, b) { return byP[b].n - byP[a].n; }), mk = Object.keys(byM).sort().slice(-6), mx = Math.max.apply(null, mk.map(function (k) { return byM[k]; })) || 1;
+    var byS = {}; all.forEach(function (c) { if (c.status === 'rejected') return; var s = c.supplierId || ''; byS[s] = byS[s] || { n: 0, todo: 0, sent: 0, done: 0, models: {} }; var q = c.qty || 1; byS[s].n += q; byS[s][c.supStatus === 'sent' ? 'sent' : c.supStatus === 'done' ? 'done' : 'todo'] += q; byS[s].models[c.product] = (byS[s].models[c.product] || 0) + q; });
+    h += '<details class="card" style="margin-bottom:10px"' + (UI.clOv ? ' open' : '') + ' ontoggle="UI.clOv=this.open"><summary style="cursor:pointer"><b>📊 ພາບລວມ</b> <span class="muted">ຕາມຕົ້ນທາງ · ສິນຄ້າ · ເດືອນ</span></summary>' +
+      '<div style="margin-top:8px"><b style="font-size:13px">🏭 ຕາມຕົ້ນທາງ (ຊິ້ນ · ບໍ່ນັບ «ບໍ່ຮັບປະກັນ»)</b>' + Object.keys(byS).map(function (s) {
+        var o = byS[s], ms = Object.keys(o.models).sort(function (a, b) { return o.models[b] - o.models[a]; }).map(function (m) { return esc(m) + ' ×' + o.models[m]; }).join(' · ');
+        return '<div class="eq" style="cursor:pointer;display:block" onclick="openSupClaim(\'' + esc(s) + '\')"><div style="display:flex;gap:8px"><b style="flex:1">' + esc(supName(s)) + '</b><b>' + o.n + '</b></div><div class="muted" style="font-size:12.5px">' + ms + '</div><div class="muted" style="font-size:12.5px">ຍັງບໍ່ສົ່ງ ' + o.todo + ' · ສົ່ງແລ້ວ ' + o.sent + ' · ດຳເນີນການແລ້ວ ' + o.done + '</div></div>'; }).join('') + '</div>' +
+      '<div style="margin-top:10px"><b style="font-size:13px">ຕາມສິນຄ້າ (ຈຳນວນຊິ້ນທີ່ມີບັນຫາ)</b>' + pk.slice(0, 10).map(function (k) {
+        return '<div class="eq" style="cursor:default"><span style="flex:1">' + esc(k) + '</span><span class="muted">ປ່ຽນແລ້ວ ' + byP[k].rep + (byP[k].cost ? ' · ທຶນ ' + short(byP[k].cost) : '') + '</span><b style="min-width:30px;text-align:right">' + byP[k].n + '</b></div>'; }).join('') + '</div>' +
+      '<div style="margin-top:10px"><b style="font-size:13px">ຕາມເດືອນ</b>' + mk.map(function (k) {
+        return '<div class="eq" style="cursor:default"><span style="width:64px">' + esc(k) + '</span><span style="flex:1"><span style="display:block;height:10px;border-radius:5px;background:#f7941d;width:' + Math.max(4, Math.round(byM[k] / mx * 100)) + '%"></span></span><b>' + byM[k] + '</b></div>'; }).join('') + '</div>' +
+      '<p class="muted" style="margin-top:8px;font-size:12px">ນັບເປັນຊິ້ນ · ຍ້ອນຫຼັງໄດ້ທັງໝົດທີ່ບັນທຶກໄວ້ໃນແອບ</p></details>';
+  }
+  var list = all.filter(function (c) {
+    if (f === 'wait') { if (c.status !== 'broken' && c.status !== 'requested') return false; } else if (f && c.status !== f) return false;
+    return !q || (c.customer + ' ' + c.phone + ' ' + c.product + ' ' + c.issue + ' ' + c.origRef).toLowerCase().indexOf(q) >= 0;
+  });
+  h += '<p class="muted" style="margin-bottom:6px">' + list.length + ' ລາຍການ</p>';
+  if (!list.length) return h + '<div class="empty">' + (all.length ? 'ບໍ່ມີລາຍການຕາມຕົວກອງ' : 'ຍັງບໍ່ມີເຄລມ — ກົດ ＋ ເພື່ອບັນທຶກ ກໍລະນີລູກຄ້າດອກໄຟມີບັນຫາ ແລ້ວປ່ຽນໃຫ້') + '</div>';
+  return h + list.map(function (c) {
+    var st = CL_ST[c.status] || CL_ST.broken;
+    return '<div class="job" style="--tc:' + st.c + '" onclick="openClaim(\'' + esc(c.id) + '\')"><div class="top"><span class="t">' + esc(dLabel(c.date)) + (c.replDate && c.status === 'replaced' ? ' → ປ່ຽນ ' + esc(dLabel(c.replDate)) : '') + '</span><span class="sp"></span><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span></div>' +
+      '<div class="nm">' + esc(c.customer || c.phone) + ' · ' + esc(c.product) + (c.qty > 1 ? ' ×' + c.qty : '') + '</div>' +
+      (c.issue ? '<div class="m">⚠️ ' + esc(c.issue) + '</div>' : '') +
+      (c.origDate || c.origRef ? '<div class="m">🧾 ' + esc((c.origRef ? c.origRef + ' · ' : '') + (c.origDate ? 'ຊື້ ' + c.origDate : '')) + '</div>' : '') +
+      '<div class="m">🏭 ' + esc(supName(c.supplierId)) + (c.supStatus ? ' · ' + esc(CL_SUP[c.supStatus].l) : '') + '</div></div>';
+  }).join('');
+}
+function openClaim(id) { UI.openNote = null; UI.openPO = null; UI.openId = id; renderClaimDetail(); openSheet(); $('sheet').scrollTop = 0; }
+function renderClaimDetail() {
+  var c = claimById(UI.openId); if (!c) return;
+  var st = CL_ST[c.status] || CL_ST.broken, logs = (S.logs[c.id] || []).slice().reverse();
+  var tel = c.phone ? c.phone.replace(/[^\d+]/g, '') : '', wa = tel ? 'https://wa.me/' + (tel.indexOf('856') === 0 ? tel : '856' + tel.replace(/^0/, '')) : '';
+  var h = '<div class="shd" style="border-top:5px solid ' + st.c + '"><b>🛡️ ເຄລມ</b><span class="badge" style="background:' + st.bg + ';color:' + st.c + '">' + st.l + '</span><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div style="font-size:19px;font-weight:800;margin-bottom:6px">' + esc(c.product) + (c.qty > 1 ? ' ×' + c.qty : '') + '</div><div class="info">' +
+    '<span class="k">👤</span><span>' + esc(c.customer || '—') + '</span>' + (c.phone ? '<span class="k">📞</span><span>' + esc(c.phone) + '</span>' : '') +
+    '<span class="k">📅</span><span>ແຈ້ງບັນຫາ ' + esc(c.date) + '</span>' +
+    '<span class="k">🏭</span><span>ຕົ້ນທາງ: <b>' + esc(supName(c.supplierId)) + '</b></span>' +
+    (c.origDate || c.origRef ? '<span class="k">🧾</span><span>' + (c.origRef ? esc(c.origRef) + ' · ' : '') + (c.origDate ? 'ຊື້ ' + esc(c.origDate) : '') + (c.origDate ? '<br><span class="muted">' + esc(claimWarranty(c)) + '</span>' : '') + '</span>' : '') +
+    (c.issue ? '<span class="k">⚠️</span><span style="white-space:pre-wrap">' + esc(c.issue) + '</span>' : '') +
+    (c.status === 'replaced' ? '<span class="k">🔄</span><span>ປ່ຽນໃຫ້ແລ້ວ ' + esc(c.replDate || '') + ' → <b>' + esc(c.replProduct || c.product) + '</b>' + (c.cost ? '<br><span class="muted">ຕົ້ນທຶນທີ່ຮ້ານຮັບ ≈ ' + money(c.cost) + ' ກີບ</span>' : '') + (c.stockOut === 'TRUE' ? '<br><span class="muted">📦 ຕັດສະຕັອກດອກໄຟໃໝ່ແລ້ວ</span>' : '<br><span class="muted">📦 ຍັງບໍ່ໄດ້ຕັດສະຕັອກ — ໃຊ້ ± ປັບແກ້ ໃນແຖບສະຕ໊ອກ ຖ້າຕ້ອງການ</span>') + '</span>' : '') +
+    (c.note ? '<span class="k">📝</span><span style="white-space:pre-wrap">' + esc(c.note) + '</span>' : '') + '</div>';
+  h += '<div class="acts">' + (tel ? '<a class="abtn" target="_top" href="tel:' + esc(tel) + '"><i>📞</i>ໂທ</a><a class="abtn" target="_blank" rel="noopener" href="' + esc(wa) + '"><i>💬</i>WhatsApp</a>' : '<span class="abtn" style="opacity:.4"><i>📞</i>ໂທ</span><span class="abtn" style="opacity:.4"><i>💬</i>WhatsApp</span>') +
+    '<span class="abtn" onclick="openClaimForm(\'' + esc(c.id) + '\')"><i>✏️</i>ແກ້ໄຂ</span><span class="abtn" onclick="delClaim(\'' + esc(c.id) + '\')" style="color:#dc2626"><i>🗑️</i>ລຶບ</span></div>';
+  h += '<div class="card"><h3>📌 ສະຖານະ</h3><div class="stgrid">' + Object.keys(CL_ST).map(function (k) {
+    return '<button class="stbtn' + (c.status === k ? ' on' : '') + '" style="background:' + CL_ST[k].bg + ';color:' + CL_ST[k].c + '" onclick="setClaimStatus(\'' + esc(c.id) + '\',\'' + k + '\')">' + CL_ST[k].l + '</button>'; }).join('') + '</div></div>';
+  var ss = c.supStatus || '';
+  h += '<div class="card"><h3>🏭 ເຄລມຕົ້ນທາງ — ' + esc(supName(c.supplierId)) + '</h3><div class="stgrid">' + Object.keys(CL_SUP).map(function (k) {
+    return '<button class="stbtn' + (ss === k ? ' on' : '') + '" style="background:' + CL_SUP[k].bg + ';color:' + CL_SUP[k].c + '" onclick="setClaimSup([\'' + esc(c.id) + '\'],\'' + k + '\')">' + CL_SUP[k].l + '</button>'; }).join('') + '</div>' +
+    (c.supDate ? '<p class="muted" style="margin-top:6px">ວັນທີ ' + esc(c.supDate) + '</p>' : '') + '</div>';
+  h += '<div class="card"><h3>🗒️ ປະຫວັດ</h3><div class="tl">' + (logs.length ? logs.map(function (l) {
+    return '<div class="it"><small>' + esc(l.time) + ' · ' + esc(l.who) + '</small>' + esc(l.detail) + '</div>'; }).join('') : '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div></div>';
+  h += '<p class="muted" style="text-align:center">ລະຫັດ ' + esc(c.id) + (c.updatedAt ? ' · ອັບເດດ ' + esc(c.updatedAt) : '') + '</p></div>';
+  $('sheet').innerHTML = h;
+}
+function setClaimSup(ids, st) {
+  act('api_setClaimsSup', ids, st).then(function () { toast((CL_SUP[st] || CL_SUP['']).l + ' ✓'); if ($('scList')) openSupClaim(); else if (UI.openId && isClaimId(UI.openId)) renderClaimDetail(); }).catch(function () { });
+}
+/* ---------- 📄 ໃບເຄລມສົ່ງຕົ້ນທາງ (Solaro / Family Solar): ເລືອກລາຍການ → PDF ---------- */
+function scList() { return (S.claims || []).filter(function (c) { return c.status !== 'rejected' && (c.supplierId || '') === (UI.sc.sup || ''); }).sort(function (a, b) { return (a.date || '').localeCompare(b.date || ''); }); }
+function openSupClaim(sup) {
+  var all = (S.claims || []).filter(function (c) { return c.status !== 'rejected'; }), keys = {};
+  all.forEach(function (c) { keys[c.supplierId || ''] = 1; });
+  var ks = Object.keys(keys); if (!ks.length) return toast('ຍັງບໍ່ມີເຄລມ', true);
+  UI.sc = UI.sc || {};
+  if (sup !== undefined && sup !== null) UI.sc.sup = sup;
+  if (ks.indexOf(UI.sc.sup === undefined ? '#' : UI.sc.sup) < 0) UI.sc.sup = ks[0];
+  var list = scList();
+  if (UI.sc.init !== UI.sc.sup) { UI.sc.sel = {}; list.forEach(function (c) { if (!c.supStatus) UI.sc.sel[c.id] = 1; }); UI.sc.init = UI.sc.sup; } // ເລີ່ມ: ຕິກທີ່ຍັງບໍ່ສົ່ງ
+  var sel = list.filter(function (c) { return UI.sc.sel[c.id]; }), models = {}, pcs = 0;
+  sel.forEach(function (c) { models[c.product] = (models[c.product] || 0) + (c.qty || 1); pcs += c.qty || 1; });
+  var h = '<div class="shd"><b>📄 ໃບເຄລມສົ່ງຕົ້ນທາງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="filters">' + ks.map(function (k) { return '<button class="fchip' + (UI.sc.sup === k ? ' on' : '') + '" onclick="openSupClaim(\'' + esc(k) + '\')">🏭 ' + esc(supName(k)) + '</button>'; }).join('') + '</div>';
+  h += '<div class="card"><h3>ສະຫຼຸບທີ່ເລືອກ — ' + esc(supName(UI.sc.sup)) + '</h3>' + (sel.length ? Object.keys(models).sort(function (a, b) { return models[b] - models[a]; }).map(function (m) {
+    return '<div class="eq" style="cursor:default"><span style="flex:1">' + esc(m) + '</span><b>' + models[m] + ' ຊິ້ນ</b></div>'; }).join('') + '<div class="eq" style="cursor:default"><span style="flex:1"><b>ລວມ</b></span><b>' + pcs + ' ຊິ້ນ</b></div>' : '<div class="muted">ຍັງບໍ່ໄດ້ຕິກລາຍການ</div>') + '</div>';
+  h += '<div id="scList">' + list.map(function (c) {
+    var ss = CL_SUP[c.supStatus || ''];
+    return '<label class="eq" style="cursor:pointer;align-items:flex-start"><input type="checkbox" style="margin:4px 8px 0 0" ' + (UI.sc.sel[c.id] ? 'checked' : '') + ' onchange="scToggle(\'' + esc(c.id) + '\',this.checked)"><span style="flex:1"><b>' + esc(c.product) + (c.qty > 1 ? ' ×' + c.qty : '') + '</b><br><span class="muted">' + esc(c.date) + ' · ' + esc(c.customer || c.phone) + (c.origDate ? ' · ຊື້ ' + esc(c.origDate) : '') + '</span>' +
+      (c.issue ? '<br><span class="muted">⚠️ ' + esc(c.issue) + '</span>' : '') + '</span><span class="badge" style="background:' + ss.bg + ';color:' + ss.c + ';flex:none">' + ss.l + '</span></label>'; }).join('') + '</div>';
+  h += '<div class="btns" style="flex-wrap:wrap"><button class="btn gold" onclick="supClaimPdf()"' + (sel.length ? '' : ' disabled') + '>📄 ສ້າງ PDF (' + sel.length + ')</button>' +
+    '<button class="btn ghost" onclick="scMark(\'sent\')"' + (sel.length ? '' : ' disabled') + '>📤 ໝາຍວ່າສົ່ງແລ້ວ</button><button class="btn ghost" onclick="scMark(\'done\')"' + (sel.length ? '' : ' disabled') + '>✅ ຕົ້ນທາງດຳເນີນການແລ້ວ</button></div>';
+  h += '<p class="muted" style="margin-top:8px;font-size:12.5px">ກົດ «ສ້າງ PDF» → ໜ້າໃໝ່ເປີດ → ເລືອກ ບັນທຶກເປັນ PDF → ສົ່ງໃຫ້ຕົ້ນທາງທາງ WhatsApp. ເຄລມທີ່ «ບໍ່ຮັບປະກັນ» ບໍ່ຢູ່ໃນລາຍການ.</p></div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet();
+}
+function scToggle(id, on) { UI.sc.sel[id] = on ? 1 : 0; var y = $('sheet').scrollTop; openSupClaim(); $('sheet').scrollTop = y; }
+function scMark(st) { var ids = scList().filter(function (c) { return UI.sc.sel[c.id]; }).map(function (c) { return c.id; }); if (ids.length) setClaimSup(ids, st); }
+function supClaimPdf() {
+  var sel = scList().filter(function (c) { return UI.sc.sel[c.id]; }); if (!sel.length) return toast('ຍັງບໍ່ໄດ້ຕິກລາຍການ', true);
+  var sup = (S.suppliers || []).filter(function (s) { return s.id === UI.sc.sup; })[0] || { name: supName(UI.sc.sup), phone: '' };
+  var models = {}, pcs = 0, cost = 0;
+  sel.forEach(function (c) { var q = c.qty || 1; models[c.product] = (models[c.product] || 0) + q; pcs += q; if (c.status === 'replaced') cost += c.cost || 0; });
+  var dt = today().split('-'), no = 'CLM-' + dt[0].slice(2) + dt[1] + dt[2];
+  var rows = sel.map(function (c, i) {
+    return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(c.product) + '</td><td class="c">' + (c.qty || 1) + '</td><td class="c">' + esc(c.origDate || '—') + '</td><td class="c">' + esc(c.date) + '</td><td>' + esc(c.issue || '—') + '</td><td>' + esc(c.customer || c.phone || '—') + '</td><td>' + (c.status === 'replaced' ? 'ປ່ຽນໃຫ້ລູກຄ້າແລ້ວ ' + esc(c.replDate || '') : c.status === 'requested' ? 'ລູກຄ້າຂໍປ່ຽນ' : 'ລໍຕົກລົງ') + (c.origRef ? '<br><small>ບິນ ' + esc(c.origRef) + '</small>' : '') + '</td></tr>'; }).join('');
+  var sum = Object.keys(models).sort(function (a, b) { return models[b] - models[a]; }).map(function (m) { return '<tr><td>' + esc(m) + '</td><td class="c">' + models[m] + '</td></tr>'; }).join('');
+  var css = ':root{--navy:#155a94;--amber:#f7941d;--line:#c9d3dc;--soft:#f4f7fa;--ink:#1c2733}*{box-sizing:border-box;margin:0;padding:0}html,body{background:#e8ecf0}' +
+    'body{font-family:"Noto Sans Lao","Phetsarath OT","Saysettha OT",sans-serif;color:var(--ink);font-size:13px;line-height:1.55;padding:24px 8px}' +
+    '.sheet{width:210mm;min-height:200mm;margin:0 auto;background:#fff;padding:12mm 13mm 8mm;box-shadow:0 2px 14px rgba(22,50,74,.18)}@page{size:A4;margin:0}@media print{html,body{background:#fff}body{padding:0}.sheet{box-shadow:none;margin:0}}' +
+    '.head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy);padding-bottom:10px}.head img{width:52px;height:52px;object-fit:contain}.head .nm{font-size:20px;font-weight:700;color:var(--navy)}.head .ct{margin-left:auto;font-size:11.5px;color:#44556a;text-align:right;line-height:1.8}' +
+    'h1{text-align:center;font-size:19px;color:var(--navy);margin:10px 0 4px}.meta{display:flex;justify-content:space-between;margin:8px 0;font-size:13px}.to{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin-bottom:10px}' +
+    'table{width:100%;border-collapse:collapse;margin-bottom:8px}th{background:var(--navy);color:#fff;font-size:12px;padding:5px 7px;text-align:left}td{padding:4px 7px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}td.c,th.c{text-align:center}tr:nth-child(even) td{background:#f8fafc}' +
+    '.sum{width:60%;margin-left:auto}.tot td{font-weight:700;border-top:2px solid var(--navy)}.sign{display:flex;justify-content:space-between;margin-top:26px}.sign div{width:42%;text-align:center;border-top:1px dotted #8fa0b0;padding-top:5px;font-size:12.5px}small{color:#5b6b7b}';
+  var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + no + ' ເຄລມ ' + esc(sup.name) + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="nm">HOME SOLAR</div><small>ພູສິຣິ ການຄ້າ</small></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<h1>ໃບແຈ້ງເຄລມສິນຄ້າ (ສົ່ງຕົ້ນທາງ)</h1><div class="meta"><div>ເລກທີ: <b>' + no + '</b></div><div>ວັນທີ: <b>' + dt[2] + '/' + dt[1] + '/' + dt[0] + '</b></div></div>' +
+    '<div class="to">ເຖິງ (ຕົ້ນທາງ): <b>' + esc(sup.name) + '</b>' + (sup.phone ? ' · ໂທ ' + esc(sup.phone) : '') + '<br>ເລື່ອງ: ແຈ້ງສິນຄ້າມີບັນຫາ ຂໍເຄລມ/ປ່ຽນຕາມເງື່ອນໄຂຮັບປະກັນ ລວມ <b>' + pcs + ' ຊິ້ນ</b> (' + sel.length + ' ລາຍການ)</div>' +
+    '<table><tr><th class="c" style="width:30px">#</th><th>ລຸ້ນສິນຄ້າ</th><th class="c" style="width:42px">ຈຳນວນ</th><th class="c" style="width:78px">ວັນທີຊື້</th><th class="c" style="width:78px">ວັນແຈ້ງບັນຫາ</th><th>ອາການ</th><th style="width:90px">ລູກຄ້າ</th><th style="width:105px">ສະຖານະ</th></tr>' + rows + '</table>' +
+    '<table class="sum"><tr><th>ສະຫຼຸບຕາມລຸ້ນ</th><th class="c" style="width:70px">ຊິ້ນ</th></tr>' + sum + '<tr class="tot"><td>ລວມ</td><td class="c">' + pcs + '</td></tr></table>' +
+    (cost ? '<p style="font-size:12px">ໝາຍເຫດ: ຮ້ານໄດ້ປ່ຽນສິນຄ້າໃໝ່ໃຫ້ລູກຄ້າແລ້ວ ຕົ້ນທຶນປະມານ ' + money(cost) + ' ກີບ — ຂໍຕົ້ນທາງພິຈາລະນາປ່ຽນ/ຄືນຕາມເງື່ອນໄຂ</p>' : '') +
+    '<div class="sign"><div>ຜູ້ແຈ້ງ (HOME SOLAR)</div><div>ຜູ້ຮັບ (' + esc(sup.name) + ')</div></div></div></body></html>';
+  var w = window.open('', '_blank'); if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
+  w.document.open(); w.document.write(html); w.document.close();
+}
+function setClaimStatus(id, s) {
+  var c = claimById(id); if (!c || c.status === s) return;
+  if (s === 'replaced') return claimReplaced(id);
+  optimistic(function () { var old = c.status; c.status = s; addLocalLog(id, 'status', CL_ST[old].l + ' → ' + CL_ST[s].l); }, CL_ST[s].l + ' ✓', 'api_setClaimStatus', id, s, {});
+}
+function claimReplaced(id) {
+  var c = claimById(id), rvid = c.replVid || c.vid, p = rvid ? prodByVid(rvid) : null;
+  var uc = p ? unitCost(p) : { v: 0 }, cost = uc.v * (c.qty || 1);
+  var cut = !!(p && stockNow(p) !== null && c.stockOut !== 'TRUE');
+  ask({ title: '✅ ປ່ຽນໃຫ້ລູກຄ້າແລ້ວ?', msg: c.product + ' ×' + (c.qty || 1) + (c.customer ? ' · ' + c.customer : '') + '\n' +
+    (cut ? '• ຕັດສະຕັອກ ' + prodLabel(p) + ' −' + (c.qty || 1) + ' (ເຫດຜົນ: ປ່ຽນຮັບປະກັນ)\n' : (p ? '' : '• ບໍ່ພົບສິນຄ້າໃນລະບົບ — ຈະບໍ່ຕັດສະຕັອກ\n')) +
+    (cost ? '• ບັນທຶກຕົ້ນທຶນທີ່ຮ້ານຮັບພາລະ ≈ ' + money(cost) + ' ກີບ' : '• ບໍ່ມີຕົ້ນທຶນ'), ok: 'ຢືນຢັນ ປ່ຽນແລ້ວ' }).then(function (y) {
+    if (!y) return;
+    act('api_setClaimStatus', id, 'replaced', { replDate: today(), replVid: rvid || '', replProduct: p ? prodLabel(p) : (c.replProduct || c.product), cost: cost, stockOut: cut })
+      .then(function () { if (cut) return act('api_stockAdjust', rvid, -(c.qty || 1), 'ປ່ຽນຮັບປະກັນ ' + id + (c.customer ? ' · ' + c.customer : '')); })
+      .then(function () { toast('🟢 ປ່ຽນແລ້ວ ✓' + (cut ? ' · ຕັດສະຕັອກແລ້ວ' : '')); })
+      .catch(function () { /* act ສະແດງຂໍ້ຜິດພາດແລ້ວ */ });
+  });
+}
+function delClaim(id) {
+  var c = claimById(id);
+  ask({ title: 'ລຶບເຄລມນີ້?', msg: c.product + ' · ' + (c.customer || c.phone) + '\nຖ້າແຄ່ແກ້ສະຖານະ ໃຫ້ກົດປຸ່ມສະຖານະແທນ — ປະຫວັດຍັງຢູ່', ok: 'ລຶບຖາວອນ', danger: true }).then(function (y) {
+    if (y) act('api_deleteClaim', id).then(function () { closeSheet(); toast('ລຶບແລ້ວ'); });
+  });
+}
+function claimFromOrder(oid) {
+  var o = orderById(oid); if (!o) return;
+  var it = (o.items || []).filter(function (x) { return x.vid; })[0] || {};
+  openClaimForm(null, { customer: o.customer, phone: o.phone, origRef: rcNo(o), origDate: o.date, vid: it.vid || '', product: it.name ? it.name + (it.variant ? ' — ' + it.variant : '') : '', qty: 1 });
+}
+function clPickList(which) {
+  var q = ($('clQ' + which).value || '').toLowerCase(), ps = (S.products || []).filter(function (p) { return !q || (p.name + ' ' + p.variant + ' ' + p.sku).toLowerCase().indexOf(q) >= 0; }).slice(0, 25);
+  $('clL' + which).innerHTML = ps.length ? ps.map(function (p) {
+    return '<div class="eq" onclick="clPick(\'' + which + '\',\'' + esc(p.vid) + '\')"><span style="flex:1">' + esc(prodLabel(p)) + '</span></div>'; }).join('') : '<div class="muted" style="padding:10px">' + ((S.products || []).length ? 'ບໍ່ພົບ' : 'ກຳລັງໂຫຼດສິນຄ້າ...') + '</div>';
+}
+function clPick(which, vid) {
+  var p = prodByVid(vid); if (!p) return;
+  if (which === 'P') {
+    UI.cl.vid = vid; UI.cl.product = prodLabel(p);
+    var g = supplierGuess(vid), se = $('clSup'); if (g && se && !UI.cl.supTouched) se.value = g; // ເດົາຕົ້ນທາງຈາກ PO ລ່າສຸດ (ແກ້ໄດ້)
+  } else { UI.cl.replVid = vid; UI.cl.replProduct = prodLabel(p); }
+  $('clS' + which).innerHTML = '✅ ' + esc(prodLabel(p)); $('clL' + which).innerHTML = ''; $('clQ' + which).value = '';
+}
+function openClaimForm(id, pre) {
+  ensureProducts();
+  var c = id ? claimById(id) : null; pre = pre || {};
+  var v = function (k) { return c && c[k] != null ? c[k] : (pre[k] != null ? pre[k] : ''); };
+  UI.cl = { vid: v('vid'), product: v('product'), qty: Number(v('qty')) || 1, replVid: c ? c.replVid : '', replProduct: c ? c.replProduct : '' };
+  var h = '<div class="shd"><b>' + (c ? '✏️ ແກ້ໄຂເຄລມ' : '🛡️ ບັນທຶກເຄລມ / ປ່ຽນຮັບປະກັນ') + '</b><button class="x" onclick="' + (c ? 'openClaim(\'' + esc(c.id) + '\')' : 'closeSheet()') + '">✕</button></div><div class="sbody">';
+  h += '<div class="row"><div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="clCustomer" value="' + esc(v('customer')) + '"></div>' +
+    '<div><label class="f">ເບີໂທ</label><input class="inp" id="clPhone" inputmode="tel" value="' + esc(v('phone')) + '" oninput="custHint(this.value,\'clNoSel\',\'clHint\')"></div></div><div class="muted" id="clHint" style="font-size:12.5px"></div>';
+  h += '<label class="f">🔆 ສິນຄ້າທີ່ມີບັນຫາ *</label><div id="clSP" style="font-weight:700;margin-bottom:4px">' + (UI.cl.product ? '✅ ' + esc(UI.cl.product) : '<span class="muted">ຍັງບໍ່ໄດ້ເລືອກ — ຄົ້ນຫາແລ້ວກົດເລືອກ</span>') + '</div>' +
+    '<input class="inp" id="clQP" placeholder="🔎 ຄົ້ນຫາສິນຄ້າ ເຊັ່ນ aura, 600w" oninput="clPickList(\'P\')"><div id="clLP" style="max-height:200px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>';
+  var supSel = v('supplierId') || (!c ? supplierGuess(UI.cl.vid) : '');
+  h += '<label class="f">🏭 ຕົ້ນທາງ (ສິນຄ້ານີ້ສັ່ງຈາກໃສ)</label><select class="inp" id="clSup" onchange="UI.cl.supTouched=true"><option value="">— ບໍ່ລະບຸ —</option>' +
+    (S.suppliers || []).filter(function (s) { return s.active !== false || s.id === supSel; }).map(function (s) { return '<option value="' + esc(s.id) + '"' + (s.id === supSel ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join('') + '</select>';
+  h += '<div class="row"><div><label class="f">ຈຳນວນຊິ້ນ</label><input class="inp" id="clQty" inputmode="numeric" value="' + UI.cl.qty + '"></div>' +
+    '<div><label class="f">📅 ວັນທີແຈ້ງບັນຫາ</label><input class="inp" type="date" id="clDate" value="' + esc(v('date') || today()) + '"></div></div>';
+  h += '<div class="row"><div><label class="f">🧾 ວັນທີລູກຄ້າຊື້</label><input class="inp" type="date" id="clOrigDate" value="' + esc(v('origDate')) + '"></div>' +
+    '<div><label class="f">ເລກບິນ / ວຽກ</label><input class="inp" id="clOrigRef" placeholder="ເຊັ່ນ #86 ຫຼື J261101-XXXX" value="' + esc(v('origRef')) + '"></div></div>';
+  h += '<label class="f">⚠️ ອາການ / ບັນຫາ</label><textarea class="inp" id="clIssue" placeholder="ເຊັ່ນ: ບໍ່ຕິດ ຫຼັງຝົນ, ແບັດເສື່ອມ ເປີດໄດ້ 3 ຊົ່ວໂມງ">' + esc(v('issue')) + '</textarea>';
+  h += '<label class="f">📌 ສະຖານະ</label><div class="tpick">' + Object.keys(CL_ST).map(function (k) {
+    return '<label><input type="radio" name="clSt" value="' + k + '"' + ((c ? c.status : (pre.status || 'broken')) === k ? ' checked' : '') + '> ' + CL_ST[k].l + '</label>'; }).join('') + '</div>' +
+    (c ? '<div class="muted" style="font-size:12px">ກົດ «ປ່ຽນແລ້ວ» ໃນໜ້າລາຍລະອຽດ ເພື່ອຕັດສະຕັອກ + ບັນທຶກຕົ້ນທຶນ</div>' : '');
+  h += '<label class="f">🔄 ປ່ຽນໃຫ້ເປັນ (ຖ້າບໍ່ແມ່ນລຸ້ນເດີມ — ບໍ່ບັງຄັບ)</label><div id="clSR" style="font-weight:700;margin-bottom:4px">' + (UI.cl.replProduct ? '✅ ' + esc(UI.cl.replProduct) : '<span class="muted">ເທົ່າລຸ້ນເດີມ</span>') + '</div>' +
+    '<input class="inp" id="clQR" placeholder="🔎 ຄົ້ນຫາລຸ້ນທີ່ປ່ຽນໃຫ້" oninput="clPickList(\'R\')"><div id="clLR" style="max-height:160px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>';
+  h += '<label class="f">📝 ໝາຍເຫດ</label><textarea class="inp" id="clNote">' + esc(v('note')) + '</textarea>';
+  h += '<div class="btns"><button class="btn ghost" onclick="' + (c ? 'openClaim(\'' + esc(c.id) + '\')' : 'closeSheet()') + '">ຍົກເລີກ</button><button class="btn pri" onclick="saveClaim(\'' + (c ? esc(c.id) : '') + '\')">💾 ບັນທຶກ</button></div></div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function saveClaim(id) {
+  var data = { id: id || '', customer: $('clCustomer').value.trim(), phone: $('clPhone').value.trim(), vid: UI.cl.vid || '', product: UI.cl.product || '', qty: Number($('clQty').value.replace(/[^\d]/g, '')) || 1,
+    date: $('clDate').value, origDate: $('clOrigDate').value, origRef: $('clOrigRef').value.trim(), issue: $('clIssue').value.trim(), note: $('clNote').value.trim(),
+    supplierId: $('clSup').value, status: (document.querySelector('input[name=clSt]:checked') || {}).value || 'broken', replVid: UI.cl.replVid || '', replProduct: UI.cl.replProduct || '' };
+  if (!data.customer && !data.phone) return toast('ກະລຸນາໃສ່ຊື່ ຫຼື ເບີໂທລູກຄ້າ', true);
+  if (!data.product) return toast('ກະລຸນາເລືອກສິນຄ້າທີ່ມີບັນຫາ', true);
+  var old = id ? claimById(id) : null;
+  var before = (S.claims || []).map(function (x) { return x.id; });
+  act('api_saveClaim', data).then(function (d) {
+    var nid = id || ((d.claims || []).filter(function (x) { return before.indexOf(x.id) < 0; })[0] || {}).id;
+    toast(id ? 'ແກ້ໄຂແລ້ວ ✓' : 'ບັນທຶກເຄລມແລ້ວ ✓');
+    if (nid) openClaim(nid); else closeSheet();
+    // ສະຖານະທີ່ເລືອກໃນຟອມ: ເຄລມໃໝ່ເຊີບເວີຕັ້ງໃຫ້ແລ້ວ · ແກ້ເຄລມເກົ່າ → ປ່ຽນສະຖານະຕາມ · «ປ່ຽນແລ້ວ» ຕ້ອງຜ່ານຂັ້ນຕອນຕັດສະຕັອກ/ຕົ້ນທຶນ
+    if (nid && data.status === 'replaced' && (!old || old.status !== 'replaced')) claimReplaced(nid);
+    else if (nid && old && old.status !== data.status) setClaimStatus(nid, data.status);
+  });
+}
 /* ---------- ສະຕ໊ອກ ---------- */
 function vStock() {
   var ps = (S.products || []), st = S.stockApp || {}, f = UI.sf || 'all', q = (UI.sq || '').toLowerCase();
@@ -3250,12 +3514,12 @@ var MOCK = (function () {
   function all(c) {
     save(); var o = isOwner(c);
     var jobs = o ? db.jobs : db.jobs.filter(function (j) { return c.jobId && j.id === c.jobId && c.key && c.key === j.shareKey; });
-    var notes = o ? db.notes : [], pos = o ? db.pos : [];
-    var logs = {}; notes.concat(pos).forEach(function (n) { if (db.logs[n.id]) logs[n.id] = db.logs[n.id]; });
+    var notes = o ? db.notes : [], pos = o ? db.pos : [], claims = o ? (db.claims = db.claims || []) : [];
+    var logs = {}; notes.concat(pos).concat(claims).forEach(function (n) { if (db.logs[n.id]) logs[n.id] = db.logs[n.id]; });
     jobs.forEach(function (j) { if (db.logs[j.id]) logs[j.id] = db.logs[j.id].filter(function (l) { return o || l.action !== 'pay'; }); });
     var ids = {}; jobs.forEach(function (j) { j.techIds.forEach(function (t) { ids[t] = 1; }); });
     return JSON.stringify({
-      owner: !!o, notes: notes, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
+      owner: !!o, notes: notes, claims: claims, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
       receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
       instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
@@ -3305,6 +3569,27 @@ var MOCK = (function () {
       need(c); var n = findN(id), base = n.remindDate && n.remindDate > today() ? parseYmd(n.remindDate) : new Date();
       n.remindDate = ymd(addDays(base, days)); n.updatedAt = nowF(); log(id, c, 'snooze', 'ເລື່ອນເຕືອນໄປ ' + n.remindDate); return all(c);
     },
+    api_saveClaim: function (c, d) {
+      need(c); db.claims = db.claims || []; var isNew = !d.id, k;
+      var x = isNew ? { id: 'C' + ymd(new Date()).slice(2).replace(/-/g, '') + '-' + Math.random().toString(36).slice(2, 6).toUpperCase(), status: 'broken', stockOut: '', cost: 0, createdAt: nowF() } : db.claims.filter(function (z) { return z.id === d.id; })[0];
+      if (!x) throw new Error('ບໍ່ພົບເຄລມນີ້');
+      ['date', 'customer', 'phone', 'vid', 'product', 'supplierId', 'origRef', 'origDate', 'issue', 'replVid', 'replProduct', 'replDate', 'note'].forEach(function (f) { if (d[f] !== undefined) x[f] = String(d[f]).trim(); });
+      x.qty = Math.max(1, Math.round(Number(d.qty) || x.qty || 1));
+      if (isNew && d.status && CL_ST[d.status]) x.status = d.status;
+      if (!x.date) x.date = today();
+      if (!x.customer && !x.phone) throw new Error('ກະລຸນາໃສ່ຊື່ ຫຼື ເບີໂທລູກຄ້າ');
+      if (!x.product) throw new Error('ກະລຸນາເລືອກສິນຄ້າ (ດອກໄຟ) ທີ່ມີບັນຫາ');
+      x.updatedAt = nowF(); if (isNew) db.claims.push(x);
+      log(x.id, c, isNew ? 'create' : 'edit', (isNew ? 'ບັນທຶກເຄລມ: ' : 'ແກ້ໄຂເຄລມ: ') + x.product + ' ×' + x.qty); return all(c);
+    },
+    api_setClaimStatus: function (c, id, s, e) {
+      need(c); var x = (db.claims || []).filter(function (z) { return z.id === id; })[0]; if (!x) throw new Error('ບໍ່ພົບເຄລມນີ້'); e = e || {};
+      var o = x.status; x.status = s;
+      if (s === 'replaced') { x.replDate = e.replDate || x.replDate || today(); if (e.replVid !== undefined) x.replVid = e.replVid; if (e.replProduct !== undefined) x.replProduct = e.replProduct; if (e.cost !== undefined) x.cost = e.cost; if (e.stockOut) x.stockOut = 'TRUE'; }
+      x.updatedAt = nowF(); log(id, c, 'status', CL_ST[o].l + ' → ' + CL_ST[s].l); return all(c);
+    },
+    api_setClaimsSup: function (c, ids, st) { need(c); (Array.isArray(ids) ? ids : [ids]).forEach(function (id) { var x = (db.claims || []).filter(function (z) { return z.id === id; })[0]; if (x) { x.supStatus = st || ''; x.supDate = st ? today() : ''; x.updatedAt = nowF(); log(id, c, 'status', '🏭 ເຄລມຕົ້ນທາງ: ' + ((CL_SUP[st || ''] || {}).l || '')); } }); return all(c); },
+    api_deleteClaim: function (c, id) { need(c); db.claims = (db.claims || []).filter(function (z) { return z.id !== id; }); return all(c); },
     api_issueFenceDoc: function (c, d) {
       need(c); var ser = fdSer(d.kind);
       if (db.fenceDocs.some(function (x) { return fdSer(x.kind) === ser && x.no === d.no; })) throw new Error('ເລກທີ ' + ser + ' ' + d.no + ' ອອກແລ້ວ — ໃຊ້ເລກອື່ນ');
