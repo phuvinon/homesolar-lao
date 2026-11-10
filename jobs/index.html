@@ -1280,25 +1280,43 @@ function dInstall() {
 }
 // ຍອດຂາຍເດືອນນີ້: Pancake (ທຸກບິນທີ່ບໍ່ຍົກເລີກ) + ບິນແອບທີ່ນັບແລ້ວ (ຫຼັງວັນຕັດຍອດ) — ກົດເກນດຽວກັບ ລຸ້ນຂາຍດີ/ລູກຄ້າ ກັນນັບຊ້ຳ
 function dSalesMonth(pre) {
-  var t = 0, seen = {}, n = 0;
-  if (CRM) (CRM.sales || []).forEach(function (s) { if (isSale(s.status) && String(s.date).indexOf(pre) === 0) { t += Number(s.amount) || 0; seen[s.oid] = 1; } });
-  liveOrders().forEach(function (o) { if (String(o.date).indexOf(pre) === 0) { t += o.total - (o.shipFee || 0); n++; } });
-  return { t: t, n: Object.keys(seen).length + n, ok: !!CRM };
+  var t = 0, n = 0; if (CRM) salesBills().bills.forEach(function (b) { if (b.date.indexOf(pre) === 0) { t += b.amt; n++; } });
+  return { t: t, n: n, ok: !!CRM };
 }
 function hCard(n, l, sub, cls, go) { return '<div class="hc ' + (cls || '') + '"' + (go ? ' onclick="' + go + '"' : ' style="cursor:default"') + '><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>'; }
 /* ---------- 📈 ຍອດຂາຍຍ້ອນຫຼັງ ແຍກລາຍເດືອນ (ແຖບ ເງິນ) ---------- */
 // ແຫຼ່ງຂໍ້ມູນ: Pancake (CRM.sales ທຸກບິນທີ່ບໍ່ຍົກເລີກ) + ບິນແອບຫຼັງ «ວັນຕັດຍອດ» (liveOrders) — ບໍ່ລວມຄ່າສົ່ງ
+// ຍອດຂາຍລວມ = ບິນ Pancake ທັງໝົດ + ບິນແອບທີ່ «ບໍ່ມີຄູ່» ໃນ Pancake (ຈັບຄູ່: ເບີໂທ + ສິນຄ້າ/ຈຳນວນຄືກັນ + ວັນທີຫ່າງ ≤ 2 ມື້ → ນັບເທື່ອດຽວ)
+// ບໍ່ຂຶ້ນກັບ «ວັນຕັດຍອດ» — ບິນແອບນັບທັນທີ ແລະ ບໍ່ຊ້ຳເວລາແລ່ນຄູ່ ·  ບໍ່ລວມຄ່າສົ່ງ ແລະ ແຖວ «ຄ່າ…»
+function salesBills() {
+  var by = {};
+  (CRM && CRM.sales || []).forEach(function (s) {
+    if (!isSale(s.status)) return;
+    var o = by[s.oid] = by[s.oid] || { id: s.oid, date: String(s.date), phone: normPhone(s.phone), amt: 0, items: [], src: 'pc' };
+    var a = Number(s.amount) || 0; o.amt += a; o.items.push({ vid: s.vid, name: s.name, qty: Number(s.qty) || 0, amt: a });
+  });
+  var pcs = Object.keys(by).map(function (k) { var o = by[k]; o.sig = physSig(o.items).sig; return o; });
+  var apps = (S.orders || []).filter(function (o) { return o.status === 'confirmed' || o.status === 'done'; });
+  var appOnly = [];
+  apps.forEach(function (o) {
+    var sig = physSig(o.items).sig, ph = normPhone(o.phone), best = null;
+    pcs.forEach(function (c) {
+      if (c.used || c.sig !== sig) return; var dd = daysBetween(o.date, c.date); if (dd > 2) return;
+      if (ph && c.phone && ph !== c.phone) return;
+      if (!best || dd < best.dd) best = { c: c, dd: dd };
+    });
+    if (best) best.c.used = true;
+    else appOnly.push({ id: o.id, date: String(o.date), amt: o.total - (o.shipFee || 0), src: 'app', items: o.items.map(function (it) { return { vid: it.vid, name: it.name, qty: it.qty, amt: it.qty * it.price }; }) });
+  });
+  return { bills: pcs.concat(appOnly), appOnly: appOnly.length, matched: pcs.filter(function (c) { return c.used; }).length };
+}
 function dSalesSeries(nMonths) {
   var now = new Date(), months = [], by = {};
-  for (var i = nMonths - 1; i >= 0; i--) { var x = new Date(now.getFullYear(), now.getMonth() - i, 1), m = ymd(x).slice(0, 7); months.push(m); by[m] = { m: m, t: 0, oids: {}, napp: 0 }; }
-  (CRM && CRM.sales || []).forEach(function (s) {
-    if (!isSale(s.status)) return; var r = by[String(s.date).slice(0, 7)]; if (!r) return;
-    r.t += Number(s.amount) || 0; r.oids[s.oid] = 1;
-  });
-  liveOrders().forEach(function (o) { var r = by[String(o.date).slice(0, 7)]; if (!r) return; r.t += o.total - (o.shipFee || 0); r.napp++; });
-  return months.map(function (m) { var r = by[m]; r.n = Object.keys(r.oids).length + r.napp; return r; });
-}
-function monLabel(m) { var y = m.slice(0, 4), mi = Number(m.slice(5, 7)) - 1; return MON[mi] + (y !== String(new Date().getFullYear()) ? ' ' + y : ''); }
+  for (var i = nMonths - 1; i >= 0; i--) { var x = new Date(now.getFullYear(), now.getMonth() - i, 1), m = ymd(x).slice(0, 7); months.push(m); by[m] = { m: m, t: 0, n: 0 }; }
+  var sb = salesBills(), appN = 0;
+  sb.bills.forEach(function (b) { var r = by[b.date.slice(0, 7)]; if (!r) return; r.t += b.amt; r.n++; if (b.src === 'app') appN++; });
+  var rows = months.map(function (m) { return by[m]; }); rows.appOnly = appN; return rows;
+}function monLabel(m) { var y = m.slice(0, 4), mi = Number(m.slice(5, 7)) - 1; return MON[mi] + (y !== String(new Date().getFullYear()) ? ' ' + y : ''); }
 function dSalesHistory() {
   if (!CRM) return '<div class="card"><h3>📈 ຍອດຂາຍຍ້ອນຫຼັງ</h3>' + (CRM_ERR ? '<div class="muted">⚠️ ໂຫຼດຂໍ້ມູນຂາຍບໍ່ໄດ້: ' + esc(CRM_ERR) + '</div>' : '<div class="muted">ກຳລັງໂຫຼດຂໍ້ມູນຂາຍ...</div>') + '</div>';
   var per = Number(UI.sPer || LS.get('js_sper')) || 6, rows = dSalesSeries(per);
@@ -1314,29 +1332,26 @@ function dSalesHistory() {
     var prev = arr[i + 1], pct = prev && prev.t ? Math.round((r.t - prev.t) / prev.t * 100) : null;
     return '<tr onclick="openSalesMonth(\'' + r.m + '\')" style="cursor:pointer"><td>' + esc(monLabel(r.m)) + (r === cur ? ' <span class="muted">(ເດືອນນີ້)</span>' : '') + (best === r && rows.length > 1 ? ' 🏆' : '') + '</td><td class="num">' + r.n + '</td><td class="num"><b>' + money(r.t) + '</b></td><td class="num" style="color:' + (pct === null ? 'inherit' : pct >= 0 ? '#12a150' : '#dc2626') + '">' + (pct === null ? '—' : (pct > 0 ? '+' : '') + pct + '%') + '</td></tr>';
   }).join('') + '</table></div>';
-  h += '<p class="muted" style="margin-top:6px">* ເດືອນນີ້ ຍັງບໍ່ຄົບເດືອນ (ສະເລ່ຍຄິດຈາກເດືອນທີ່ຈົບແລ້ວ) · ກົດເດືອນເພື່ອເບິ່ງສິນຄ້າທີ່ຂາຍ · Pancake + ບິນແອບ(ຫຼັງວັນຕັດຍອດ) · ບໍ່ລວມຄ່າສົ່ງ</p>';
+  h += '<p class="muted" style="margin-top:6px">* ເດືອນນີ້ ຍັງບໍ່ຄົບເດືອນ (ສະເລ່ຍຄິດຈາກເດືອນທີ່ຈົບແລ້ວ) · ກົດເດືອນເພື່ອເບິ່ງສິນຄ້າທີ່ຂາຍ · Pancake + ບິນແອບທີ່ບໍ່ມີໃນ Pancake (ບິນຄູ່ກັນນັບເທື່ອດຽວ) · ບໍ່ລວມຄ່າສົ່ງ</p>' + (rows.appOnly ? '<p class="muted" style="font-size:12.5px">ໃນນີ້ເປັນບິນຈາກແອບທີ່ບໍ່ມີໃນ Pancake ' + rows.appOnly + ' ບິນ</p>' : '');
   if (first && first > rows[0].m + '-01') h += '<p style="color:#a15c00;font-size:13px;margin-top:4px">⚠️ ຂໍ້ມູນ Pancake ທີ່ແອບມີ ເລີ່ມແຕ່ ' + esc(first) + ' — ເດືອນກ່ອນນັ້ນຍອດອາດບໍ່ຄົບ</p>';
   return h + '</div>';
 }
 // ລາຍລະອຽດຂອງເດືອນໜຶ່ງ: ສິນຄ້າທີ່ຂາຍ (ຈຳນວນ + ເງິນ)
 function openSalesMonth(m) {
-  var by = {}, bills = {};
-  (CRM && CRM.sales || []).forEach(function (s) {
-    if (!isSale(s.status) || String(s.date).slice(0, 7) !== m || /^ຄ່າ/.test(s.name || '')) return;
-    var k = s.vid || s.name, r = by[k] = by[k] || { name: s.name, qty: 0, amt: 0 }; r.qty += Number(s.qty) || 0; r.amt += Number(s.amount) || 0; bills[s.oid] = 1;
-  });
-  liveOrders().forEach(function (o) {
-    if (String(o.date).slice(0, 7) !== m) return; bills[o.id] = 1;
-    o.items.forEach(function (it) { if (/^ຄ່າ/.test(it.name || '')) return; var k = it.vid || it.name, r = by[k] = by[k] || { name: it.name, qty: 0, amt: 0 }; r.qty += it.qty; r.amt += it.qty * it.price; });
+  var by = {}, nb = 0;
+  salesBills().bills.forEach(function (b) {
+    if (b.date.slice(0, 7) !== m) return; nb++;
+    b.items.forEach(function (it) { if (/^ຄ່າ/.test(it.name || '')) return; var k = it.vid || it.name, r = by[k] = by[k] || { name: it.name, qty: 0, amt: 0 }; r.qty += it.qty; r.amt += it.amt; });
   });
   var list = Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.amt - a.amt; });
   var tot = list.reduce(function (a, r) { return a + r.amt; }, 0);
-  var h = '<div class="shd"><b>📈 ຍອດຂາຍ ' + esc(monLabel(m)) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody"><div class="kpis" style="grid-template-columns:repeat(2,1fr)">' + dTile(short(tot), 'ຍອດສິນຄ້າ', 'blue') + dTile(Object.keys(bills).length, 'ຈຳນວນບິນ', '') + '</div>' +
+  var h = '<div class="shd"><b>📈 ຍອດຂາຍ ' + esc(monLabel(m)) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody"><div class="kpis" style="grid-template-columns:repeat(2,1fr)">' + dTile(short(tot), 'ຍອດສິນຄ້າ', 'blue') + dTile(nb, 'ຈຳນວນບິນ', '') + '</div>' +
     '<div class="card"><h3>ສິນຄ້າທີ່ຂາຍ</h3>' + (list.length ? list.map(function (r) {
       return '<div class="eq" style="cursor:default"><span style="flex:1;font-size:14px">' + esc(r.name) + '<br><span class="muted">' + r.qty + ' ຊິ້ນ' + (tot ? ' · ' + Math.round(r.amt / tot * 100) + '%' : '') + '</span></span><b>' + money(r.amt) + '</b></div>'; }).join('') : '<div class="muted">ບໍ່ມີຂໍ້ມູນ</div>') + '</div></div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
-}function vDash() {
+}
+function vDash() {
   if (!CRM && !CRM_ERR) loadCRM();
   var js = S.jobs, t = today(), d7 = ymd(addDays(new Date(), 7)), d = new Date(), pre = ymd(d).slice(0, 7);
   var over = js.filter(isOverdue);
