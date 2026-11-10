@@ -179,6 +179,21 @@ th{font-size:12px;color:var(--muted);font-weight:600}
 .brow .bv{min-width:26px;text-align:right;font-variant-numeric:tabular-nums}
 @media (max-width:420px){ .kpi .n{font-size:21px} .kpi .l{font-size:10.5px} }
 @media (min-width:700px){ .acts{grid-template-columns:repeat(6,1fr)} }
+/* ===== ພາບລວມ v2: ຕົວເລກຫຼັກ + ຕ້ອງເຮັດດຽວນີ້ + ແຖບກຸ່ມ ===== */
+.achips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.achip{border:1px solid color-mix(in srgb,var(--c) 40%,transparent);background:color-mix(in srgb,var(--c) 12%,var(--card));color:var(--c);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer}
+.achip b{font-weight:800}
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.hc{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);border-radius:16px;padding:12px 14px;box-shadow:var(--sh);cursor:pointer}
+.hc .n{font-size:25px;font-weight:800;color:var(--ink);line-height:1.2;font-variant-numeric:tabular-nums}
+.hc .l{font-size:13px;color:var(--muted);margin-top:2px}
+.hc .s{font-size:12px;color:var(--muted);margin-top:3px}
+.hc.red{border-top-color:#dc2626}.hc.green{border-top-color:#12a150}.hc.blue{border-top-color:#2563eb}
+details.fold{margin:14px 0 6px}
+details.fold summary{cursor:pointer;font-weight:800;font-size:14.5px;padding:8px 2px;list-style:none;color:var(--muted)}
+details.fold summary::-webkit-details-marker{display:none}
+details.fold summary:before{content:'▸ ';color:var(--gold)}
+details.fold[open] summary:before{content:'▾ '}
 
 /* ===== v20 ໜ້າຕາໃໝ່: ໂທນເວັບໄຊຮ້ານ (navy #0A1322 + ທອງ #F6C453) · ສະຫວ່າງ = ຄ່າເລີ່ມ · 🌙 ມືດ = html[data-theme=dark] ===== */
 :root{--bg:#F5F3EE; --card:#fff; --soft:#faf8f3; --line:#e8e3d7; --line2:#d8d1c1; --muted:#6b6f78; --pri:#0A1322; --on-pri:#fff; --act:#0A1322; --acc:#c9971c; --sh:0 1px 2px rgba(10,19,34,.05),0 2px 8px rgba(10,19,34,.04)}
@@ -1263,68 +1278,99 @@ function dInstall() {
   if (missing) h += '<p style="color:#a15c00;font-size:13px;margin:-4px 2px 10px">⚠️ ' + missing + ' ວຽກສຳເລັດແລ້ວ ຍັງບໍ່ໄດ້ໃສ່ຈຳນວນຈຸດ/ຄ່າແຮງ — ຕົວເລກຂ້າງເທິງອາດຕ່ຳກວ່າຈິງ</p>';
   return h;
 }
+// ຍອດຂາຍເດືອນນີ້: Pancake (ທຸກບິນທີ່ບໍ່ຍົກເລີກ) + ບິນແອບທີ່ນັບແລ້ວ (ຫຼັງວັນຕັດຍອດ) — ກົດເກນດຽວກັບ ລຸ້ນຂາຍດີ/ລູກຄ້າ ກັນນັບຊ້ຳ
+function dSalesMonth(pre) {
+  var t = 0, seen = {}, n = 0;
+  if (CRM) (CRM.sales || []).forEach(function (s) { if (isSale(s.status) && String(s.date).indexOf(pre) === 0) { t += Number(s.amount) || 0; seen[s.oid] = 1; } });
+  liveOrders().forEach(function (o) { if (String(o.date).indexOf(pre) === 0) { t += o.total - (o.shipFee || 0); n++; } });
+  return { t: t, n: Object.keys(seen).length + n, ok: !!CRM };
+}
+function hCard(n, l, sub, cls, go) { return '<div class="hc ' + (cls || '') + '"' + (go ? ' onclick="' + go + '"' : ' style="cursor:default"') + '><div class="n">' + n + '</div><div class="l">' + l + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>'; }
 function vDash() {
+  if (!CRM && !CRM_ERR) loadCRM();
   var js = S.jobs, t = today(), d7 = ymd(addDays(new Date(), 7)), d = new Date(), pre = ymd(d).slice(0, 7);
-  var open = js.filter(isOpen), over = js.filter(isOverdue);
+  var over = js.filter(isOverdue);
   var tdy = js.filter(function (j) { return j.date === t && j.status !== 'cancelled'; });
   var next7 = js.filter(function (j) { return j.date >= t && j.date <= d7 && isOpen(j); });
   var wait = js.filter(function (j) { return j.status === 'pending' || j.status === 'postponed' || (!j.date && isOpen(j)); });
   var month = js.filter(function (j) { return j.date && j.date.indexOf(pre) === 0 && j.status !== 'cancelled'; });
   var doneM = month.filter(function (j) { return j.status === 'done'; });
-  var h = '<div class="toolbar"><div style="flex:1"><b style="font-size:17px">📊 ພາບລວມ</b><div class="muted">' + DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + '</div></div>' +
-    '<button class="nb" onclick="openFenceList()">🧱 ເອກະສານຮົ້ວ</button><button class="nb" onclick="openLoadSheet()">📦 ກຽມເຄື່ອງ</button></div>';
-  // ວຽກ
-  h += '<div class="sec">🔧 ວຽກຕິດຕັ້ງ</div><div class="kpis">' + dTile(tdy.length, 'ວຽກມື້ນີ້', 'blue', "go('today')") + dTile(next7.length, '7 ມື້ຂ້າງໜ້າ', '', "go('week')") +
-    dTile(over.length, 'ເລີຍກຳນົດ', 'red', "go('today')") + dTile(wait.length, 'ລໍຖ້ານັດ/ເລື່ອນ', 'amber', "go('today')") + '</div>';
-  (function () { // v25: ເຄລມ/ປ່ຽນຮັບປະກັນ (ສະແດງເມື່ອເຊີບເວີຮອງຮັບ — ສົ່ງ claims ມາ)
-    if (!Array.isArray(S.claims)) return;
-    var cl = S.claims, w = cl.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length, rm = cl.filter(function (c) { return c.status === 'replaced' && claimMonth(c) === pre; }).length;
-    h += '<div class="sec">🛡️ ຮັບປະກັນ / ປ່ຽນດອກໄຟ</div><div class="kpis">' + dTile(w, 'ລໍປ່ຽນ', w ? 'red' : '', "UI.salesTab='claims';go('sales')") + dTile(rm, 'ປ່ຽນແລ້ວ ເດືອນນີ້', 'blue', "UI.salesTab='claims';UI.clf='replaced';go('sales')") + dTile(cl.length, 'ທັງໝົດທີ່ບັນທຶກ', '', "UI.salesTab='claims';UI.clf='';go('sales')") + '</div>';
-  })();
-  var days = []; for (var i = 0; i < 7; i++) { var dd = addDays(new Date(), i), ds = ymd(dd); days.push({ l: (i === 0 ? 'ມື້ນີ້' : i === 1 ? 'ມື້ອື່ນ' : DOW[dd.getDay()] + ' ' + dd.getDate()), v: js.filter(function (j) { return j.date === ds && j.status !== 'cancelled'; }).length, go: "UI.cursor=new Date();go('week')" }); }
-  h += '<div class="card"><h3>📆 ວຽກ 7 ມື້ຂ້າງໜ້າ</h3>' + dBars(days) + '</div>';
-  var techLoad = activeTechs().map(function (tc) { return { l: tc.name, v: next7.filter(function (j) { return j.techIds.indexOf(tc.id) >= 0; }).length }; }).sort(function (a, b) { return b.v - a.v; });
-  var noTech = next7.filter(function (j) { return !j.techIds.length; }).length;
-  h += '<div class="card"><h3>👷 ວຽກຂອງຊ່າງ (7 ມື້ຂ້າງໜ້າ)</h3>' + dBars(techLoad) + (noTech ? '<p style="color:#dc2626;font-size:13px;margin-top:4px">⚠️ ' + noTech + ' ວຽກຍັງບໍ່ມອບໝາຍຊ່າງ</p>' : '') + '</div>';
-  var types = S.types.map(function (tp) { return { l: stripEmoji(tp) || tp, v: month.filter(function (j) { return j.type === tp; }).length }; }).filter(function (r) { return r.v; }).sort(function (a, b) { return b.v - a.v; });
-  h += '<div class="card"><h3>🏷️ ວຽກເດືອນ' + MON[d.getMonth()] + ' ແຍກຕາມປະເພດ <span class="muted">(' + month.length + ' ວຽກ · ສຳເລັດ ' + doneM.length + ')</span></h3>' + dBars(types) + '</div>';
-  h += dInstall();
-  h += dProfit();
-  h += dCRM();
-  // ເງິນ
-  var val = 0, got = 0; month.forEach(function (j) { val += j.price || 0; got += (j.deposit || 0) + (j.collected || 0); });
-  var due = js.reduce(function (a, j) { return a + (j.status !== 'cancelled' ? (j.due || 0) : 0); }, 0);
-  var payable = (S.pos || []).reduce(function (a, p) { return a + poCalc(p).due; }, 0);
-  var rcM = (S.receipts || []).filter(function (r) { return String(r.date).indexOf(pre) === 0; });
-  h += '<div class="sec">💰 ເງິນ <span class="sp"></span><button class="nb" style="font-size:13px" onclick="go(\'money\')">ລາຍລະອຽດ ›</button></div><div class="money3">' +
-    dTile(money(val), 'ມູນຄ່າວຽກເດືອນນີ້', '', "go('money')") + dTile(money(got), 'ເກັບແລ້ວເດືອນນີ້', '', "go('money')") + dTile(money(due), 'ລູກຄ້າຄ້າງຈ່າຍ (ທັງໝົດ)', 'red', "go('money')") + '</div>';
-  h += '<div class="money3">' + dTile(rcM.length, 'ໃບເກັບເງິນເດືອນນີ້', '') + dTile(money(rcM.reduce(function (a, r) { return a + r.total; }, 0)), 'ຍອດໃນໃບເກັບເງິນ', '') +
-    dTile(money(payable), 'ເຮົາຄ້າງຈ່າຍຜູ້ສະໜອງ', 'amber', "UI.pf='due';go('po')") + '</div>';
-  // ລູກຄ້າ & ໂນດ
   var notes = S.notes || [], fol = notes.filter(function (n) { return n.cat === 'follow' && n.status === 'open'; });
   var wonM = notes.filter(function (n) { return n.status === 'won' && String(n.updatedAt).indexOf(pre) === 0; });
-  h += '<div class="sec">📞 ລູກຄ້າທີ່ກຳລັງຕິດຕາມ</div><div class="kpis">' + dTile(fol.length, 'ກຳລັງ follow', 'amber', "UI.nf='follow';go('notes')") +
-    dTile(notes.filter(noteDue).length, 'ໂນດຮອດກຳນົດ', 'red', "UI.nf='due';go('notes')") + dTile(money(fol.reduce(function (a, n) { return a + (n.value || 0); }, 0)), 'ມູນຄ່າຄາດ', '', "go('notes')") +
-    dTile(wonM.length, 'ປິດການຂາຍເດືອນນີ້', 'blue', "go('notes')") + '</div>';
-  // ສາງ
-  var low = (S.products || []).filter(function (p) { return p.stock <= LOW_STOCK; }).sort(function (a, b) { return a.stock - b.stock; });
+  var low = (S.products || []).filter(function (p) { return availOf(p) <= LOW_STOCK; }).sort(function (a, b) { return availOf(a) - availOf(b); });
   var waitPO = (S.pos || []).filter(function (p) { return p.status === 'sent'; });
-  h += '<div class="sec">📦 ສາງ & ສັ່ງເຄື່ອງ</div><div class="kpis" style="grid-template-columns:repeat(2,1fr)">' + dTile(waitPO.length, 'ໃບສັ່ງລໍຖ້າຮັບເຄື່ອງ', 'blue', "UI.pf='sent';go('po')") + dTile(low.length, 'ສິນຄ້າໃກ້ໝົດ (≤' + LOW_STOCK + ')', 'amber', "go('po')") + '</div>';
-  if (low.length) h += '<div class="card" style="padding:8px 12px">' + low.slice(0, 6).map(function (p) {
-    return '<div class="eq" onclick="openPOForm(null,\'' + esc(p.vid) + '\')"><span style="flex:1">' + esc(prodLabel(p)) + '</span><b style="color:' + (p.stock < 0 ? '#dc2626' : '#a15c00') + '">' + p.stock + '</b><span class="badge" style="background:#fdecc8;color:#a15c00">＋ ສັ່ງ</span></div>';
-  }).join('') + '</div>';
-  // ຄວາມເຄື່ອນໄຫວລ່າສຸດ
+  var noTech = next7.filter(function (j) { return !j.techIds.length; }).length;
+  var codLate = codOpen().filter(function (o) { return daysAgo(o.date) > 7; }), drafts = (S.orders || []).filter(function (o) { return o.status === 'draft'; });
+  var cl = Array.isArray(S.claims) ? S.claims : null, clW = cl ? cl.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length : 0;
+  var noteDueN = notes.filter(noteDue).length;
+  // ຕົວເລກຫຼັກ
+  var sm = dSalesMonth(pre);
+  var jobDue = js.reduce(function (a, j) { return a + (j.status !== 'cancelled' ? (j.due || 0) : 0); }, 0);
+  var ordDueN = (S.orders || []).filter(function (o) { return !o.jobId || !jobById(o.jobId); }).reduce(function (a, o) { return a + ordDue(o); }, 0); // ບິນທີ່ຜູກກັບວຽກ ນັບໃນຍອດຄ້າງຂອງວຽກແລ້ວ
+  var due = jobDue + ordDueN;
+  var profit = 0, rev = 0; js.forEach(function (j) { if (j.status === 'done' && j.date && j.date.indexOf(pre) === 0 && j.price > 0) { var k = jobProfit(j); profit += k.profit; rev += k.rev; } });
+  var tab = UI.dtab || LS.get('js_dtab') || 'job';
+  var h = '<div class="toolbar"><div style="flex:1"><b style="font-size:18px">ພາບລວມ</b><div class="muted">' + DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + '</div></div>' +
+    '<button class="nb" onclick="openFenceList()">🧱 ຮົ້ວ</button><button class="nb" onclick="openLoadSheet()">📦 ກຽມເຄື່ອງ</button></div>';
+  // ⚡ ຕ້ອງເຮັດດຽວນີ້
+  var act = [
+    [over.length, 'ວຽກເລີຍກຳນົດ', '#dc2626', "go('today')"], [codLate.length, 'COD ຄ້າງເກີນ 7 ມື້', '#dc2626', "UI.salesTab='orders';UI.of='cod';go('sales')"],
+    [clW, 'ລໍປ່ຽນຮັບປະກັນ', '#dc2626', "UI.salesTab='claims';go('sales')"], [noteDueN, 'ໂນດຮອດກຳນົດ', '#d97706', "UI.nf='due';go('notes')"],
+    [drafts.length, 'ບິນຮ່າງຄ້າງ', '#d97706', "UI.salesTab='orders';UI.of='draft';go('sales')"], [noTech, 'ວຽກຍັງບໍ່ມອບຊ່າງ', '#d97706', "go('week')"],
+    [low.length, 'ສິນຄ້າໃກ້ໝົດ', '#2563eb', "UI.salesTab='stock';UI.sf='low';go('sales')"]].filter(function (a) { return a[0] > 0; });
+  h += '<div class="sec" style="margin-top:4px">ຕ້ອງເຮັດດຽວນີ້</div><div class="achips">' + (act.length ? act.map(function (a) {
+    return '<button class="achip" style="--c:' + a[2] + '" onclick="' + a[3] + '"><b>' + a[0] + '</b> ' + a[1] + '</button>'; }).join('') : '<span class="achip" style="--c:#12a150">✓ ບໍ່ມີອັນຄ້າງ</span>') + '</div>';
+  // ຕົວເລກຫຼັກ 4 ອັນ
+  h += '<div class="hero">' + hCard(sm.ok ? short(sm.t) : '…', 'ຂາຍເດືອນນີ້', sm.ok ? sm.n + ' ບິນ' : 'ກຳລັງໂຫຼດ', 'blue', "UI.salesTab='orders';go('sales')") +
+    hCard(short(due), 'ຄ້າງເກັບ', due ? 'ວຽກ + ບິນ' + (codLate.length ? ' · <span style="color:#dc2626">COD ເກີນ 7 ມື້</span>' : '') : '✓ ບໍ່ມີຄ້າງ', due ? 'red' : 'green', "go('money')") +
+    hCard(short(profit), 'ກຳໄລວຽກເດືອນນີ້', rev ? Math.round(profit / rev * 100) + '% ຂອງ ' + short(rev) : 'ຍັງບໍ່ມີວຽກສຳເລັດ', profit >= 0 ? 'green' : 'red', "UI.dtab='money';LS.set('js_dtab','money');render()") +
+    hCard(tdy.length, 'ວຽກມື້ນີ້', over.length ? '<span style="color:#dc2626">+ ' + over.length + ' ເລີຍກຳນົດ</span>' : (tdy.length ? 'ເຮັດຕາມແຜນ' : 'ວ່າງ'), over.length ? 'red' : '', "go('today')") + '</div>';
+  // ແຖບກຸ່ມ
+  var tabs = [['job', 'ວຽກ'], ['money', 'ເງິນ'], ['cust', 'ລູກຄ້າ'], ['stock', 'ສາງ']];
+  h += '<div class="seg">' + tabs.map(function (x) { return '<button class="' + (tab === x[0] ? 'on' : '') + '" onclick="UI.dtab=\'' + x[0] + '\';LS.set(\'js_dtab\',\'' + x[0] + '\');render()">' + x[1] + '</button>'; }).join('') + '</div>';
+  if (tab === 'job') {
+    h += '<div class="kpis"><div class="kpi blue" onclick="go(\'week\')"><div class="n">' + next7.length + '</div><div class="l">7 ມື້ຂ້າງໜ້າ</div></div><div class="kpi amber" onclick="go(\'today\')"><div class="n">' + wait.length + '</div><div class="l">ລໍຖ້ານັດ/ເລື່ອນ</div></div>' +
+      '<div class="kpi" style="cursor:default"><div class="n">' + month.length + '</div><div class="l">ວຽກເດືອນນີ້</div></div><div class="kpi" style="cursor:default"><div class="n">' + doneM.length + '</div><div class="l">ສຳເລັດແລ້ວ</div></div></div>';
+    var days = []; for (var i = 0; i < 7; i++) { var dd = addDays(new Date(), i), ds = ymd(dd); days.push({ l: (i === 0 ? 'ມື້ນີ້' : i === 1 ? 'ມື້ອື່ນ' : DOW[dd.getDay()] + ' ' + dd.getDate()), v: js.filter(function (j) { return j.date === ds && j.status !== 'cancelled'; }).length, go: "UI.cursor=new Date();go('week')" }); }
+    h += '<div class="card"><h3>📆 ວຽກ 7 ມື້ຂ້າງໜ້າ</h3>' + dBars(days) + '</div>';
+    var techLoad = activeTechs().map(function (tc) { return { l: tc.name, v: next7.filter(function (j) { return j.techIds.indexOf(tc.id) >= 0; }).length }; }).sort(function (a, b) { return b.v - a.v; });
+    h += '<div class="card"><h3>👷 ວຽກຂອງຊ່າງ (7 ມື້ຂ້າງໜ້າ)</h3>' + dBars(techLoad) + (noTech ? '<p style="color:#dc2626;font-size:13px;margin-top:4px">⚠️ ' + noTech + ' ວຽກຍັງບໍ່ມອບໝາຍຊ່າງ</p>' : '') + '</div>';
+    var types = S.types.map(function (tp) { return { l: stripEmoji(tp) || tp, v: month.filter(function (j) { return j.type === tp; }).length }; }).filter(function (r) { return r.v; }).sort(function (a, b) { return b.v - a.v; });
+    h += '<div class="card"><h3>🏷️ ວຽກເດືອນ' + MON[d.getMonth()] + ' ແຍກຕາມປະເພດ</h3>' + dBars(types) + '</div>';
+    h += dInstall();
+  } else if (tab === 'money') {
+    var val = 0, got = 0; month.forEach(function (j) { val += j.price || 0; got += (j.deposit || 0) + (j.collected || 0); });
+    var payable = (S.pos || []).reduce(function (a, p) { return a + poCalc(p).due; }, 0);
+    var rcM = (S.receipts || []).filter(function (r) { return String(r.date).indexOf(pre) === 0; });
+    h += '<div class="sec">💰 ເງິນ <span class="sp"></span><button class="nb" style="font-size:13px" onclick="go(\'money\')">ສະໝຸດເງິນ ›</button></div><div class="money3">' +
+      dTile(money(val), 'ມູນຄ່າວຽກເດືອນນີ້', '', "go('money')") + dTile(money(got), 'ເກັບແລ້ວເດືອນນີ້', '', "go('money')") + dTile(money(jobDue), 'ລູກຄ້າຄ້າງ (ວຽກ)', 'red', "go('money')") + '</div>';
+    h += '<div class="money3">' + dTile(money(ordDueN), 'ບິນຂາຍຄ້າງ / COD', ordDueN ? 'amber' : '', "UI.salesTab='orders';UI.of='due';go('sales')") + dTile(money(rcM.reduce(function (a, r) { return a + r.total; }, 0)), 'ຍອດໃບເກັບເງິນເດືອນນີ້', '') +
+      dTile(money(payable), 'ເຮົາຄ້າງຈ່າຍຜູ້ສະໜອງ', 'amber', "UI.pf='due';go('po')") + '</div>';
+    h += dProfit();
+  } else if (tab === 'cust') {
+    h += '<div class="sec">📞 ລູກຄ້າທີ່ກຳລັງຕິດຕາມ</div><div class="kpis">' + dTile(fol.length, 'ກຳລັງ follow', 'amber', "UI.nf='follow';go('notes')") +
+      dTile(noteDueN, 'ໂນດຮອດກຳນົດ', 'red', "UI.nf='due';go('notes')") + dTile(short(fol.reduce(function (a, n) { return a + (n.value || 0); }, 0)), 'ມູນຄ່າຄາດ', '', "go('notes')") +
+      dTile(wonM.length, 'ປິດການຂາຍເດືອນນີ້', 'blue', "go('notes')") + '</div>';
+    h += dCRM();
+  } else {
+    h += '<div class="sec">📦 ສາງ & ສັ່ງເຄື່ອງ</div><div class="kpis" style="grid-template-columns:repeat(2,1fr)">' + dTile(waitPO.length, 'ໃບສັ່ງລໍຖ້າຮັບເຄື່ອງ', 'blue', "UI.pf='sent';go('po')") + dTile(low.length, 'ສິນຄ້າໃກ້ໝົດ (≤' + LOW_STOCK + ')', 'amber', "UI.salesTab='stock';UI.sf='low';go('sales')") + '</div>';
+    if (low.length) h += '<div class="card" style="padding:8px 12px">' + low.slice(0, 8).map(function (p) {
+      var a = availOf(p);
+      return '<div class="eq" onclick="openPOForm(null,\'' + esc(p.vid) + '\')"><span style="flex:1">' + esc(prodLabel(p)) + (stockNow(p) === null ? ' <span class="muted" style="font-size:11px">(Pancake)</span>' : '') + '</span><b style="color:' + (a < 0 ? '#dc2626' : '#a15c00') + '">' + a + '</b><span class="badge" style="background:#fdecc8;color:#a15c00">＋ ສັ່ງ</span></div>';
+    }).join('') + '</div>';
+    else h += '<div class="empty">ບໍ່ມີສິນຄ້າໃກ້ໝົດ ✓</div>';
+  }
+  // ຄວາມເຄື່ອນໄຫວລ່າສຸດ (ພັບໄວ້)
   var acts = []; Object.keys(S.logs || {}).forEach(function (id) { (S.logs[id] || []).forEach(function (l) { acts.push({ id: id, l: l }); }); });
   acts.sort(function (a, b) { return String(b.l.time).localeCompare(String(a.l.time)); });
   var name = function (id) { var j = jobById(id); if (j) return j.customer; var n = noteById(id); if (n) return '📝 ' + n.title; var p = poById(id); if (p) return '📦 ' + p.id; return id; };
   var openFn = function (id) { return jobById(id) ? "openJob('" + id + "')" : noteById(id) ? "openNote('" + id + "')" : poById(id) ? "openPO('" + id + "')" : ''; };
-  h += '<div class="sec">🕘 ຄວາມເຄື່ອນໄຫວລ່າສຸດ</div><div class="card" style="padding:8px 12px"><div class="tl">' + (acts.slice(0, 10).map(function (a) {
+  h += '<details class="fold"><summary>🕘 ຄວາມເຄື່ອນໄຫວລ່າສຸດ</summary><div class="card" style="padding:8px 12px;margin-top:8px"><div class="tl">' + (acts.slice(0, 10).map(function (a) {
     var o = openFn(a.id);
     return '<div class="it' + (a.l.action === 'note' ? ' note' : '') + '"' + (o ? ' onclick="' + esc(o) + '" style="cursor:pointer"' : '') + '><small>' + esc(a.l.time) + ' · ' + esc(a.l.who) + ' · <b>' + esc(name(a.id)) + '</b></small>' + esc(a.l.detail) + '</div>';
-  }).join('') || '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div></div>';
+  }).join('') || '<div class="muted">ຍັງບໍ່ມີ</div>') + '</div></div></details>';
   return h;
 }
-
 /* ================= 🧾 ໃບເກັບເງິນ (ເຈົ້າຂອງ) — ແບບດຽວກັບ HOME_SOLAR_RECEIPT_*.html ================= */
 var RC_ASSET = 'https://phuvinon.github.io/homesolar-lao/jobs/'; // rc-logo.png, rc-qr.jpg
 var RC_SHOP = { addr: 'ບ້ານຄຳສະຫວາດ ເມືອງໄຊເສດຖາ ນະຄອນຫຼວງວຽງຈັນ', tel: '020 55949459 / 58868589',
