@@ -2058,12 +2058,13 @@ var FD_SHORT = { quote: 'ສະເໜີ', deposit: 'ມັດຈຳ', install: 
 var FENCE_SHOP = { name: 'ພູສິຣິ ຕິດຕັ້ງຮົ້ວ', co: 'ບໍລິສັດ ພູສິຣິການຄ້າ ຂາອອກ-ຂາເຂົ້າ ຈຳກັດ', addr: 'ບ້ານຄຳສະຫວາດ ເມືອງໄຊເສດຖາ ນະຄອນຫຼວງວຽງຈັນ', tel: '020 58868589',
   bank: [['LAK', '010-1200-00334968-001'], ['THB', '013-1202-00334968-001'], ['ຊື່ບັນຊີ', 'PHUVINON BANNAVONG']], signer: 'PHUVINON BANNAVONG' };
 var FD_TERMS = '• ມັດຈຳ 50% ກ່ອນເລີ່ມສັ່ງຜະລິດ/ຕິດຕັ້ງ, ຊຳລະສ່ວນທີ່ເຫຼືອເມື່ອສົ່ງມອບງານ\n• ຮັບປະກັນໂຄງສ້າງຮົ້ວ 10 ປີ\n• ໄລຍະເວລາຕິດຕັ້ງ: ແຈ້ງໃຫ້ຊາບຫຼັງຢືນຢັນພື້ນທີ່ ແລະ ຈຳນວນແທ້ຈິງ\n• ລາຄານີ້ອີງຕາມພື້ນທີ່/ແບບທີ່ແຈ້ງມາ ອາດປ່ຽນແປງໄດ້ຫາກໜ້າວຽກຈິງແຕກຕ່າງ';
-function fdSer(k) { return k === 'quote' ? 'QT' : 'FN'; }
+function fdSer(k) { return k === 'quote' ? 'QT' : k === 'hsquote' ? 'HQ' : 'FN'; }
 function fdNo(d) { return fdSer(d.kind) + '-' + String(d.date || today()).slice(0, 4) + '-' + ('00' + d.no).slice(-3); }
 function fdNext(kind) { var s = fdSer(kind); return (S.fenceDocs || []).filter(function (x) { return fdSer(x.kind) === s; }).reduce(function (a, x) { return Math.max(a, x.no); }, 0) + 1; }
 function fdUsed(d) { return (S.fenceDocs || []).some(function (x) { return fdSer(x.kind) === fdSer(d.kind) && x.no === d.no; }); }
+function fdFence() { return (S.fenceDocs || []).filter(function (x) { return FD_T[x.kind]; }); } // ໃບຮົ້ວເທົ່ານັ້ນ (ບໍ່ລວມໃບສະເໜີ Home Solar)
 function fdNewest(list) { return list.slice().sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; }); }
-function fdOf(jobId) { return fdNewest((S.fenceDocs || []).filter(function (x) { return x.jobId === jobId; })); }
+function fdOf(jobId) { return fdNewest(fdFence().filter(function (x) { return x.jobId === jobId; })); }
 function fdById(id) { return (S.fenceDocs || []).filter(function (x) { return x.id === id; })[0]; }
 function isFenceJob(j) { return /ຮົ້ວ/.test(j && j.type || ''); }
 function fdSum(d) { return (d.items || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0); }
@@ -2084,7 +2085,7 @@ function fdJobCard(j) {
 
 // ລາຍການເອກະສານຮົ້ວທັງໝົດ (ເຂົ້າຈາກ ພາບລວມ)
 function openFenceList() {
-  var docs = fdNewest(S.fenceDocs || []);
+  var docs = fdNewest(fdFence());
   var h = '<div class="shd"><b>🧱 ເອກະສານຮົ້ວ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
   h += '<div class="row" style="gap:6px"><button class="btn gold" onclick="openFenceDoc(\'quote\')">＋ 📋 ໃບສະເໜີລາຄາ</button><button class="btn ghost" onclick="openFenceDoc(\'deposit\')">＋ 💵 ໃບຮັບເງິນ</button></div>';
   h += '<p class="muted" style="margin:8px 0">ອອກຈາກໜ້າວຽກຮົ້ວກໍໄດ້ (ກາດ 💰 ເງິນ) — ເງິນທີ່ຮັບຈະບັນທຶກເຂົ້າວຽກໃຫ້ນຳ</p>';
@@ -2115,7 +2116,7 @@ function fdToJob(id) {
 function openFenceDoc(kind, jobId, fromId) {
   var j = jobId ? jobById(jobId) : null, src = fromId ? fdById(fromId) : null;
   if (!src && j) src = fdOf(j.id).filter(function (x) { return x.kind === 'quote'; })[0] || fdOf(j.id)[0] || null; // ໃບສະເໜີຂອງວຽກນີ້
-  var last = fdNewest(S.fenceDocs || [])[0], li = last && last.items[0] ? last.items[0] : null;
+  var last = fdNewest(fdFence())[0], li = last && last.items[0] ? last.items[0] : null;
   var items = src ? fdCopyItems(src.items) : [{ name: li ? li.name : 'ຮົ້ວຕາໜ່າງເຫລັກ ພ້ອມເສົາ', mesh: li ? li.mesh : '9cm*17cm*5mm', size: li ? li.size : '180cm*3m',
     unit: li ? li.unit : 'ຊຸດ', qty: 0, price: li ? li.price : 0 }];
   if (!src && j && j.price && items.length === 1 && !items[0].qty) { items[0].qty = 1; items[0].price = j.price; items[0].name = (j.title || items[0].name).split('\n')[0]; }
@@ -2257,6 +2258,153 @@ function fdPrint(r, w) {
       '<div class="in-words"><span class="lbl">ຈຳນວນເງິນທີ່ຮັບເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(r.paid) + ' ກີບຖ້ວນ</span></div>' +
       '<div class="signs">' + sig('ລາຍເຊັນລູກຄ້າ', '') + sig('ລາຍເຊັນຜູ້ຮັບເງິນ', FENCE_SHOP.signer) + '</div>') +
     '<div class="foot-note">' + FENCE_SHOP.co + ' · ' + esc(id) + '</div>' +
+    '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
+  w = w || window.open('', '_blank');
+  if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+/* ================= 📋 ໃບສະເໜີລາຄາ HOME SOLAR (ດອກໄຟ/ໂຊລ່າ) + VAT 10% (ເຈົ້າຂອງ) =================
+   ເລກ HQ-ປີ-ລຳດັບ · ເກັບໃນຕາຕະລາງ FenceDocs ດຽວກັນ (kind = hsquote) · ລາຄາໃນໃບ = ກ່ອນ VAT → ພິມ: ລວມກ່ອນອາກອນ + VAT 10% + ລວມທັງໝົດ */
+var SQ_VAT = 0.1;
+var SQ_TERMS = '• ລາຄານີ້ແຍກ VAT 10% ຕາມທີ່ລະບຸ ແລະ ໃຊ້ໄດ້ຮອດວັນທີ່ກຳນົດ\n• ຊຳລະເປັນເງິນສົດ ຫຼື ໂອນຜ່ານທະນາຄານ\n• ການຮັບປະກັນສິນຄ້າ ເປັນໄປຕາມເງື່ອນໄຂຂອງສິນຄ້າແຕ່ລະລຸ້ນ\n• ລາຄາ ແລະ ຈຳນວນສິນຄ້າ ອາດປ່ຽນແປງໄດ້ ຖ້າມີການປ່ຽນລາຍການ';
+function sqDocs() { return fdNewest((S.fenceDocs || []).filter(function (x) { return x.kind === 'hsquote'; })); }
+function sqNext() { return sqDocs().reduce(function (a, x) { return Math.max(a, x.no); }, 0) + 1; }
+function sqNo(d) { return 'HQ-' + String(d.date || today()).slice(0, 4) + '-' + ('00' + d.no).slice(-3); }
+function sqCalc(d) {
+  var sub = (d.items || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0), vat = Math.round(sub * SQ_VAT);
+  return { sub: sub, vat: vat, total: sub + vat };
+}
+function openSqList() {
+  var docs = sqDocs();
+  var h = '<div class="shd"><b>📋 ໃບສະເໜີລາຄາ Home Solar</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<button class="btn gold full" onclick="openSqForm()">＋ ໃບສະເໜີລາຄາໃໝ່ (VAT 10%)</button>';
+  if (!docs.length) h += '<div class="empty">ຍັງບໍ່ມີໃບສະເໜີລາຄາ</div>';
+  docs.forEach(function (r) {
+    var k = sqCalc(r);
+    h += '<div class="card" style="padding:8px 10px;margin-top:6px"><div class="eq" onclick="sqReprint(\'' + esc(r.id) + '\')"><span style="flex:1">📋 <b>' + esc(r.id) + '</b><br><span class="muted">' + esc(r.date) + ' · ' + esc(r.customer) + '</span></span><b>' + money(k.total) + '</b><span class="badge" style="background:#eef4ff;color:#1d4ed8">🖨️</span></div>' +
+      '<div class="row" style="gap:6px;margin-top:4px"><button class="btn ghost" style="padding:6px" onclick="openSqForm(\'' + esc(r.id) + '\')">📄 ສຳເນົາ/ແກ້ເປັນໃບໃໝ່</button></div></div>';
+  });
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h + '</div>'; openSheet(); $('sheet').scrollTop = 0;
+}
+function openSqForm(fromId) {
+  ensureProducts(); if (!CRM) loadCRM();
+  var src = fromId ? fdById(fromId) : null;
+  UI.sq = { no: sqNext(), date: today(), validDate: ymd(addDays(new Date(), 15)), customer: src ? src.customer : '', phone: src ? src.phone : '', address: src ? src.address : '',
+    notes: src ? src.notes || '' : '', terms: src && src.terms ? src.terms : SQ_TERMS,
+    items: src ? src.items.map(function (it) { return { vid: '', name: it.name, size: it.size || '', unit: it.unit || 'ອັນ', qty: it.qty, price: it.price }; }) : [] };
+  var d = UI.sq, h = '<div class="shd"><b>📋 ໃບສະເໜີລາຄາ (ມີ VAT 10%)</b><button class="x" onclick="openSqList()">✕</button></div><div class="sbody">';
+  h += '<div class="row"><div><label class="f">ເລກທີ (ແກ້ໄດ້)</label><input class="inp" inputmode="numeric" value="' + d.no + '" oninput="UI.sq.no=Number(this.value.replace(/[^\\d]/g,\'\'))||0;sqNoTxt()"><div class="muted" id="sqNoTxt" style="font-size:12px"></div></div>' +
+    '<div><label class="f">ວັນທີ</label><input class="inp" type="date" value="' + esc(d.date) + '" onchange="UI.sq.date=this.value;sqNoTxt()"></div></div>';
+  h += '<label class="f">ໃຊ້ໄດ້ຮອດວັນທີ</label><input class="inp" type="date" value="' + esc(d.validDate) + '" onchange="UI.sq.validDate=this.value">';
+  h += '<div class="row"><div><label class="f">ເບີໂທ (ພິມແລ້ວດຶງລູກຄ້າເກົ່າ)</label><input class="inp" id="sqPhone" inputmode="tel" value="' + esc(d.phone) + '" oninput="UI.sq.phone=this.value;cfSuggest(\'sq\',1)"></div>' +
+    '<div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="sqName" value="' + esc(d.customer) + '" oninput="UI.sq.customer=this.value;cfSuggest(\'sq\')"></div></div>';
+  h += '<div class="muted" id="sqCustHint" style="font-size:12.5px"></div>' + cfBox('sq', d.customer, d.phone);
+  h += '<label class="f">ທີ່ຢູ່ / ສະຖານທີ່ຕິດຕັ້ງ</label><input class="inp" id="sqAddr" value="' + esc(d.address) + '" oninput="UI.sq.address=this.value">';
+  h += '<label class="f">ເພີ່ມສິນຄ້າ (ແຄັດຕະລັອກ — ກົດເພື່ອເພີ່ມ ລາຄາຂຶ້ນອັດຕະໂນມັດ)</label><input class="inp" id="sqSearch" placeholder="🔎 ພິມຊື່ ຫຼື ລະຫັດ ເຊັ່ນ 600w, ໄຟສາດ" oninput="sqSearch(this.value)"><div id="sqResults" style="max-height:220px;overflow-y:auto;margin-top:4px"></div>';
+  h += '<div id="sqItems" style="margin-top:10px"></div><button class="btn ghost full" style="margin-top:6px" onclick="UI.sq.items.push({vid:\'\',name:\'\',size:\'\',unit:\'ອັນ\',qty:1,price:0});sqRender()">＋ ລາຍການອື່ນ (ເຊັ່ນ ຄ່າຕິດຕັ້ງ, ຄ່າຂົນສົ່ງ)</button>';
+  h += '<label class="f">ໝາຍເຫດ (ຂຶ້ນໃນໃບ · 1 ແຖວ = 1 ຂໍ້)</label><textarea class="inp" rows="2" oninput="UI.sq.notes=this.value">' + esc(d.notes) + '</textarea>';
+  h += '<label class="f">ເງື່ອນໄຂ</label><textarea class="inp" rows="4" oninput="UI.sq.terms=this.value">' + esc(d.terms) + '</textarea>';
+  h += '<div id="sqTotal" class="card" style="margin-top:12px;background:#0A1322;color:#fff;border:0"></div>';
+  h += '<div class="btns"><button class="btn ghost" onclick="openSqList()">ຍົກເລີກ</button><button class="btn gold" onclick="sqIssue()">📋 ອອກໃບ + ພິມ PDF</button></div>';
+  h += '<p class="muted" style="margin-top:8px">ໃສ່ລາຄາກ່ອນ VAT — ໃບຈະຄິດ VAT 10% ເພີ່ມໃຫ້ ແລະ ສະແດງລວມທັງໝົດ</p></div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+  sqRender(); sqSearch(''); sqNoTxt(); cfSuggest('sq');
+}
+function sqNoTxt() { var d = UI.sq, el = $('sqNoTxt'); if (!el) return; el.innerHTML = sqDocs().some(function (x) { return x.no === d.no; }) ? '<span style="color:#dc2626">⚠️ ເລກນີ້ອອກແລ້ວ</span>' : esc(sqNo(d)); }
+function sqSearch(q) {
+  q = String(q || '').toLowerCase().trim();
+  var inO = {}; UI.sq.items.forEach(function (it) { if (it.vid) inO[it.vid] = 1; });
+  var all = S.products || [], cats = [];
+  all.forEach(function (p) { String(p.category || '').split(',').forEach(function (c) { c = c.trim(); if (c && cats.indexOf(c) < 0) cats.push(c); }); });
+  var cat = UI.sqCat || '';
+  var ps = all.filter(function (p) { return (!q || (p.name + ' ' + p.variant + ' ' + p.sku + ' ' + p.category).toLowerCase().indexOf(q) >= 0) && (!cat || String(p.category).indexOf(cat) >= 0); });
+  var chips = cats.length > 1 ? '<div class="filters" style="margin:0 0 4px">' + [''].concat(cats).map(function (c) { return '<button class="fchip' + (cat === c ? ' on' : '') + '" onclick="UI.sqCat=\'' + esc(c).replace(/\\/g, '\\\\').replace(/'/g, "\\'") + '\';sqSearch($(\'sqSearch\').value)">' + (c ? esc(c) : 'ທັງໝົດ') + '</button>'; }).join('') + '</div>' : '';
+  $('sqResults').innerHTML = chips + ps.slice(0, 60).map(function (p) {
+    return '<div class="eq" onclick="sqToggle(\'' + esc(p.vid) + '\')"><span style="font-size:20px">' + (inO[p.vid] ? '☑️' : '⬜') + '</span><span style="flex:1;min-width:0">' + esc(prodLabel(p)) +
+      '<div class="muted" style="font-size:12px">' + esc(p.sku) + '</div></span><b style="white-space:nowrap">' + money(p.retail) + '</b></div>';
+  }).join('') + (!ps.length ? '<div class="muted" style="padding:6px">' + ((S.products || []).length ? 'ບໍ່ພົບ' : 'ກຳລັງໂຫຼດສິນຄ້າ...') + '</div>' : '');
+}
+function sqToggle(vid) {
+  var i = -1; UI.sq.items.forEach(function (it, k) { if (it.vid === vid) i = k; });
+  if (i >= 0) UI.sq.items.splice(i, 1);
+  else { var p = prodByVid(vid); if (!p) return; UI.sq.items.push({ vid: vid, name: p.name, size: p.variant || '', unit: 'ອັນ', qty: 1, price: p.retail }); }
+  sqRender(); sqSearch($('sqSearch').value);
+}
+function sqRender() {
+  var d = UI.sq;
+  $('sqItems').innerHTML = d.items.length ? '<div class="card" style="padding:8px 10px"><h3>ລາຍການ (' + d.items.length + ')</h3>' + d.items.map(function (it, i) {
+    return '<div style="border-bottom:1px solid var(--line);padding:8px 0"><div style="display:flex;gap:6px">' +
+      (it.vid ? '<b style="flex:1">' + esc(it.name) + (it.size ? ' — ' + esc(it.size) : '') + '</b>' : '<input class="inp" style="flex:1" placeholder="ຊື່ລາຍການ" value="' + esc(it.name) + '" oninput="UI.sq.items[' + i + '].name=this.value">') +
+      '<button class="btn ghost" style="padding:2px 9px;flex:none" onclick="UI.sq.items.splice(' + i + ',1);sqRender();sqSearch($(\'sqSearch\').value)">✕</button></div>' +
+      '<div class="row" style="margin-top:6px;align-items:center"><div style="flex:0 0 60px"><input class="inp" placeholder="ໜ່ວຍ" value="' + esc(it.unit) + '" oninput="UI.sq.items[' + i + '].unit=this.value"></div>' +
+      '<div style="flex:0 0 64px"><input class="inp" inputmode="decimal" placeholder="ຈຳນວນ" value="' + (it.qty || '') + '" oninput="UI.sq.items[' + i + '].qty=Number(this.value.replace(/[^\\d.]/g,\'\'))||0;sqTotals()"></div>' +
+      '<div><input class="inp" inputmode="numeric" placeholder="ລາຄາ/ໜ່ວຍ (ກ່ອນ VAT)" value="' + (it.price ? money(it.price) : '') + '" oninput="fmtNum(this);UI.sq.items[' + i + '].price=Number(this.value.replace(/[^\\d]/g,\'\'))||0;sqTotals()"></div></div></div>';
+  }).join('') + '</div>' : '<div class="empty">ຍັງບໍ່ໄດ້ເລືອກສິນຄ້າ — ກົດຈາກລາຍການດ້ານເທິງ</div>';
+  sqTotals();
+}
+function sqTotals() {
+  var k = sqCalc(UI.sq), el = $('sqTotal'); if (!el) return;
+  el.innerHTML = '<div class="info" style="grid-template-columns:1fr auto;font-size:14px"><span>ລວມກ່ອນ VAT</span><b>' + money(k.sub) + '</b><span>ອາກອນ VAT 10%</span><b>' + money(k.vat) + '</b>' +
+    '<span style="font-size:17px;color:#F6C453"><b>ລວມທັງໝົດ</b></span><b style="font-size:17px;color:#F6C453">' + money(k.total) + ' ກີບ</b></div><div class="muted" style="color:#c9d0dc;margin-top:4px">(' + laoWords(k.total) + 'ກີບຖ້ວນ)</div>';
+}
+function sqIssue() {
+  var d = UI.sq; d.customer = ($('sqName') || {}).value || d.customer; d.phone = ($('sqPhone') || {}).value || d.phone; d.address = ($('sqAddr') || {}).value || d.address;
+  if (!String(d.customer || '').trim()) return toast('ກະລຸນາໃສ່ຊື່ລູກຄ້າ', true);
+  if (!d.items.some(function (it) { return String(it.name).trim() && it.qty > 0; })) return toast('ກະລຸນາເລືອກສິນຄ້າ + ຈຳນວນ', true);
+  if (d.no < 1 || sqDocs().some(function (x) { return x.no === d.no; })) return toast('ເລກທີນີ້ອອກແລ້ວ — ປ່ຽນເລກ', true);
+  var w = window.open('', '_blank'); if (w) w.document.write('<p style="font-family:sans-serif;padding:30px">ກຳລັງອອກໃບສະເໜີລາຄາ...</p>');
+  var pay = { kind: 'hsquote', no: d.no, date: d.date, validDate: d.validDate, customer: d.customer, phone: d.phone, address: d.address, notes: d.notes, terms: d.terms, jobId: '',
+    items: d.items.map(function (it) { return { name: it.name, mesh: '', size: it.size || '', unit: it.unit, qty: it.qty, price: it.price }; }) };
+  act('api_issueFenceDoc', pay).then(function (r) {
+    var id = sqNo(d), doc = (r.fenceDocs || []).filter(function (x) { return x.id === id; })[0] || pay;
+    toast('ອອກ ' + id + ' ແລ້ວ ✓'); sqPrint(doc, w); openSqList();
+  }).catch(function () { if (w) w.close(); });
+}
+function sqReprint(id) { var r = fdById(id); if (r) sqPrint(r); }
+function sqPrint(r, w) {
+  var k = sqCalc(r), id = r.id || sqNo(r);
+  var dmy = function (s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(s || ''); };
+  var rows = r.items.map(function (it, i) {
+    return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(it.name) + (it.size ? ' — ' + esc(it.size) : '') + '</td><td class="c">' + esc(it.unit) + '</td><td class="c">' + esc(it.qty) + '</td><td class="num">' + money(it.price) + '</td><td class="num b">' + money(it.qty * it.price) + '</td></tr>';
+  }).join('');
+  var notes = String(r.notes || '').split('\n').filter(function (s) { return s.trim(); });
+  var css = ':root{--navy:#155a94;--orange:#f5921e;--line:#ccd3e0;--soft:#f5f7fb;--ink:#1c2733}*{box-sizing:border-box;margin:0;padding:0}html,body{background:#e6e9ee}' +
+    'body{font-family:"Noto Sans Lao","Phetsarath OT","Saysettha OT","Lao UI",sans-serif;color:var(--ink);font-size:13px;line-height:1.55;padding:24px 8px}' +
+    '.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm 13mm 12mm;box-shadow:0 2px 14px rgba(22,50,74,.18)}@page{size:A4;margin:0}' +
+    '@media print{html,body{background:#fff}body{padding:0}.sheet{box-shadow:none;margin:0;min-height:auto;padding:13mm 12mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    '.head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy);padding-bottom:10px}.head img{height:48px;width:auto}.head .nm{font-size:20px;font-weight:700;color:var(--navy)}.head .tg{font-size:11.5px;color:#5b6b7b}.head .ct{margin-left:auto;font-size:11.5px;color:#44556a;text-align:right;line-height:1.8}' +
+    '.doc-title{text-align:center;margin:12px 0 4px}.doc-title h1{font-size:19px;font-weight:700;color:var(--navy);display:inline-block;padding:3px 26px;border-bottom:2.5px solid var(--orange)}.doc-sub{text-align:center;font-size:11.5px;color:#5b6b7b;margin-bottom:4px}' +
+    '.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px;margin:12px 0 10px}.meta .row{display:flex;gap:7px;align-items:baseline}.meta .lbl{white-space:nowrap;font-weight:600;color:var(--navy)}.meta .v{flex:1;border-bottom:1px dotted #8fa0b0;padding:1px 4px;min-height:20px}' +
+    'table.items{width:100%;border-collapse:collapse;margin-top:6px}.items th{background:var(--navy);color:#fff;font-weight:600;font-size:11.5px;padding:7px 5px;border:1px solid var(--navy)}' +
+    '.items td{border:1px solid var(--line);padding:5px 6px;font-size:12px;height:30px}.items tbody tr:nth-child(even){background:var(--soft)}.items .c{text-align:center}.items .num{text-align:right}.items .b{font-weight:600;color:var(--navy)}' +
+    '.items tfoot td{padding:6px 8px;font-weight:700;border:1px solid var(--line)}.items .sl{text-align:right;background:var(--soft);color:var(--navy)}.items .sv{text-align:right;background:var(--soft);color:var(--navy)}.items .gl{text-align:right;background:#fff4dd;color:var(--navy);font-size:14px}.items .gv{text-align:right;background:#fff4dd;color:var(--navy);font-size:14.5px}' +
+    '.note{margin-top:6px;font-size:11px;color:#8a6d1f;background:#fff8e6;border:1px dashed #e0c060;border-radius:4px;padding:5px 9px;display:block}' +
+    '.in-words{margin-top:8px;display:flex;gap:8px;align-items:baseline;font-size:12px}.in-words .lbl{font-weight:600;color:var(--navy);white-space:nowrap}.in-words .val{flex:1;border-bottom:1px dotted #8fa0b0;padding:1px 6px}' +
+    '.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}.box{border:1px solid var(--line);border-radius:6px;padding:10px 13px}.box .t{font-weight:700;color:var(--navy);font-size:12.5px;margin-bottom:6px}' +
+    '.box .r{font-size:12px;display:flex;justify-content:space-between;gap:8px;padding:2px 0}.box .r span:first-child{color:#5b6b7b}.terms{white-space:pre-wrap;font-size:12px;line-height:1.6}.qr{width:96px;height:96px;object-fit:contain;display:block;margin:6px auto 0}' +
+    '.signs{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:22px}.sig{border:1px solid var(--line);border-radius:6px;padding:12px 16px 14px;text-align:center}' +
+    '.sig .role{font-weight:700;color:var(--navy);font-size:13.5px;padding-bottom:6px;border-bottom:1px solid var(--soft);margin-bottom:30px}.sig .line{border-bottom:1px dotted #6d7f90;margin:0 18px 6px}.sig .cap{font-size:11.5px;color:#5b6b7b;margin-bottom:6px}.sig .nm2{font-size:12.5px;min-height:18px}' +
+    '.foot-note{margin-top:14px;text-align:center;font-size:10.5px;color:#8595a5}';
+  var meta = [['ເລກທີໃບສະເໜີ', id], ['ວັນທີ', dmy(r.date)], ['ຊື່ລູກຄ້າ', r.customer], ['ໃຊ້ໄດ້ຮອດວັນທີ', dmy(r.validDate)], ['ທີ່ຢູ່/ສະຖານທີ່', r.address], ['ຕິດຕໍ່', r.phone]];
+  var sig = function (role, nm) { return '<div class="sig"><div class="role">' + role + '</div><div class="line"></div><div class="cap">ຊື່ແຈ້ງ / ວັນທີ</div><div class="nm2">' + esc(nm || '') + '</div></div>'; };
+  var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(id) + ' ' + esc(r.customer) + ' — ໃບສະເໜີລາຄາ</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="nm">HOME SOLAR</div><div class="tg">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<div class="doc-title"><h1>ໃບສະເໜີລາຄາ</h1></div><div class="doc-sub">Price Quotation</div>' +
+    '<div class="meta">' + meta.map(function (m) { return '<div class="row"><span class="lbl">' + m[0] + ':</span><span class="v">' + esc(m[1] || '') + '</span></div>'; }).join('') + '</div>' +
+    '<table class="items"><thead><tr><th style="width:28px">ລ/ດ</th><th>ລາຍການສິນຄ້າ</th><th style="width:54px">ຫົວໜ່ວຍ</th><th style="width:50px">ຈຳນວນ</th><th style="width:96px">ລາຄາ/ໜ່ວຍ (ກີບ)</th><th style="width:110px">ຈຳນວນເງິນ (ກີບ)</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody><tfoot><tr><td colspan="5" class="sl">ລວມກ່ອນອາກອນ (ກີບ)</td><td class="sv">' + money(k.sub) + '</td></tr>' +
+    '<tr><td colspan="5" class="sl">ອາກອນມູນຄ່າເພີ່ມ VAT 10% (ກີບ)</td><td class="sv">' + money(k.vat) + '</td></tr>' +
+    '<tr><td colspan="5" class="gl">ລວມທັງໝົດ ລວມ VAT (ກີບ)</td><td class="gv">' + money(k.total) + '</td></tr></tfoot></table>' +
+    notes.map(function (n) { return '<div class="note">ໝາຍເຫດ: ' + esc(n) + '</div>'; }).join('') +
+    '<div class="in-words"><span class="lbl">ຈຳນວນເງິນເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(k.total) + ' ກີບຖ້ວນ</span></div>' +
+    '<div class="pay-grid"><div class="box"><div class="t">ເງື່ອນໄຂ</div><div class="terms">' + esc(r.terms || SQ_TERMS) + '</div></div>' +
+    '<div class="box"><div class="t">ວິທີຊຳລະ</div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(RC_SHOP.bankName) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><span>' + esc(RC_SHOP.bankNo) + '</span></div><img class="qr" src="' + RC_ASSET + 'rc-qr.jpg"></div></div>' +
+    '<div class="signs">' + sig('ຜູ້ສະເໜີລາຄາ', 'HOME SOLAR') + sig('ລູກຄ້າຕົກລົງຮັບຂໍ້ສະເໜີ', '') + '</div>' +
+    '<div class="foot-note">HOME SOLAR · ' + esc(id) + '</div>' +
     '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
   w = w || window.open('', '_blank');
   if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
@@ -2959,7 +3107,7 @@ function vOrders() {
     if (f !== 'all' && f !== 'due' && o.status !== f) return false;
     return !q || (o.customer + ' ' + o.phone + ' ' + o.no + ' ' + o.items.map(function (i) { return i.name; }).join(' ')).toLowerCase().indexOf(q) >= 0;
   });
-  var h = '<button class="btn gold full" style="margin-bottom:10px" onclick="openOrderForm()">＋ ເປີດບິນຂາຍໃໝ່</button>';
+  var h = '<button class="btn gold full" style="margin-bottom:6px" onclick="openOrderForm()">＋ ເປີດບິນຂາຍໃໝ່</button><button class="btn ghost full" style="margin-bottom:10px" onclick="openSqList()">📋 ໃບສະເໜີລາຄາ (ມີ VAT 10%)</button>';
   h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(short(dayT), 'ຂາຍມື້ນີ້', '') + dTile(short(monT), 'ຂາຍເດືອນນີ້', '') + dTile(short(due), 'ຄ້າງເກັບ', due ? 'amber' : '') + '</div>';
   var cod = codOpen(), codSum = cod.reduce(function (a, o) { return a + ordDue(o); }, 0), codOld = cod.reduce(function (a, o) { return Math.max(a, daysAgo(o.date)); }, 0);
   if (cod.length) h += '<div class="card" style="border-left:5px solid ' + (codOld > 7 ? '#dc2626' : '#d97706') + ';cursor:pointer" onclick="UI.of=\'cod\';render()"><b>🚚 COD ລໍຮັບເງິນຈາກຂົນສົ່ງ</b><div class="muted" style="margin-top:2px">' + cod.length + ' ບິນ · ' + money(codSum) + ' ກີບ · ເກົ່າສຸດ ' + codOld + ' ມື້' + (codOld > 7 ? ' · ⚠️ ຕາມເງິນຈາກຂົນສົ່ງ' : '') + '</div></div>';
@@ -3026,7 +3174,8 @@ function custSource() {
 function custStatusTxt() { return CRM ? '✓ ຖານລູກຄ້າ ' + ((CRM.customers || []).length) + ' ຄົນ' : (CRM_ERR ? '⚠️ ໂຫຼດຖານລູກຄ້າບໍ່ໄດ້: ' + CRM_ERR : '⏳ ກຳລັງໂຫຼດຖານລູກຄ້າ...'); }
 /* ---------- ຄົ້ນ/ຕິກເລືອກລູກຄ້າເກົ່າ ໃນຟອມ ວຽກໃໝ່ + ໂນດ (ແບບດຽວກັບບິນຂາຍ) ---------- */
 var CF = { job: { name: 'fCustomer', phone: 'fPhone', sug: 'fCustSug', hint: 'fCustHint', src: 'fSource', geo: 'fG' },
-           note: { name: 'nCustomer', phone: 'nPhone', sug: 'nCustSug', hint: 'nCustHint', src: 'nSource', geo: '' } };
+           note: { name: 'nCustomer', phone: 'nPhone', sug: 'nCustSug', hint: 'nCustHint', src: 'nSource', geo: '' },
+           sq: { name: 'sqName', phone: 'sqPhone', sug: 'sqCustSug', hint: 'sqCustHint', src: 'sqSource', geo: '' } };
 UI.cfl = {};
 function cfRender(k, qnRaw, qpRaw) {
   var qn = String(qnRaw || '').trim().toLowerCase(), qp = normPhone(qpRaw), list = [];
@@ -3905,7 +4054,7 @@ var MOCK = (function () {
     api_issueFenceDoc: function (c, d) {
       need(c); var ser = fdSer(d.kind);
       if (db.fenceDocs.some(function (x) { return fdSer(x.kind) === ser && x.no === d.no; })) throw new Error('ເລກທີ ' + ser + ' ' + d.no + ' ອອກແລ້ວ — ໃຊ້ເລກອື່ນ');
-      var items = d.items.filter(function (it) { return String(it.name).trim() && it.qty > 0; }), q = d.kind === 'quote';
+      var items = d.items.filter(function (it) { return String(it.name).trim() && it.qty > 0; }), q = d.kind === 'quote' || d.kind === 'hsquote';
       var r = { id: fdNo(d), kind: d.kind, no: d.no, jobId: d.jobId || '', date: d.date, validDate: q ? d.validDate : '', customer: d.customer, address: d.address, phone: d.phone,
         items: items, total: fdSum({ items: items }), prevPaid: q ? 0 : d.prevPaid || 0, paid: q ? 0 : d.paid || 0, notes: d.notes || '', terms: d.terms || '', createdAt: nowF() };
       db.fenceDocs.push(r);
