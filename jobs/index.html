@@ -2375,7 +2375,7 @@ function sqPrint(r, w) {
     'body{font-family:"Noto Sans Lao","Phetsarath OT","Saysettha OT","Lao UI",sans-serif;color:var(--ink);font-size:13px;line-height:1.55;padding:24px 8px}' +
     '.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm 13mm 12mm;box-shadow:0 2px 14px rgba(22,50,74,.18)}@page{size:A4;margin:0}' +
     '@media print{html,body{background:#fff}body{padding:0}.sheet{box-shadow:none;margin:0;min-height:auto;padding:13mm 12mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
-    '.head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy);padding-bottom:10px}.head img{height:48px;width:auto}.head .nm{font-size:20px;font-weight:700;color:var(--navy)}.head .tg{font-size:11.5px;color:#5b6b7b}.head .ct{margin-left:auto;font-size:11.5px;color:#44556a;text-align:right;line-height:1.8}' +
+    '.head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy);padding-bottom:10px}.head img{height:48px;width:auto}.head .nm{font-size:16.5px;font-weight:700;color:var(--navy)}.head .tg{font-size:11.5px;color:#5b6b7b}.head .ct{margin-left:auto;font-size:11.5px;color:#44556a;text-align:right;line-height:1.8}' +
     '.doc-title{text-align:center;margin:12px 0 4px}.doc-title h1{font-size:19px;font-weight:700;color:var(--navy);display:inline-block;padding:3px 26px;border-bottom:2.5px solid var(--orange)}.doc-sub{text-align:center;font-size:11.5px;color:#5b6b7b;margin-bottom:4px}' +
     '.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px;margin:12px 0 10px}.meta .row{display:flex;gap:7px;align-items:baseline}.meta .lbl{white-space:nowrap;font-weight:600;color:var(--navy)}.meta .v{flex:1;border-bottom:1px dotted #8fa0b0;padding:1px 4px;min-height:20px}' +
     'table.items{width:100%;border-collapse:collapse;margin-top:6px}.items th{background:var(--navy);color:#fff;font-weight:600;font-size:11.5px;padding:7px 5px;border:1px solid var(--navy)}' +
@@ -2392,7 +2392,7 @@ function sqPrint(r, w) {
   var sig = function (role, nm) { return '<div class="sig"><div class="role">' + role + '</div><div class="line"></div><div class="cap">ຊື່ແຈ້ງ / ວັນທີ</div><div class="nm2">' + esc(nm || '') + '</div></div>'; };
   var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(id) + ' ' + esc(r.customer) + ' — ໃບສະເໜີລາຄາ</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
-    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="nm">HOME SOLAR</div><div class="tg">ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="nm">' + esc(FENCE_SHOP.co) + '</div><div class="tg">ຈຳໜ່າຍພາຍໃຕ້ແບຣນ HOME SOLAR · ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
     '<div class="doc-title"><h1>ໃບສະເໜີລາຄາ</h1></div><div class="doc-sub">Price Quotation</div>' +
     '<div class="meta">' + meta.map(function (m) { return '<div class="row"><span class="lbl">' + m[0] + ':</span><span class="v">' + esc(m[1] || '') + '</span></div>'; }).join('') + '</div>' +
     '<table class="items"><thead><tr><th style="width:28px">ລ/ດ</th><th>ລາຍການສິນຄ້າ</th><th style="width:54px">ຫົວໜ່ວຍ</th><th style="width:50px">ຈຳນວນ</th><th style="width:96px">ລາຄາ/ໜ່ວຍ (ກີບ)</th><th style="width:110px">ຈຳນວນເງິນ (ກີບ)</th></tr></thead>' +
@@ -2403,8 +2403,8 @@ function sqPrint(r, w) {
     '<div class="in-words"><span class="lbl">ຈຳນວນເງິນເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(k.total) + ' ກີບຖ້ວນ</span></div>' +
     '<div class="pay-grid"><div class="box"><div class="t">ເງື່ອນໄຂ</div><div class="terms">' + esc(r.terms || SQ_TERMS) + '</div></div>' +
     '<div class="box"><div class="t">ວິທີຊຳລະ</div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(RC_SHOP.bankName) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><span>' + esc(RC_SHOP.bankNo) + '</span></div><img class="qr" src="' + RC_ASSET + 'rc-qr.jpg"></div></div>' +
-    '<div class="signs">' + sig('ຜູ້ສະເໜີລາຄາ', 'HOME SOLAR') + sig('ລູກຄ້າຕົກລົງຮັບຂໍ້ສະເໜີ', '') + '</div>' +
-    '<div class="foot-note">HOME SOLAR · ' + esc(id) + '</div>' +
+    '<div class="signs">' + sig('ຜູ້ສະເໜີລາຄາ', FENCE_SHOP.co) + sig('ລູກຄ້າຕົກລົງຮັບຂໍ້ສະເໜີ', '') + '</div>' +
+    '<div class="foot-note">' + esc(FENCE_SHOP.co) + ' · ' + esc(id) + '</div>' +
     '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
   w = w || window.open('', '_blank');
   if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
