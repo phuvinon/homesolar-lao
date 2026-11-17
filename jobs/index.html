@@ -2267,12 +2267,18 @@ function fdPrint(r, w) {
 /* ================= 📋 ໃບສະເໜີລາຄາ HOME SOLAR (ດອກໄຟ/ໂຊລ່າ) + VAT 10% (ເຈົ້າຂອງ) =================
    ເລກ HQ-ປີ-ລຳດັບ · ເກັບໃນຕາຕະລາງ FenceDocs ດຽວກັນ (kind = hsquote) · ລາຄາໃນໃບ = ກ່ອນ VAT → ພິມ: ລວມກ່ອນອາກອນ + VAT 10% + ລວມທັງໝົດ */
 var SQ_VAT = 0.1;
-var SQ_TERMS = '• ລາຄານີ້ແຍກ VAT 10% ຕາມທີ່ລະບຸ ແລະ ໃຊ້ໄດ້ຮອດວັນທີ່ກຳນົດ\n• ຊຳລະເປັນເງິນສົດ ຫຼື ໂອນຜ່ານທະນາຄານ\n• ການຮັບປະກັນສິນຄ້າ ເປັນໄປຕາມເງື່ອນໄຂຂອງສິນຄ້າແຕ່ລະລຸ້ນ\n• ລາຄາ ແລະ ຈຳນວນສິນຄ້າ ອາດປ່ຽນແປງໄດ້ ຖ້າມີການປ່ຽນລາຍການ';
+var SQ_TAIL = '\n• ຊຳລະເປັນເງິນສົດ ຫຼື ໂອນຜ່ານທະນາຄານ\n• ການຮັບປະກັນສິນຄ້າ ເປັນໄປຕາມເງື່ອນໄຂຂອງສິນຄ້າແຕ່ລະລຸ້ນ\n• ລາຄາ ແລະ ຈຳນວນສິນຄ້າ ອາດປ່ຽນແປງໄດ້ ຖ້າມີການປ່ຽນລາຍການ';
+var SQ_TERMS_VAT = '• ລາຄານີ້ລວມອາກອນ VAT 10% ແລ້ວ ແລະ ໃຊ້ໄດ້ຮອດວັນທີ່ກຳນົດ' + SQ_TAIL;
+var SQ_TERMS_NO = '• ລາຄານີ້ບໍ່ລວມອາກອນ VAT ແລະ ໃຊ້ໄດ້ຮອດວັນທີ່ກຳນົດ' + SQ_TAIL;
+var SQ_TERMS = SQ_TERMS_VAT;
+var SQ_LDB = { bank: 'ທະນາຄານພັດທະນາລາວ (LDB)', name: 'PHUSIRI TRADING IMPORT EXPORT CO.,LTD', no: '0300 1000 1000 3891' };
+// ໃບຕິກ «ລວມອາກອນ» = VAT 10% + ບັນຊີ LDB ບໍລິສັດ · ບໍ່ຕິກ = ບໍ່ມີ VAT + ບັນຊີ BCEL Home Solar (ເກັບໃນ items[].mesh = 'novat' ບໍ່ຕ້ອງແກ້ server)
+function sqIsVat(o) { if (typeof o.vat === 'boolean') return o.vat; return !(o.items && o.items[0] && o.items[0].mesh === 'novat'); }
 function sqDocs() { return fdNewest((S.fenceDocs || []).filter(function (x) { return x.kind === 'hsquote'; })); }
 function sqNext() { return sqDocs().reduce(function (a, x) { return Math.max(a, x.no); }, 0) + 1; }
 function sqNo(d) { return 'HQ-' + String(d.date || today()).slice(0, 4) + '-' + ('00' + d.no).slice(-3); }
 function sqCalc(d) {
-  var sub = (d.items || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0), vat = Math.round(sub * SQ_VAT);
+  var sub = (d.items || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0), vat = sqIsVat(d) ? Math.round(sub * SQ_VAT) : 0;
   return { sub: sub, vat: vat, total: sub + vat };
 }
 function openSqList() {
@@ -2292,7 +2298,7 @@ function openSqForm(fromId) {
   ensureProducts(); if (!CRM) loadCRM();
   var src = fromId ? fdById(fromId) : null;
   UI.sq = { no: sqNext(), date: today(), validDate: ymd(addDays(new Date(), 15)), customer: src ? src.customer : '', phone: src ? src.phone : '', address: src ? src.address : '',
-    notes: src ? src.notes || '' : '', terms: src && src.terms ? src.terms : SQ_TERMS,
+    vat: src ? sqIsVat(src) : true, notes: src ? src.notes || '' : '', terms: src && src.terms ? src.terms : SQ_TERMS_VAT,
     items: src ? src.items.map(function (it) { return { vid: '', name: it.name, size: it.size || '', unit: it.unit || 'ອັນ', qty: it.qty, price: it.price }; }) : [] };
   var d = UI.sq, h = '<div class="shd"><b>📋 ໃບສະເໜີລາຄາ (ມີ VAT 10%)</b><button class="x" onclick="openSqList()">✕</button></div><div class="sbody">';
   h += '<div class="row"><div><label class="f">ເລກທີ (ແກ້ໄດ້)</label><input class="inp" inputmode="numeric" value="' + d.no + '" oninput="UI.sq.no=Number(this.value.replace(/[^\\d]/g,\'\'))||0;sqNoTxt()"><div class="muted" id="sqNoTxt" style="font-size:12px"></div></div>' +
@@ -2302,16 +2308,22 @@ function openSqForm(fromId) {
     '<div><label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" id="sqName" value="' + esc(d.customer) + '" oninput="UI.sq.customer=this.value;cfSuggest(\'sq\')"></div></div>';
   h += '<div class="muted" id="sqCustHint" style="font-size:12.5px"></div>' + cfBox('sq', d.customer, d.phone);
   h += '<label class="f">ທີ່ຢູ່ / ສະຖານທີ່ຕິດຕັ້ງ</label><input class="inp" id="sqAddr" value="' + esc(d.address) + '" oninput="UI.sq.address=this.value">';
+  h += '<div class="card" style="padding:6px 10px;margin-top:8px"><label class="eq" style="cursor:pointer"><input type="radio" name="sqVat" ' + (d.vat ? 'checked' : '') + ' onchange="sqSetVat(true)"><span style="flex:1"><b>ລວມອາກອນ VAT 10%</b><br><span class="muted">ໂອນເຂົ້າບັນຊີ LDB · PHUSIRI TRADING</span></span></label>' +
+    '<label class="eq" style="cursor:pointer"><input type="radio" name="sqVat" ' + (!d.vat ? 'checked' : '') + ' onchange="sqSetVat(false)"><span style="flex:1"><b>ບໍ່ລວມອາກອນ</b><br><span class="muted">ໂອນເຂົ້າບັນຊີ BCEL · HOME SOLAR</span></span></label></div>';
   h += '<label class="f">ເພີ່ມສິນຄ້າ (ແຄັດຕະລັອກ — ກົດເພື່ອເພີ່ມ ລາຄາຂຶ້ນອັດຕະໂນມັດ)</label><input class="inp" id="sqSearch" placeholder="🔎 ພິມຊື່ ຫຼື ລະຫັດ ເຊັ່ນ 600w, ໄຟສາດ" oninput="sqSearch(this.value)"><div id="sqResults" style="max-height:220px;overflow-y:auto;margin-top:4px"></div>';
   h += '<div id="sqItems" style="margin-top:10px"></div><button class="btn ghost full" style="margin-top:6px" onclick="UI.sq.items.push({vid:\'\',name:\'\',size:\'\',unit:\'ອັນ\',qty:1,price:0});sqRender()">＋ ລາຍການອື່ນ (ເຊັ່ນ ຄ່າຕິດຕັ້ງ, ຄ່າຂົນສົ່ງ)</button>';
   h += '<label class="f">ໝາຍເຫດ (ຂຶ້ນໃນໃບ · 1 ແຖວ = 1 ຂໍ້)</label><textarea class="inp" rows="2" oninput="UI.sq.notes=this.value">' + esc(d.notes) + '</textarea>';
-  h += '<label class="f">ເງື່ອນໄຂ</label><textarea class="inp" rows="4" oninput="UI.sq.terms=this.value">' + esc(d.terms) + '</textarea>';
+  h += '<label class="f">ເງື່ອນໄຂ</label><textarea class="inp" id="sqTerms" rows="4" oninput="UI.sq.terms=this.value">' + esc(d.terms) + '</textarea>';
   h += '<div id="sqTotal" class="card" style="margin-top:12px;background:#0A1322;color:#fff;border:0"></div>';
   h += '<div class="btns"><button class="btn ghost" onclick="openSqList()">ຍົກເລີກ</button><button class="btn gold" onclick="sqIssue()">📋 ອອກໃບ + ພິມ PDF</button></div>';
-  h += '<p class="muted" style="margin-top:8px">ໃສ່ລາຄາກ່ອນ VAT — ໃບຈະຄິດ VAT 10% ເພີ່ມໃຫ້ ແລະ ສະແດງລວມທັງໝົດ</p></div>';
+  h += '<p class="muted" style="margin-top:8px">ຕິກ «ລວມອາກອນ»: ໃສ່ລາຄາກ່ອນ VAT ໃບຄິດ VAT 10% ເພີ່ມໃຫ້ · ບໍ່ຕິກ: ລາຄາທີ່ໃສ່ = ລວມທັງໝົດ ບໍ່ມີ VAT</p></div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
   sqRender(); sqSearch(''); sqNoTxt(); cfSuggest('sq');
+}
+function sqSetVat(on) {
+  var d = UI.sq; if (d.terms === SQ_TERMS_VAT || d.terms === SQ_TERMS_NO) { d.terms = on ? SQ_TERMS_VAT : SQ_TERMS_NO; var t = $('sqTerms'); if (t) t.value = d.terms; } // ປ່ຽນຂໍ້ຄວາມເງື່ອນໄຂຕາມ ຖ້າຍັງບໍ່ໄດ້ແກ້ເອງ
+  d.vat = on; sqTotals();
 }
 function sqNoTxt() { var d = UI.sq, el = $('sqNoTxt'); if (!el) return; el.innerHTML = sqDocs().some(function (x) { return x.no === d.no; }) ? '<span style="color:#dc2626">⚠️ ເລກນີ້ອອກແລ້ວ</span>' : esc(sqNo(d)); }
 function sqSearch(q) {
@@ -2347,7 +2359,7 @@ function sqRender() {
 }
 function sqTotals() {
   var k = sqCalc(UI.sq), el = $('sqTotal'); if (!el) return;
-  el.innerHTML = '<div class="info" style="grid-template-columns:1fr auto;font-size:14px"><span>ລວມກ່ອນ VAT</span><b>' + money(k.sub) + '</b><span>ອາກອນ VAT 10%</span><b>' + money(k.vat) + '</b>' +
+  el.innerHTML = '<div class="info" style="grid-template-columns:1fr auto;font-size:14px">' + (sqIsVat(UI.sq) ? '<span>ລວມກ່ອນ VAT</span><b>' + money(k.sub) + '</b><span>ອາກອນ VAT 10%</span><b>' + money(k.vat) + '</b>' : '') +
     '<span style="font-size:17px;color:#F6C453"><b>ລວມທັງໝົດ</b></span><b style="font-size:17px;color:#F6C453">' + money(k.total) + ' ກີບ</b></div><div class="muted" style="color:#c9d0dc;margin-top:4px">(' + laoWords(k.total) + 'ກີບຖ້ວນ)</div>';
 }
 function sqIssue() {
@@ -2357,7 +2369,7 @@ function sqIssue() {
   if (d.no < 1 || sqDocs().some(function (x) { return x.no === d.no; })) return toast('ເລກທີນີ້ອອກແລ້ວ — ປ່ຽນເລກ', true);
   var w = window.open('', '_blank'); if (w) w.document.write('<p style="font-family:sans-serif;padding:30px">ກຳລັງອອກໃບສະເໜີລາຄາ...</p>');
   var pay = { kind: 'hsquote', no: d.no, date: d.date, validDate: d.validDate, customer: d.customer, phone: d.phone, address: d.address, notes: d.notes, terms: d.terms, jobId: '',
-    items: d.items.map(function (it) { return { name: it.name, mesh: '', size: it.size || '', unit: it.unit, qty: it.qty, price: it.price }; }) };
+    items: d.items.map(function (it) { return { name: it.name, mesh: d.vat ? '' : 'novat', size: it.size || '', unit: it.unit, qty: it.qty, price: it.price }; }) };
   act('api_issueFenceDoc', pay).then(function (r) {
     var id = sqNo(d), doc = (r.fenceDocs || []).filter(function (x) { return x.id === id; })[0] || pay;
     toast('ອອກ ' + id + ' ແລ້ວ ✓'); sqPrint(doc, w); openSqList();
@@ -2365,7 +2377,7 @@ function sqIssue() {
 }
 function sqReprint(id) { var r = fdById(id); if (r) sqPrint(r); }
 function sqPrint(r, w) {
-  var k = sqCalc(r), id = r.id || sqNo(r);
+  var k = sqCalc(r), id = r.id || sqNo(r), vatOn = sqIsVat(r);
   var dmy = function (s) { var p = String(s || '').split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(s || ''); };
   var rows = r.items.map(function (it, i) {
     return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(it.name) + (it.size ? ' — ' + esc(it.size) : '') + '</td><td class="c">' + esc(it.unit) + '</td><td class="c">' + esc(it.qty) + '</td><td class="num">' + money(it.price) + '</td><td class="num b">' + money(it.qty * it.price) + '</td></tr>';
@@ -2396,13 +2408,14 @@ function sqPrint(r, w) {
     '<div class="doc-title"><h1>ໃບສະເໜີລາຄາ</h1></div><div class="doc-sub">Price Quotation</div>' +
     '<div class="meta">' + meta.map(function (m) { return '<div class="row"><span class="lbl">' + m[0] + ':</span><span class="v">' + esc(m[1] || '') + '</span></div>'; }).join('') + '</div>' +
     '<table class="items"><thead><tr><th style="width:28px">ລ/ດ</th><th>ລາຍການສິນຄ້າ</th><th style="width:54px">ຫົວໜ່ວຍ</th><th style="width:50px">ຈຳນວນ</th><th style="width:96px">ລາຄາ/ໜ່ວຍ (ກີບ)</th><th style="width:110px">ຈຳນວນເງິນ (ກີບ)</th></tr></thead>' +
-    '<tbody>' + rows + '</tbody><tfoot><tr><td colspan="5" class="sl">ລວມກ່ອນອາກອນ (ກີບ)</td><td class="sv">' + money(k.sub) + '</td></tr>' +
-    '<tr><td colspan="5" class="sl">ອາກອນມູນຄ່າເພີ່ມ VAT 10% (ກີບ)</td><td class="sv">' + money(k.vat) + '</td></tr>' +
-    '<tr><td colspan="5" class="gl">ລວມທັງໝົດ ລວມ VAT (ກີບ)</td><td class="gv">' + money(k.total) + '</td></tr></tfoot></table>' +
+    '<tbody>' + rows + '</tbody><tfoot>' + (vatOn ? '<tr><td colspan="5" class="sl">ລວມກ່ອນອາກອນ (ກີບ)</td><td class="sv">' + money(k.sub) + '</td></tr>' +
+    '<tr><td colspan="5" class="sl">ອາກອນມູນຄ່າເພີ່ມ VAT 10% (ກີບ)</td><td class="sv">' + money(k.vat) + '</td></tr>' : '') +
+    '<tr><td colspan="5" class="gl">' + (vatOn ? 'ລວມທັງໝົດ ລວມ VAT (ກີບ)' : 'ລວມທັງໝົດ (ກີບ) · ບໍ່ລວມອາກອນ') + '</td><td class="gv">' + money(k.total) + '</td></tr></tfoot></table>' +
     notes.map(function (n) { return '<div class="note">ໝາຍເຫດ: ' + esc(n) + '</div>'; }).join('') +
     '<div class="in-words"><span class="lbl">ຈຳນວນເງິນເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(k.total) + ' ກີບຖ້ວນ</span></div>' +
-    '<div class="pay-grid"><div class="box"><div class="t">ເງື່ອນໄຂ</div><div class="terms">' + esc(r.terms || SQ_TERMS) + '</div></div>' +
-    '<div class="box"><div class="t">ວິທີຊຳລະ</div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(RC_SHOP.bankName) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><span>' + esc(RC_SHOP.bankNo) + '</span></div><img class="qr" src="' + RC_ASSET + 'rc-qr.jpg"></div></div>' +
+    '<div class="pay-grid"><div class="box"><div class="t">ເງື່ອນໄຂ</div><div class="terms">' + esc(r.terms || (vatOn ? SQ_TERMS_VAT : SQ_TERMS_NO)) + '</div></div>' +
+    (vatOn ? '<div class="box"><div class="t">ວິທີຊຳລະ · ໂອນເຂົ້າບັນຊີບໍລິສັດ</div><div class="r"><span>ທະນາຄານ</span><span>' + esc(SQ_LDB.bank) + '</span></div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(SQ_LDB.name) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><b>' + esc(SQ_LDB.no) + '</b></div></div></div>'
+      : '<div class="box"><div class="t">ວິທີຊຳລະ</div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(RC_SHOP.bankName) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><span>' + esc(RC_SHOP.bankNo) + '</span></div><img class="qr" src="' + RC_ASSET + 'rc-qr.jpg"></div></div>') +
     '<div class="signs">' + sig('ຜູ້ສະເໜີລາຄາ', FENCE_SHOP.co) + sig('ລູກຄ້າຕົກລົງຮັບຂໍ້ສະເໜີ', '') + '</div>' +
     '<div class="foot-note">' + esc(FENCE_SHOP.co) + ' · ' + esc(id) + '</div>' +
     '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
