@@ -802,7 +802,7 @@ function detailHtml(j, page) {
         ((j.labor || []).length ? ' <span class="muted">(' + j.labor.map(function (l) { return techName(l.tid) + ' ' + (l.full ? l.full + ' ວັນ' : '') + (l.half ? (l.full ? ' + ' : '') + l.half + ' ເຄິ່ງວັນ' : ''); }).join(', ') + ')</span>' : '') + '</span>' : '') +
       '</div>' +
       (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') +
-      (isFenceJob(j) ? fdJobCard(j) : ordsOfJob(j.id) + '<button class="btn pri full" style="margin-top:8px" onclick="openOrderFromJob(\'' + esc(j.id) + '\')">🧾 ອອກບິນຂາຍ (ເລືອກຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)</button>') +
+      (isFenceJob(j) ? fdJobCard(j) : isRentJob(j) ? rdJobCard(j) : ordsOfJob(j.id) + '<button class="btn pri full" style="margin-top:8px" onclick="openOrderFromJob(\'' + esc(j.id) + '\')">🧾 ອອກບິນຂາຍ (ເລືອກຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)</button>') +
       receiptsOf(j.id).map(function (r) {
         return '<div class="eq" onclick="reprintReceipt(' + r.no + ')"><span style="flex:1">🧾 ' + esc(rcNo(r)) + ' · ' + esc(r.date) + '</span><b>' + money(r.total) + '</b><span class="badge" style="background:#eef4ff;color:#1d4ed8">🖨️ ພິມຄືນ</span></div>';
       }).join('') + '</div>';
@@ -898,7 +898,9 @@ function setStatus(id, s) {
     // ປິດວຽກ (ເຈົ້າຂອງ) ແລະ ຍັງບໍ່ເຄີຍອອກໃບ → ຖາມອອກໃບເກັບເງິນເລີຍ
     if (s === 'done' && S.owner && isFenceJob(j) && j.due > 0) {
       setTimeout(function () { ask({ title: '🧾 ອອກໃບເກັບເງິນຮົ້ວເລີຍບໍ່?', msg: j.customer + ' · ຄ້າງ ' + money(j.due) + ' ກີບ', ok: 'ອອກໃບເກັບເງິນ' }).then(function (y) { if (y) openFenceDoc('full', id); }); }, 400);
-    } else if (s === 'done' && S.owner && !isFenceJob(j) && j.price > 0 && !receiptsOf(id).length && !(S.orders || []).some(function (o) { return o.jobId === id && o.status !== 'cancelled'; })) {
+    } else if (s === 'done' && S.owner && isRentJob(j) && !fdOf(id).some(function (x) { return x.kind === 'rfull'; })) {
+      setTimeout(function () { ask({ title: '🧾 ອອກໃບເກັບເງິນ (ເຊົ່າດອກໄຟ) ເລີຍບໍ່?', msg: j.customer, ok: 'ອອກໃບເກັບເງິນ' }).then(function (y) { if (y) openFenceDoc('rfull', id); }); }, 400);
+    } else if (s === 'done' && S.owner && !isFenceJob(j) && !isRentJob(j) && j.price > 0 && !receiptsOf(id).length && !(S.orders || []).some(function (o) { return o.jobId === id && o.status !== 'cancelled'; })) {
       setTimeout(function () { ask({ title: '🧾 ອອກບິນຂາຍເລີຍບໍ່?', msg: j.customer + ' · ' + money(j.price) + ' ກີບ (ເລືອກສິນຄ້າຈາກແຄັດຕະລັອກ · ຕັດສະຕ໊ອກ)', ok: 'ອອກບິນ' }).then(function (y) { if (y) openOrderFromJob(id); }); }, 400);
     }
   };
@@ -1376,7 +1378,7 @@ function vDash() {
   var profit = 0, rev = 0; js.forEach(function (j) { if (j.status === 'done' && j.date && j.date.indexOf(pre) === 0 && j.price > 0) { var k = jobProfit(j); profit += k.profit; rev += k.rev; } });
   var tab = UI.dtab || LS.get('js_dtab') || 'job';
   var h = '<div class="toolbar"><div style="flex:1"><b style="font-size:18px">ພາບລວມ</b><div class="muted">' + DOW[d.getDay()] + ' ' + d.getDate() + ' ' + MON[d.getMonth()] + ' ' + d.getFullYear() + '</div></div>' +
-    '<button class="nb" onclick="openFenceList()">🧱 ຮົ້ວ</button><button class="nb" onclick="openLoadSheet()">📦 ກຽມເຄື່ອງ</button></div>';
+    '<button class="nb" onclick="openFenceList()">🧱 ຮົ້ວ</button><button class="nb" onclick="openRentList()">🔆 ເຊົ່າໄຟ</button><button class="nb" onclick="openLoadSheet()">📦 ກຽມເຄື່ອງ</button></div>';
   // ⚡ ຕ້ອງເຮັດດຽວນີ້
   var act = [
     [over.length, 'ວຽກເລີຍກຳນົດ', '#dc2626', "go('today')"], [codLate.length, 'COD ຄ້າງເກີນ 7 ມື້', '#dc2626', "UI.salesTab='orders';UI.of='cod';go('sales')"],
@@ -2051,20 +2053,25 @@ function dProfit() {
 
 /* ================= 🧱 ເອກະສານຮົ້ວ (ເຈົ້າຂອງ) — ແບບດຽວກັບ PHUSIRI_FENCE_QUOTE_FORM / RECEIPT_FORM =================
    ໃບສະເໜີລາຄາ = ເລກ QT · ໃບຮັບເງິນມັດຈຳ / ງວດ / ໃບເກັບເງິນ = ເລກ FN (ແຍກຈາກ INV ຂອງ Home Solar) */
-var FD_T = { quote: 'ໃບສະເໜີລາຄາ', deposit: 'ໃບຮັບເງິນມັດຈຳ', install: 'ໃບຮັບເງິນງວດ', full: 'ໃບເກັບເງິນ' };
-var FD_SUB = { quote: 'Price Quotation', deposit: 'Deposit Receipt', install: 'Installment Receipt', full: 'Invoice / Receipt' };
-var FD_IC = { quote: '📋', deposit: '💵', install: '💵', full: '🧾' };
-var FD_SHORT = { quote: 'ສະເໜີ', deposit: 'ມັດຈຳ', install: 'ງວດ', full: 'ເກັບເງິນ' };
+var FD_T = { quote: 'ໃບສະເໜີລາຄາ', deposit: 'ໃບຮັບເງິນມັດຈຳ', install: 'ໃບຮັບເງິນງວດ', full: 'ໃບເກັບເງິນ', rquote: 'ໃບສະເໜີລາຄາ', rdeposit: 'ໃບຮັບເງິນມັດຈຳ', rfull: 'ໃບເກັບເງິນ' };
+var FD_SUB = { quote: 'Price Quotation', deposit: 'Deposit Receipt', install: 'Installment Receipt', full: 'Invoice / Receipt', rquote: 'Price Quotation · Solar Light Rental', rdeposit: 'Deposit Receipt · Solar Light Rental', rfull: 'Bill · Solar Light Rental' };
+var FD_IC = { quote: '📋', deposit: '💵', install: '💵', full: '🧾', rquote: '📋', rdeposit: '💵', rfull: '🧾' };
+var FD_SHORT = { quote: 'ສະເໜີ', deposit: 'ມັດຈຳ', install: 'ງວດ', full: 'ເກັບເງິນ', rquote: 'ສະເໜີ', rdeposit: 'ມັດຈຳ', rfull: 'ໃບເກັບເງິນ' };
+var FENCE_KINDS = ['quote', 'deposit', 'install', 'full'], RENT_KINDS = ['rquote', 'rdeposit', 'rfull']; // v28: r* = ເຊົ່າດອກໄຟ (HOME SOLAR)
+function isRentKind(k) { return RENT_KINDS.indexOf(k) > -1; }
+function isQuoteKind(k) { return k === 'quote' || k === 'rquote' || k === 'hsquote'; }
+function isRentJob(j) { return /ເຊົ່າ/.test(j && j.type || ''); }
 var FENCE_SHOP = { name: 'ພູສິຣິ ຕິດຕັ້ງຮົ້ວ', co: 'ບໍລິສັດ ພູສິຣິການຄ້າ ຂາອອກ-ຂາເຂົ້າ ຈຳກັດ', addr: 'ບ້ານຄຳສະຫວາດ ເມືອງໄຊເສດຖາ ນະຄອນຫຼວງວຽງຈັນ', tel: '020 58868589',
   bank: [['LAK', '010-1200-00334968-001'], ['THB', '013-1202-00334968-001'], ['ຊື່ບັນຊີ', 'PHUVINON BANNAVONG']], signer: 'PHUVINON BANNAVONG' };
 var FD_TERMS = '• ມັດຈຳ 50% ກ່ອນເລີ່ມສັ່ງຜະລິດ/ຕິດຕັ້ງ, ຊຳລະສ່ວນທີ່ເຫຼືອເມື່ອສົ່ງມອບງານ\n• ຮັບປະກັນໂຄງສ້າງຮົ້ວ 10 ປີ\n• ໄລຍະເວລາຕິດຕັ້ງ: ແຈ້ງໃຫ້ຊາບຫຼັງຢືນຢັນພື້ນທີ່ ແລະ ຈຳນວນແທ້ຈິງ\n• ລາຄານີ້ອີງຕາມພື້ນທີ່/ແບບທີ່ແຈ້ງມາ ອາດປ່ຽນແປງໄດ້ຫາກໜ້າວຽກຈິງແຕກຕ່າງ';
-function fdSer(k) { return k === 'quote' ? 'QT' : k === 'hsquote' ? 'HQ' : 'FN'; }
+function fdSer(k) { return k === 'quote' ? 'QT' : k === 'hsquote' ? 'HQ' : k === 'rquote' ? 'RQ' : isRentKind(k) ? 'RN' : 'FN'; }
 function fdNo(d) { return fdSer(d.kind) + '-' + String(d.date || today()).slice(0, 4) + '-' + ('00' + d.no).slice(-3); }
 function fdNext(kind) { var s = fdSer(kind); return (S.fenceDocs || []).filter(function (x) { return fdSer(x.kind) === s; }).reduce(function (a, x) { return Math.max(a, x.no); }, 0) + 1; }
 function fdUsed(d) { return (S.fenceDocs || []).some(function (x) { return fdSer(x.kind) === fdSer(d.kind) && x.no === d.no; }); }
-function fdFence() { return (S.fenceDocs || []).filter(function (x) { return FD_T[x.kind]; }); } // ໃບຮົ້ວເທົ່ານັ້ນ (ບໍ່ລວມໃບສະເໜີ Home Solar)
+function fdFence() { return (S.fenceDocs || []).filter(function (x) { return FENCE_KINDS.indexOf(x.kind) > -1; }); }
+function fdRent() { return (S.fenceDocs || []).filter(function (x) { return isRentKind(x.kind); }); } // ໃບຮົ້ວເທົ່ານັ້ນ (ບໍ່ລວມໃບສະເໜີ Home Solar)
 function fdNewest(list) { return list.slice().sort(function (a, b) { return a.createdAt < b.createdAt ? 1 : -1; }); }
-function fdOf(jobId) { return fdNewest(fdFence().filter(function (x) { return x.jobId === jobId; })); }
+function fdOf(jobId) { return fdNewest((S.fenceDocs || []).filter(function (x) { return x.kind !== 'hsquote' && FD_T[x.kind] && x.jobId === jobId; })); }
 function fdById(id) { return (S.fenceDocs || []).filter(function (x) { return x.id === id; })[0]; }
 function isFenceJob(j) { return /ຮົ້ວ/.test(j && j.type || ''); }
 function fdSum(d) { return (d.items || []).reduce(function (a, it) { return a + (Number(it.qty) || 0) * (Number(it.price) || 0); }, 0); }
@@ -2072,7 +2079,7 @@ function fdCopyItems(items) { return (items || []).map(function (it) { return { 
 function fdQ(s) { return s ? '\'' + esc(s) + '\'' : 'null'; }
 function fdRowHtml(r) {
   return '<div class="eq" onclick="fdReprint(\'' + esc(r.id) + '\')"><span style="flex:1">' + FD_IC[r.kind] + ' ' + esc(FD_T[r.kind]) + ' <b>' + esc(r.id) + '</b><br><span class="muted">' + esc(r.date) + ' · ' + esc(r.customer) + '</span></span>' +
-    '<b>' + money(r.kind === 'quote' ? r.total : r.paid) + '</b><span class="badge" style="background:#eef4ff;color:#1d4ed8">🖨️</span></div>';
+    '<b>' + money(isQuoteKind(r.kind) || !r.paid ? r.total : r.paid) + '</b><span class="badge" style="background:#eef4ff;color:#1d4ed8">🖨️</span></div>';
 }
 // ປຸ່ມ + ລາຍການເອກະສານ ໃນກາດເງິນຂອງວຽກຮົ້ວ
 function fdJobCard(j) {
@@ -2107,23 +2114,33 @@ function openFenceList() {
 // ໃບສະເໜີ → ສ້າງວຽກຮົ້ວ (ຜູກໃບກັບວຽກໃຫ້ອັດຕະໂນມັດ)
 function fdToJob(id) {
   var r = fdById(id); if (!r) return;
-  var tp = S.types.filter(function (t) { return /ຮົ້ວ/.test(t); })[0];
+  var rent = isRentKind(r.kind), tp = S.types.filter(function (t) { return rent ? /ເຊົ່າ/.test(t) : /ຮົ້ວ/.test(t); })[0];
   openForm(null, null, { type: tp, customer: r.customer, phone: r.phone, location: r.address, price: r.total, fromQuote: r.id,
     title: r.items.map(function (it) { return it.name + (it.size ? ' ' + it.size : '') + ' × ' + it.qty + ' ' + (it.unit || ''); }).join('\n') + (r.notes ? '\n' + r.notes : '') });
 }
 
 // ຟອມອອກເອກະສານ · kind = quote|deposit|install|full · jobId (ຖ້າມີ) · fromId = ເອົາລາຍການຈາກເອກະສານນີ້
 function openFenceDoc(kind, jobId, fromId) {
-  var j = jobId ? jobById(jobId) : null, src = fromId ? fdById(fromId) : null;
-  if (!src && j) src = fdOf(j.id).filter(function (x) { return x.kind === 'quote'; })[0] || fdOf(j.id)[0] || null; // ໃບສະເໜີຂອງວຽກນີ້
-  var last = fdNewest(fdFence())[0], li = last && last.items[0] ? last.items[0] : null;
-  var items = src ? fdCopyItems(src.items) : [{ name: li ? li.name : 'ຮົ້ວຕາໜ່າງເຫລັກ ພ້ອມເສົາ', mesh: li ? li.mesh : '9cm*17cm*5mm', size: li ? li.size : '180cm*3m',
-    unit: li ? li.unit : 'ຊຸດ', qty: 0, price: li ? li.price : 0 }];
-  if (!src && j && j.price && items.length === 1 && !items[0].qty) { items[0].qty = 1; items[0].price = j.price; items[0].name = (j.title || items[0].name).split('\n')[0]; }
+  var rent = isRentKind(kind), j = jobId ? jobById(jobId) : null, src = fromId ? fdById(fromId) : null;
+  if (!src && j) src = fdOf(j.id).filter(function (x) { return isQuoteKind(x.kind); })[0] || fdOf(j.id)[0] || null; // ໃບສະເໜີຂອງວຽກນີ້
+  var items, disc = 0, notes = src ? src.notes || '' : '';
+  if (rent) { // v28: ເຊົ່າດອກໄຟ — ຄ່າເລີ່ມ 300,000/ດອກ/ຄືນ · ຈຳນວນ = ອຸປະກອນໃນວຽກ ຫຼື ຈຸດ
+    items = src ? fdCopyItems(src.items).filter(function (it) { if (Number(it.price) < 0) { disc += -it.price * (Number(it.qty) || 1); return false; } return true; }) : null;
+    if (!items || !items.length) {
+      var eq = j ? (j.equipment || []).filter(function (e) { return e.vid; }) : [], nq = eq.reduce(function (a, e) { return a + (Number(e.qty) || 1); }, 0) || (j && j.points) || 0;
+      items = [{ name: RD_ITEM, mesh: '', size: eq.map(function (e) { var p = prodByVid(e.vid); return (p ? p.name : e.t) + ' ×' + (Number(e.qty) || 1); }).join(' · '), unit: 'ດອກ', qty: nq, price: RD_PRICE }];
+    }
+    if (!src && j) notes = 'ວັນຕິດຕັ້ງ: ' + dmyOf(j.date) + ' · ວັນເກັບຄືນ: ';
+  } else {
+    var last = fdNewest(fdFence())[0], li = last && last.items[0] ? last.items[0] : null;
+    items = src ? fdCopyItems(src.items) : [{ name: li ? li.name : 'ຮົ້ວຕາໜ່າງເຫລັກ ພ້ອມເສົາ', mesh: li ? li.mesh : '9cm*17cm*5mm', size: li ? li.size : '180cm*3m',
+      unit: li ? li.unit : 'ຊຸດ', qty: 0, price: li ? li.price : 0 }];
+    if (!src && j && j.price && items.length === 1 && !items[0].qty) { items[0].qty = 1; items[0].price = j.price; items[0].name = (j.title || items[0].name).split('\n')[0]; }
+  }
   var jid = j ? j.id : (src ? src.jobId || '' : '');
-  UI.fdDraft = { kind: '', jobId: jid, date: today(), validDate: ymd(addDays(new Date(), 15)),
+  UI.fdDraft = { kind: '', rent: rent, jobId: jid, date: today(), validDate: ymd(addDays(new Date(), rent ? 7 : 15)), discount: disc,
     customer: j ? j.customer : src ? src.customer : '', address: j ? j.location : src ? src.address : '', phone: j ? j.phone : src ? src.phone : '',
-    items: items, notes: src ? src.notes || '' : '', terms: src && src.terms ? src.terms : FD_TERMS, addPay: !!jid, back: j ? j.id : '' };
+    items: items, notes: notes, terms: src && src.terms ? src.terms : rent ? RD_TERMS : FD_TERMS, addPay: !!jid, back: j ? j.id : '' };
   fdSetKind(kind);
   fdRender();
 }
@@ -2132,34 +2149,38 @@ function fdSetKind(kind) {
   var d = UI.fdDraft, oldSer = d.kind ? fdSer(d.kind) : '';
   d.kind = kind;
   if (fdSer(kind) !== oldSer) d.no = fdNext(kind);
-  var j = d.jobId ? jobById(d.jobId) : null, total = fdSum(d);
+  var j = d.jobId ? jobById(d.jobId) : null, total = fdTot(d);
   d.prevPaid = j ? (j.deposit || 0) + (j.collected || 0) : 0;
-  d.paid = kind === 'deposit' ? Math.round(total * 0.5 / 1000) * 1000 : kind === 'full' ? Math.max(0, total - d.prevPaid) : 0;
+  d.paid = (kind === 'deposit' || kind === 'rdeposit') ? Math.round(total * 0.5 / 1000) * 1000 : kind === 'full' ? Math.max(0, total - d.prevPaid) : 0; // rfull = ໃບເກັບເງິນ (ຍັງບໍ່ຮັບ) ຄ່າເລີ່ມ 0
 }
+function fdTot(d) { return Math.max(0, fdSum(d) - (d.rent ? d.discount || 0 : 0)); } // ຍອດຫຼັງສ່ວນຫຼຸດ (ຮ່າງ)
 function fdRender() {
-  var d = UI.fdDraft, q = d.kind === 'quote';
-  var close = d.back ? 'openJob(\'' + esc(d.back) + '\')' : 'openFenceList()';
-  var h = '<div class="shd"><b>' + FD_IC[d.kind] + ' ' + FD_T[d.kind] + ' (ຮົ້ວ)</b><button class="x" onclick="' + close + '">✕</button></div><div class="sbody">';
-  h += '<div class="stgrid" style="grid-template-columns:repeat(4,1fr)">' + ['quote', 'deposit', 'install', 'full'].map(function (k) {
+  var d = UI.fdDraft, q = isQuoteKind(d.kind), rent = d.rent;
+  var close = d.back ? 'openJob(\'' + esc(d.back) + '\')' : rent ? 'openRentList()' : 'openFenceList()';
+  var kinds = rent ? RENT_KINDS : FENCE_KINDS;
+  var h = '<div class="shd"><b>' + FD_IC[d.kind] + ' ' + FD_T[d.kind] + (rent ? ' (ເຊົ່າດອກໄຟ)' : ' (ຮົ້ວ)') + '</b><button class="x" onclick="' + close + '">✕</button></div><div class="sbody">';
+  h += '<div class="stgrid" style="grid-template-columns:repeat(' + kinds.length + ',1fr)">' + kinds.map(function (k) {
     return '<button class="stbtn' + (d.kind === k ? ' on' : '') + '" style="' + (d.kind === k ? 'background:#1c2a72;color:#fff' : 'background:#eef1f8;color:#1c2a72') + '" onclick="fdSetKind(\'' + k + '\');fdRender()">' + FD_IC[k] + ' ' + FD_SHORT[k] + '</button>';
   }).join('') + '</div>';
   h += '<div class="row"><div><label class="f">ເລກທີ (ແກ້ໄດ້)</label><input class="inp" inputmode="numeric" value="' + d.no + '" oninput="UI.fdDraft.no=Number(this.value.replace(/[^\\d]/g,\'\'))||0;fdNoTxt()"><div class="muted" id="fdNoTxt" style="font-size:12px"></div></div>' +
     '<div><label class="f">ວັນທີ</label><input class="inp" type="date" value="' + esc(d.date) + '" onchange="UI.fdDraft.date=this.value;fdNoTxt()"></div></div>';
   if (q) h += '<label class="f">ໃຊ້ໄດ້ຮອດວັນທີ</label><input class="inp" type="date" value="' + esc(d.validDate) + '" onchange="UI.fdDraft.validDate=this.value">';
   h += '<label class="f">ຊື່ລູກຄ້າ *</label><input class="inp" value="' + esc(d.customer) + '" placeholder="ທ່ານ / ນາງ / ບໍລິສັດ ..." oninput="UI.fdDraft.customer=this.value">';
-  h += '<label class="f">' + (q ? 'ສະຖານທີ່ຕິດຕັ້ງ' : 'ທີ່ຢູ່') + '</label><input class="inp" value="' + esc(d.address) + '" oninput="UI.fdDraft.address=this.value">';
+  h += '<label class="f">' + (rent ? 'ສະຖານທີ່ຈັດງານ' : q ? 'ສະຖານທີ່ຕິດຕັ້ງ' : 'ທີ່ຢູ່') + '</label><input class="inp" value="' + esc(d.address) + '" oninput="UI.fdDraft.address=this.value">';
   h += '<label class="f">ຕິດຕໍ່ (ເບີໂທ)</label><input class="inp" inputmode="tel" value="' + esc(d.phone) + '" oninput="UI.fdDraft.phone=this.value">';
   h += '<label class="f">ລາຍການ</label><div id="fdItems"></div><button class="btn ghost full" style="margin-top:6px" onclick="fdAddItem()">＋ ເພີ່ມລາຍການ</button>';
-  h += '<label class="f">ໝາຍເຫດ (ຂຶ້ນໃນໃບ · 1 ແຖວ = 1 ຂໍ້)</label><textarea class="inp" rows="2" placeholder="ເຊັ່ນ: ຄວາມຍາວຮົ້ວທັງໝົດ 88 ແມັດ (33 ຊຸດ)" oninput="UI.fdDraft.notes=this.value">' + esc(d.notes) + '</textarea>';
-  if (q) h += '<label class="f">ເງື່ອນໄຂການຊຳລະ ແລະ ການຮັບປະກັນ</label><textarea class="inp" rows="5" oninput="UI.fdDraft.terms=this.value">' + esc(d.terms) + '</textarea>';
+  if (rent) h += '<label class="f">ສ່ວນຫຼຸດ (ກີບ)</label><input class="inp" inputmode="numeric" value="' + (d.discount ? money(d.discount) : '') + '" placeholder="0" oninput="fmtNum(this);UI.fdDraft.discount=Number(this.value.replace(/[^\\d]/g,\'\'))||0;fdTotals()">';
+  h += '<label class="f">ໝາຍເຫດ (ຂຶ້ນໃນໃບ · 1 ແຖວ = 1 ຂໍ້)</label><textarea class="inp" rows="2" placeholder="' + (rent ? 'ເຊັ່ນ: ວັນຕິດຕັ້ງ 15/11/2026 · ວັນເກັບຄືນ 17/11/2026' : 'ເຊັ່ນ: ຄວາມຍາວຮົ້ວທັງໝົດ 88 ແມັດ (33 ຊຸດ)') + '" oninput="UI.fdDraft.notes=this.value">' + esc(d.notes) + '</textarea>';
+  if (q) h += '<label class="f">' + (rent ? 'ເງື່ອນໄຂ' : 'ເງື່ອນໄຂການຊຳລະ ແລະ ການຮັບປະກັນ') + '</label><textarea class="inp" rows="5" oninput="UI.fdDraft.terms=this.value">' + esc(d.terms) + '</textarea>';
   else {
+    var dep = d.kind === 'deposit' || d.kind === 'rdeposit';
     h += '<div class="row"><div><label class="f">ຊຳລະແລ້ວກ່ອນໜ້າ</label><input class="inp" inputmode="numeric" value="' + (d.prevPaid ? money(d.prevPaid) : '') + '" oninput="fmtNum(this);UI.fdDraft.prevPaid=Number(this.value.replace(/[^\\d]/g,\'\'))||0;fdTotals()"></div>' +
-      '<div><label class="f">' + (d.kind === 'deposit' ? 'ຮັບເປັນມັດຈຳ *' : 'ຮັບເງິນຄັ້ງນີ້ *') + '</label><input class="inp" id="fdPaid" inputmode="numeric" value="' + (d.paid ? money(d.paid) : '') + '" oninput="fmtNum(this);UI.fdDraft.paid=Number(this.value.replace(/[^\\d]/g,\'\'))||0;fdTotals()"></div></div>';
-    if (d.jobId) h += '<label class="eq" style="margin-top:8px"><input type="checkbox" ' + (d.addPay ? 'checked' : '') + ' onchange="UI.fdDraft.addPay=this.checked"><span style="flex:1">ບັນທຶກເງິນນີ້ເຂົ້າວຽກນຳ (' + (d.kind === 'deposit' ? 'ຊ່ອງມັດຈຳ' : 'ເກັບແລ້ວ') + ')</span></label>';
+      '<div><label class="f">' + (dep ? 'ຮັບເປັນມັດຈຳ *' : d.kind === 'rfull' ? 'ຮັບເງິນແລ້ວ (ວ່າງ = ຍັງບໍ່ຈ່າຍ)' : 'ຮັບເງິນຄັ້ງນີ້ *') + '</label><input class="inp" id="fdPaid" inputmode="numeric" value="' + (d.paid ? money(d.paid) : '') + '" oninput="fmtNum(this);UI.fdDraft.paid=Number(this.value.replace(/[^\\d]/g,\'\'))||0;fdTotals()"></div></div>';
+    if (d.jobId) h += '<label class="eq" style="margin-top:8px"><input type="checkbox" ' + (d.addPay ? 'checked' : '') + ' onchange="UI.fdDraft.addPay=this.checked"><span style="flex:1">ບັນທຶກເງິນນີ້ເຂົ້າວຽກນຳ (' + (dep ? 'ຊ່ອງມັດຈຳ' : 'ເກັບແລ້ວ') + ')' + (d.kind === 'rfull' ? ' · ລາຄາວຽກ = ຍອດໃບນີ້' : '') + '</span></label>';
   }
   h += '<div id="fdTotal" class="card" style="margin-top:12px;background:#1c2a72;color:#fff;border:0"></div>';
   h += '<div class="btns"><button class="btn ghost" onclick="' + close + '">ຍົກເລີກ</button><button class="btn gold" onclick="issueFenceDoc()">' + FD_IC[d.kind] + ' ອອກໃບ + ພິມ PDF</button></div>';
-  h += '<p class="muted" style="margin-top:8px">ແບບດຽວກັບໃບຂອງ ພູສິຣິ ຕິດຕັ້ງຮົ້ວ (ໂລໂກ້ Phusiri Trading, ບັນຊີ BCEL, ລາຍເຊັນ)</p></div>';
+  h += '<p class="muted" style="margin-top:8px">' + (rent ? 'ໃບ HOME SOLAR (ໂລໂກ້ Home Solar · BCEL + QR) · ເລກ RQ = ໃບສະເໜີ · RN = ມັດຈຳ/ໃບເກັບເງິນ' : 'ແບບດຽວກັບໃບຂອງ ພູສິຣິ ຕິດຕັ້ງຮົ້ວ (ໂລໂກ້ Phusiri Trading, ບັນຊີ BCEL, ລາຍເຊັນ)') + '</p></div>';
   UI.openId = null; UI.openNote = null; UI.openPO = null;
   $('sheet').innerHTML = h; openSheet();
   fdItems(); fdNoTxt();
@@ -2171,8 +2192,9 @@ function fdItems() {
   $('fdItems').innerHTML = d.items.map(function (it, i) {
     return '<div class="card" style="padding:8px 10px;margin-bottom:6px"><div class="row"><input class="inp" placeholder="ລາຍການສິນຄ້າ" value="' + esc(it.name) + '" oninput="' + set(i, 'name') + '">' +
       (d.items.length > 1 ? '<button class="btn ghost" style="flex:none;padding:4px 10px" onclick="UI.fdDraft.items.splice(' + i + ',1);fdItems()">✕</button>' : '') + '</div>' +
+      (d.rent ? '<div class="row" style="margin-top:6px"><input class="inp" placeholder="ລາຍລະອຽດ (ລຸ້ນດອກໄຟ ຯລຯ)" value="' + esc(it.size) + '" oninput="' + set(i, 'size') + '"></div>' :
       '<div class="row" style="margin-top:6px"><div><input class="inp" placeholder="ຄວາມຖີ່ຕາໜ່າງ" value="' + esc(it.mesh) + '" oninput="' + set(i, 'mesh') + '"></div>' +
-      '<div><input class="inp" placeholder="ສູງ x ກວ້າງ" value="' + esc(it.size) + '" oninput="' + set(i, 'size') + '"></div></div>' +
+      '<div><input class="inp" placeholder="ສູງ x ກວ້າງ" value="' + esc(it.size) + '" oninput="' + set(i, 'size') + '"></div></div>') +
       '<div class="row" style="margin-top:6px"><div style="flex:0 0 64px"><input class="inp" placeholder="ໜ່ວຍ" value="' + esc(it.unit) + '" oninput="' + set(i, 'unit') + '"></div>' +
       '<div style="flex:0 0 76px"><input class="inp" inputmode="decimal" placeholder="ຈຳນວນ" value="' + (it.qty || '') + '" oninput="' + set(i, 'qty', 1) + '"></div>' +
       '<div><input class="inp" inputmode="numeric" placeholder="ລາຄາ/ກີບ" value="' + (it.price ? money(it.price) : '') + '" oninput="fmtNum(this);' + set(i, 'price', 1) + '"></div></div></div>';
@@ -2181,30 +2203,37 @@ function fdItems() {
 }
 function fdTotals() {
   var d = UI.fdDraft, el = $('fdTotal'); if (!el) return;
-  var total = fdSum(d), due = Math.max(0, total - (d.prevPaid || 0) - (d.paid || 0));
+  var q = isQuoteKind(d.kind), sub = fdSum(d), total = fdTot(d), due = Math.max(0, total - (d.prevPaid || 0) - (d.paid || 0)), dep = d.kind === 'deposit' || d.kind === 'rdeposit';
   el.innerHTML = '<div class="info" style="grid-template-columns:1fr auto;font-size:14px">' +
-    '<span style="font-size:16px;color:#f5921e"><b>' + (d.kind === 'quote' ? 'ລວມລາຄາສະເໜີ' : 'ລາຄາທັງໝົດ') + '</b></span><b style="font-size:16px;color:#f5921e">' + money(total) + ' ກີບ</b>' +
-    (d.kind === 'quote' ? '' : (d.prevPaid ? '<span>ຊຳລະແລ້ວກ່ອນໜ້າ</span><b>' + money(d.prevPaid) + '</b>' : '') +
-      '<span>' + (d.kind === 'deposit' ? 'ຮັບເປັນມັດຈຳ' : 'ຮັບເງິນຄັ້ງນີ້') + '</span><b>' + money(d.paid) + '</b>' +
-      (due ? '<span>ຍອດຄ້າງຊຳລະ</span><b>' + money(due) + '</b>' : '<span>✓ ຊຳລະຄົບ</span><b></b>')) + '</div>' +
-    '<div class="muted" style="color:#c9d0dc;margin-top:4px">(' + laoWords(d.kind === 'quote' ? total : d.paid) + 'ກີບຖ້ວນ)</div>';
+    (d.rent && d.discount ? '<span>ລວມ</span><b>' + money(sub) + '</b><span>ສ່ວນຫຼຸດ</span><b>−' + money(d.discount) + '</b>' : '') +
+    '<span style="font-size:16px;color:#f5921e"><b>' + (q ? 'ລວມລາຄາສະເໜີ' : 'ລາຄາທັງໝົດ') + '</b></span><b style="font-size:16px;color:#f5921e">' + money(total) + ' ກີບ</b>' +
+    (q ? '' : (d.prevPaid ? '<span>ຊຳລະແລ້ວກ່ອນໜ້າ</span><b>' + money(d.prevPaid) + '</b>' : '') +
+      '<span>' + (dep ? 'ຮັບເປັນມັດຈຳ' : 'ຮັບເງິນຄັ້ງນີ້') + '</span><b>' + money(d.paid) + '</b>' +
+      (due ? '<span>' + (d.kind === 'rfull' ? 'ຍອດທີ່ຕ້ອງຊຳລະ' : 'ຍອດຄ້າງຊຳລະ') + '</span><b>' + money(due) + '</b>' : '<span>✓ ຊຳລະຄົບ</span><b></b>')) + '</div>' +
+    '<div class="muted" style="color:#c9d0dc;margin-top:4px">(' + laoWords(q ? total : d.kind === 'rfull' && !d.paid ? due : d.paid) + 'ກີບຖ້ວນ)</div>';
 }
 function issueFenceDoc() {
   var d = UI.fdDraft;
   if (!String(d.customer || '').trim()) return toast('ກະລຸນາໃສ່ຊື່ລູກຄ້າ', true);
   if (!d.items.some(function (it) { return String(it.name).trim() && it.qty > 0; })) return toast('ກະລຸນາໃສ່ລາຍການ + ຈຳນວນ', true);
-  if (d.kind !== 'quote' && !(d.paid > 0)) return toast('ກະລຸນາໃສ່ຈຳນວນເງິນທີ່ຮັບ', true);
+  if (!isQuoteKind(d.kind) && d.kind !== 'rfull' && !(d.paid > 0)) return toast('ກະລຸນາໃສ່ຈຳນວນເງິນທີ່ຮັບ', true);
+  if (d.rent && (d.discount || 0) > fdSum(d)) return toast('ສ່ວນຫຼຸດຫຼາຍກວ່າຍອດລວມ', true);
   if (d.no < 1 || fdUsed(d)) return toast('ເລກທີນີ້ອອກແລ້ວ — ປ່ຽນເລກ', true);
+  var pay = d;
+  if (d.rent) { // ສ່ວນຫຼຸດ = ລາຍການລົບ 1 ແຖວ (server ຮັບລາຄາລົບສະເພາະໃບເຊົ່າ)
+    pay = JSON.parse(JSON.stringify(d)); pay.items = pay.items.filter(function (it) { return String(it.name).trim() && it.qty > 0; });
+    if (d.discount > 0) pay.items.push({ name: 'ສ່ວນຫຼຸດ', mesh: '', size: '', unit: '', qty: 1, price: -Math.round(d.discount) });
+  }
   var w = window.open('', '_blank'); // ເປີດທັນທີຕອນກົດ (ກັນ popup ຖືກບລັອກ)
   if (w) w.document.write('<p style="font-family:sans-serif;padding:30px">ກຳລັງອອກ' + FD_T[d.kind] + '...</p>');
-  act('api_issueFenceDoc', d).then(function (r) {
-    var id = fdNo(d), doc = (r.fenceDocs || []).filter(function (x) { return x.id === id; })[0] || d;
+  act('api_issueFenceDoc', pay).then(function (r) {
+    var id = fdNo(d), doc = (r.fenceDocs || []).filter(function (x) { return x.id === id; })[0] || pay;
     toast('ອອກ ' + id + ' ແລ້ວ ✓');
-    fdPrint(doc, w);
-    if (d.back) openJob(d.back); else openFenceList();
+    if (d.rent) rdPrint(doc, w); else fdPrint(doc, w);
+    if (d.back) openJob(d.back); else if (d.rent) openRentList(); else openFenceList();
   }).catch(function () { if (w) w.close(); });
 }
-function fdReprint(id) { var r = fdById(id); if (r) fdPrint(r); }
+function fdReprint(id) { var r = fdById(id); if (r) (isRentKind(r.kind) ? rdPrint : fdPrint)(r); }
 function fdPrint(r, w) {
   var q = r.kind === 'quote', total = r.total || fdSum(r), due = Math.max(0, total - (r.prevPaid || 0) - (r.paid || 0));
   var id = r.id || fdNo(r);
@@ -2258,6 +2287,98 @@ function fdPrint(r, w) {
       '<div class="in-words"><span class="lbl">ຈຳນວນເງິນທີ່ຮັບເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(r.paid) + ' ກີບຖ້ວນ</span></div>' +
       '<div class="signs">' + sig('ລາຍເຊັນລູກຄ້າ', '') + sig('ລາຍເຊັນຜູ້ຮັບເງິນ', FENCE_SHOP.signer) + '</div>') +
     '<div class="foot-note">' + FENCE_SHOP.co + ' · ' + esc(id) + '</div>' +
+    '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
+  w = w || window.open('', '_blank');
+  if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
+  w.document.open(); w.document.write(html); w.document.close();
+}
+
+/* ================= 🔆 v28 ເອກະສານເຊົ່າດອກໄຟ HOME SOLAR (ເຈົ້າຂອງ) =================
+   ໃບສະເໜີລາຄາ RQ → ໃບຮັບເງິນມັດຈຳ RN → ໃບເກັບເງິນ RN · ເກັບໃນ FenceDocs (kind rquote/rdeposit/rfull)
+   ສ່ວນຫຼຸດ = ລາຍການລາຄາລົບ · ໃບເກັບເງິນອອກໄດ້ກ່ອນຮັບເງິນ (paid 0) ແລະ ຕັ້ງລາຄາວຽກ = ຍອດໃບ · ເງິນທີ່ຮັບ → ສະໝຸດເງິນຝັ່ງ Home Solar */
+var RD_PRICE = 300000;
+var RD_ITEM = 'ເຊົ່າດອກໄຟໂຊລ່າ · 1 ຄືນ (ລວມເສົາ ຂົນສົ່ງ ຕິດຕັ້ງ-ເກັບຄືນ)';
+var RD_TERMS = '• ມັດຈຳ 50% ເພື່ອຈອງວັນ · ສ່ວນທີ່ເຫຼືອຊຳລະມື້ຕິດຕັ້ງ\n• ລາຄາລວມ ດອກໄຟ ເສົາ/ຂາຈັບ ຂົນສົ່ງ ແລະ ຊ່າງ ຕິດຕັ້ງ-ເກັບຄືນ (ລັດສະໝີ 15 ກມ)\n• ຄືນເພີ່ມ +80,000 ກີບ/ດອກ/ຄືນ · ໄກກວ່າ 15 ກມ +12,000 ກີບ/ກມ\n• ອຸປະກອນເສຍຫາຍ ຫຼື ເສຍໄປ ຍ້ອນການກະທຳ ລູກຄ້າຮັບຜິດຊອບຕາມລາຄາຂາຍ';
+function dmyOf(s) { var p = String(s || '').slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : String(s || ''); }
+function rdJobCard(j) {
+  return '<div class="row" style="margin-top:8px;gap:6px">' +
+    '<button class="btn ghost" style="padding:8px 4px" onclick="openFenceDoc(\'rquote\',\'' + esc(j.id) + '\')">📋 ສະເໜີລາຄາ</button>' +
+    '<button class="btn ghost" style="padding:8px 4px" onclick="openFenceDoc(\'rdeposit\',\'' + esc(j.id) + '\')">💵 ມັດຈຳ</button>' +
+    '<button class="btn pri" style="padding:8px 4px" onclick="openFenceDoc(\'rfull\',\'' + esc(j.id) + '\')">🧾 ໃບເກັບເງິນ</button></div>' +
+    fdOf(j.id).map(fdRowHtml).join('');
+}
+function openRentList() {
+  var docs = fdNewest(fdRent());
+  var h = '<div class="shd"><b>🔆 ເອກະສານເຊົ່າດອກໄຟ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="row" style="gap:6px"><button class="btn gold" onclick="openFenceDoc(\'rquote\')">＋ 📋 ໃບສະເໜີລາຄາ</button><button class="btn ghost" onclick="openFenceDoc(\'rfull\')">＋ 🧾 ໃບເກັບເງິນ</button></div>';
+  h += '<p class="muted" style="margin:8px 0">ວຽກປະເພດ «🔆 ເຊົ່າດອກໄຟ» ອອກໃບຈາກກາດ 💰 ເງິນ ຂອງວຽກໄດ້ເລີຍ — ມັດຈຳ/ເງິນທີ່ຮັບຈະເຂົ້າວຽກໃຫ້ນຳ</p>';
+  if (!docs.length) h += '<div class="empty">ຍັງບໍ່ມີເອກະສານ</div>';
+  docs.forEach(function (r) {
+    var j = r.jobId ? jobById(r.jobId) : null, jid = fdQ(j ? j.id : '');
+    h += '<div class="card" style="padding:8px 10px;margin-bottom:6px">' + fdRowHtml(r) +
+      '<div class="row" style="gap:6px;margin-top:4px;flex-wrap:wrap">' +
+      (j ? '<button class="btn ghost" style="padding:6px" onclick="openJob(\'' + esc(j.id) + '\')">🔧 ເບິ່ງວຽກ</button>' : '') +
+      (r.kind === 'rquote' && !j ? '<button class="btn ghost" style="padding:6px" onclick="fdToJob(\'' + esc(r.id) + '\')">➡️ ສ້າງວຽກ</button>' : '') +
+      (r.kind === 'rquote' ? '<button class="btn ghost" style="padding:6px" onclick="openFenceDoc(\'rdeposit\',' + jid + ',\'' + esc(r.id) + '\')">💵 ອອກໃບມັດຈຳ</button>' : '') +
+      '<button class="btn ghost" style="padding:6px" onclick="openFenceDoc(\'' + r.kind + '\',' + jid + ',\'' + esc(r.id) + '\')">📄 ສຳເນົາ</button>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+function rdPrint(r, w) {
+  var q = r.kind === 'rquote', id = r.id || fdNo(r);
+  var pos = (r.items || []).filter(function (it) { return Number(it.price) >= 0; }), neg = (r.items || []).filter(function (it) { return Number(it.price) < 0; });
+  var sub = fdSum({ items: pos }), disc = -fdSum({ items: neg }), total = Math.max(0, sub - disc);
+  var prev = r.prevPaid || 0, paid = r.paid || 0, due = Math.max(0, total - prev - paid);
+  var rows = pos.map(function (it, i) {
+    return '<tr><td class="c">' + (i + 1) + '</td><td>' + esc(it.name) + (it.size ? '<div class="sm">' + esc(it.size) + '</div>' : '') + '</td><td class="c">' + esc(it.unit) + '</td><td class="c">' + esc(it.qty) + '</td><td class="num">' + money(it.price) + '</td><td class="num b">' + money(it.qty * it.price) + '</td></tr>';
+  }).join('');
+  var notes = String(r.notes || '').split('\n').filter(function (s) { return s.trim(); });
+  var css = ':root{--navy:#155a94;--orange:#f5921e;--line:#ccd3e0;--soft:#f5f7fb;--ink:#1c2733}*{box-sizing:border-box;margin:0;padding:0}html,body{background:#e6e9ee}' +
+    'body{font-family:"Noto Sans Lao","Phetsarath OT","Saysettha OT","Lao UI",sans-serif;color:var(--ink);font-size:13px;line-height:1.55;padding:24px 8px}' +
+    '.sheet{width:210mm;min-height:297mm;margin:0 auto;background:#fff;padding:14mm 13mm 12mm;box-shadow:0 2px 14px rgba(22,50,74,.18)}@page{size:A4;margin:0}' +
+    '@media print{html,body{background:#fff}body{padding:0}.sheet{box-shadow:none;margin:0;min-height:auto;padding:13mm 12mm}*{-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
+    '.head{display:flex;align-items:center;gap:14px;border-bottom:3px solid var(--navy);padding-bottom:10px}.head img{height:52px;width:auto}.head .nm{font-size:16.5px;font-weight:700;color:var(--navy)}.head .tg{font-size:11.5px;color:#5b6b7b}.head .ct{margin-left:auto;font-size:11.5px;color:#44556a;text-align:right;line-height:1.8}' +
+    '.doc-title{text-align:center;margin:12px 0 4px}.doc-title h1{font-size:20px;font-weight:700;color:var(--navy);display:inline-block;padding:3px 26px;border-bottom:2.5px solid var(--orange)}.doc-sub{text-align:center;font-size:11.5px;color:#5b6b7b;margin-bottom:4px}' +
+    '.meta{display:grid;grid-template-columns:1fr 1fr;gap:4px 26px;margin:12px 0 10px}.meta .row{display:flex;gap:7px;align-items:baseline}.meta .lbl{white-space:nowrap;font-weight:600;color:var(--navy)}.meta .v{flex:1;border-bottom:1px dotted #8fa0b0;padding:1px 4px;min-height:20px}' +
+    'table.items{width:100%;border-collapse:collapse;margin-top:6px}.items th{background:var(--navy);color:#fff;font-weight:600;font-size:11.5px;padding:7px 5px;border:1px solid var(--navy)}' +
+    '.items td{border:1px solid var(--line);padding:6px;font-size:12px;vertical-align:top}.items .sm{font-size:11px;color:#5b6b7b;line-height:1.5;margin-top:2px}.items .c{text-align:center}.items .num{text-align:right;white-space:nowrap}.items .b{font-weight:600;color:var(--navy)}' +
+    '.items tfoot td{padding:6px 8px;font-weight:700}.items .sl{text-align:right;background:var(--soft);color:var(--navy)}.items .sv{text-align:right;background:var(--soft);color:var(--navy)}.items .dv{text-align:right;background:var(--soft);color:#c0392b}.items .gl{text-align:right;background:#fff4dd;color:var(--navy);font-size:14px}.items .gv{text-align:right;background:#fff4dd;color:var(--navy);font-size:15px}' +
+    '.note{margin-top:6px;font-size:12px;color:#1c2733;background:#f5f7fb;border-left:3px solid var(--orange);padding:5px 9px;display:block}' +
+    '.in-words{margin-top:8px;display:flex;gap:8px;align-items:baseline;font-size:12px}.in-words .lbl{font-weight:600;color:var(--navy);white-space:nowrap}.in-words .val{flex:1;border-bottom:1px dotted #8fa0b0;padding:1px 6px}' +
+    '.pay-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}.box{border:1px solid var(--line);border-radius:6px;padding:10px 13px}.box .t{font-weight:700;color:var(--navy);font-size:12.5px;margin-bottom:6px}' +
+    '.box .r{font-size:12px;display:flex;justify-content:space-between;gap:8px;padding:2px 0}.box .r span:first-child{color:#5b6b7b}.terms{white-space:pre-wrap;font-size:12px;line-height:1.6}.qr{width:104px;height:104px;object-fit:contain;display:block;margin:6px auto 0}' +
+    '.summary{border:1px solid var(--line);border-radius:6px;overflow:hidden}.summary .r{display:flex;justify-content:space-between;padding:8px 12px;font-size:13px;border-bottom:1px solid var(--line)}.summary .r:last-child{border-bottom:none}' +
+    '.summary .lbl{color:var(--navy);font-weight:600}.summary .val{font-weight:700;color:var(--navy)}.summary .paid{background:#e8f6ee}.summary .paid .val{color:#12804a}.summary .due{background:#fff4e5}.summary .due .val{color:var(--orange);font-size:16px}' +
+    '.signs{display:grid;grid-template-columns:1fr 1fr;gap:26px;margin-top:22px}.sig{border:1px solid var(--line);border-radius:6px;padding:12px 16px 14px;text-align:center}' +
+    '.sig .role{font-weight:700;color:var(--navy);font-size:13.5px;padding-bottom:6px;border-bottom:1px solid var(--soft);margin-bottom:30px}.sig .line{border-bottom:1px dotted #6d7f90;margin:0 18px 6px}.sig .cap{font-size:11.5px;color:#5b6b7b;margin-bottom:6px}.sig .nm2{font-size:12.5px;min-height:18px}' +
+    '.foot-note{margin-top:14px;text-align:center;font-size:10.5px;color:#8595a5}';
+  var meta = q ? [['ເລກທີໃບສະເໜີ', id], ['ວັນທີ', dmyOf(r.date)], ['ຊື່ລູກຄ້າ', r.customer], ['ໃຊ້ໄດ້ຮອດວັນທີ', dmyOf(r.validDate)], ['ສະຖານທີ່ຈັດງານ', r.address], ['ຕິດຕໍ່', r.phone]] :
+    [['ເລກທີ', id], ['ລົງວັນທີ', dmyOf(r.date)], ['ຊື່ລູກຄ້າ', r.customer], ['ຕິດຕໍ່', r.phone], ['ສະຖານທີ່ຈັດງານ', r.address], ['ບໍລິການ', 'ເຊົ່າດອກໄຟໂຊລ່າ']];
+  var sig = function (role, nm) { return '<div class="sig"><div class="role">' + role + '</div><div class="line"></div><div class="cap">ຊື່ແຈ້ງ / ວັນທີ</div><div class="nm2">' + esc(nm || '') + '</div></div>'; };
+  var bank = '<div class="box"><div class="t">ວິທີຊຳລະ · LAO QR / BCEL One</div><div class="r"><span>ຊື່ບັນຊີ</span><span>' + esc(RC_SHOP.bankName) + '</span></div><div class="r"><span>ເລກບັນຊີ</span><b>' + esc(RC_SHOP.bankNo) + '</b></div><img class="qr" src="' + RC_ASSET + 'rc-qr.jpg"></div>';
+  var foot = '<tfoot>' + (disc ? '<tr><td colspan="5" class="sl">ລວມ (ກີບ)</td><td class="sv">' + money(sub) + '</td></tr><tr><td colspan="5" class="sl">ສ່ວນຫຼຸດ (ກີບ)</td><td class="dv">−' + money(disc) + '</td></tr>' : '') +
+    '<tr><td colspan="5" class="gl">' + (q ? 'ລວມລາຄາສະເໜີ (ກີບ)' : 'ລາຄາທັງໝົດ (ກີບ)') + '</td><td class="gv">' + money(total) + '</td></tr></tfoot>';
+  var html = '<!doctype html><html lang="lo"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>' + esc(id) + ' ' + esc(r.customer) + ' — ' + FD_T[r.kind] + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet"><style>' + css + PRINT_BAR_CSS + '</style></head><body>' + printBar() + '<div class="sheet">' +
+    '<div class="head"><img src="' + RC_ASSET + 'rc-logo.png"><div><div class="nm">HOME SOLAR · ໂຮມໂຊລ່າ</div><div class="tg">ບໍລິການເຊົ່າດອກໄຟໂຊລ່າ ສຳລັບງານບຸນ ງານລ້ຽງ · ໂຊລ່າ ທາງເລືອກທີ່ດີທີ່ສຸດ</div></div><div class="ct">' + esc(RC_SHOP.addr) + '<br>ໂທ: ' + esc(RC_SHOP.tel) + '</div></div>' +
+    '<div class="doc-title"><h1>' + FD_T[r.kind] + '</h1></div><div class="doc-sub">' + FD_SUB[r.kind] + '</div>' +
+    '<div class="meta">' + meta.map(function (m) { return '<div class="row"><span class="lbl">' + m[0] + ':</span><span class="v">' + esc(m[1] || '') + '</span></div>'; }).join('') + '</div>' +
+    '<table class="items"><thead><tr><th style="width:28px">ລ/ດ</th><th>ລາຍການ</th><th style="width:54px">ຫົວໜ່ວຍ</th><th style="width:50px">ຈຳນວນ</th><th style="width:96px">ລາຄາ/ໜ່ວຍ (ກີບ)</th><th style="width:110px">ຈຳນວນເງິນ (ກີບ)</th></tr></thead>' +
+    '<tbody>' + rows + '</tbody>' + foot + '</table>' +
+    notes.map(function (n) { return '<div class="note">' + esc(n) + '</div>'; }).join('') +
+    (q ? '<div class="in-words"><span class="lbl">ຈຳນວນເງິນເປັນຕົວໜັງສື:</span><span class="val">' + laoWords(total) + ' ກີບຖ້ວນ</span></div>' +
+      '<div class="pay-grid"><div class="box"><div class="t">ເງື່ອນໄຂ</div><div class="terms">' + esc(r.terms || RD_TERMS) + '</div></div>' + bank + '</div>' +
+      '<div class="signs">' + sig('ຜູ້ສະເໜີລາຄາ', 'HOME SOLAR') + sig('ລູກຄ້າຕົກລົງ', '') + '</div>'
+    : '<div class="pay-grid">' + bank + '<div class="summary"><div class="r"><span class="lbl">ລາຄາທັງໝົດ</span><span class="val">₭ ' + money(total) + '</span></div>' +
+      (prev ? '<div class="r"><span class="lbl">ຊຳລະແລ້ວກ່ອນໜ້າ</span><span class="val">₭ ' + money(prev) + '</span></div>' : '') +
+      (paid ? '<div class="r paid"><span class="lbl">' + (r.kind === 'rdeposit' ? 'ຮັບເປັນມັດຈຳ' : 'ຮັບເງິນຄັ້ງນີ້') + '</span><span class="val">₭ ' + money(paid) + '</span></div>' : '') +
+      '<div class="r due"><span class="lbl">' + (r.kind === 'rfull' && !paid ? 'ຍອດທີ່ຕ້ອງຊຳລະ' : 'ຍອດຄ້າງຊຳລະ') + '</span><span class="val">' + (due ? '₭ ' + money(due) : '✓ ຊຳລະຄົບ') + '</span></div></div></div>' +
+      '<div class="in-words"><span class="lbl">' + (paid ? 'ຈຳນວນເງິນທີ່ຮັບເປັນຕົວໜັງສື:' : 'ຍອດທີ່ຕ້ອງຊຳລະເປັນຕົວໜັງສື:') + '</span><span class="val">' + laoWords(paid || due) + ' ກີບຖ້ວນ</span></div>' +
+      '<div class="signs">' + sig('ລູກຄ້າ', '') + sig(paid ? 'ຜູ້ຮັບເງິນ' : 'ຜູ້ອອກໃບ', 'HOME SOLAR') + '</div>') +
+    '<div class="foot-note">HOME SOLAR · WhatsApp 020 5594 9459 · ' + esc(id) + '</div>' +
     '</div><script>Promise.all([document.fonts.ready].concat([].map.call(document.images,function(i){return i.complete?1:new Promise(function(r){i.onload=i.onerror=r})}))).then(function(){setTimeout(function(){window.print()},300)})<\/script></body></html>';
   w = w || window.open('', '_blank');
   if (!w) return toast('ເບຣາວເຊີບລັອກໜ້າຕ່າງໃໝ່ — ອະນຸຍາດ popup ແລ້ວລອງໃໝ່', true);
@@ -3057,6 +3178,7 @@ function unitCost(p) {
 function syncJobCost(jid, extraItems) {
   if (!S.owner || COST_LOCK[jid]) return Promise.resolve();
   var j = jobById(jid); if (!j) return Promise.resolve();
+  if (isRentJob(j)) return Promise.resolve(); // v28: ເຊົ່າ = ດອກໄຟກັບຄືນມາ ບໍ່ແມ່ນຕົ້ນທຶນຂາຍ
   if (!(S.products || []).length) { toast('⚠️ ສິນຄ້າຍັງໂຫຼດບໍ່ແລ້ວ — ຕົ້ນທຶນຍັງບໍ່ເຂົ້າລາຍຈ່າຍວຽກ (ກົດບັນທຶກວຽກອີກຄັ້ງ ຫຼັງສິນຄ້າໂຫຼດ)', true); return Promise.resolve(); }
   var want = {};
   (j.equipment || []).concat(extraItems || []).forEach(function (e) { if (e.vid && Number(e.qty) > 0) want[e.vid] = Math.max(want[e.vid] || 0, Math.round(Number(e.qty))); });
@@ -3899,7 +4021,7 @@ var MOCK = (function () {
   var KEY = 'js_demo_db_v1';
   function seed() {
     var t = new Date(), d = function (n) { return ymd(addDays(t, n)); };
-    var types = ['💡 ຕິດຕັ້ງດອກໄຟ', '🧱 ຕິດຕັ້ງຮົ້ວ', '🔍 ສຳຫຼວດໜ້າງານ', '🔧 ສ້ອມແປງ/ຮັບປະກັນ', '📦 ສົ່ງເຄື່ອງ', '📌 ອື່ນໆ'];
+    var types = ['💡 ຕິດຕັ້ງດອກໄຟ', '🔆 ເຊົ່າດອກໄຟ (ງານ)', '🧱 ຕິດຕັ້ງຮົ້ວ', '🔍 ສຳຫຼວດໜ້າງານ', '🔧 ສ້ອມແປງ/ຮັບປະກັນ', '📦 ສົ່ງເຄື່ອງ', '📌 ອື່ນໆ'];
     var J = function (o) {
       return Object.assign({ title: '', phone: '', location: '', mapUrl: '', start: '08:00', end: '11:00', techIds: ['t1'], status: 'scheduled', equipment: [],
         price: 0, deposit: 0, collected: 0, note: '', photosBefore: [], photosAfter: [], calEventId: '', createdAt: d(-3) + ' 09:00', updatedAt: d(-1) + ' 17:00' }, o);
@@ -4067,13 +4189,14 @@ var MOCK = (function () {
     api_issueFenceDoc: function (c, d) {
       need(c); var ser = fdSer(d.kind);
       if (db.fenceDocs.some(function (x) { return fdSer(x.kind) === ser && x.no === d.no; })) throw new Error('ເລກທີ ' + ser + ' ' + d.no + ' ອອກແລ້ວ — ໃຊ້ເລກອື່ນ');
-      var items = d.items.filter(function (it) { return String(it.name).trim() && it.qty > 0; }), q = d.kind === 'quote' || d.kind === 'hsquote';
+      var items = d.items.filter(function (it) { return String(it.name).trim() && it.qty > 0; }), q = isQuoteKind(d.kind);
       var r = { id: fdNo(d), kind: d.kind, no: d.no, jobId: d.jobId || '', date: d.date, validDate: q ? d.validDate : '', customer: d.customer, address: d.address, phone: d.phone,
         items: items, total: fdSum({ items: items }), prevPaid: q ? 0 : d.prevPaid || 0, paid: q ? 0 : d.paid || 0, notes: d.notes || '', terms: d.terms || '', createdAt: nowF() };
       db.fenceDocs.push(r);
       if (r.jobId) {
         var j = find(r.jobId);
-        if (!q && d.addPay) { if (d.kind === 'deposit') j.deposit += r.paid; else j.collected += r.paid; if (!j.price) j.price = r.total; log(j.id, c, 'pay', 'ຮັບເງິນ ' + money(r.paid) + ' ກີບ (' + r.id + ')'); }
+        if (d.kind === 'rfull' && r.total > 0) j.price = r.total;
+        if (!q && d.addPay && r.paid > 0) { if (d.kind === 'deposit' || d.kind === 'rdeposit') j.deposit += r.paid; else j.collected += r.paid; if (!j.price) j.price = r.total; log(j.id, c, 'pay', 'ຮັບເງິນ ' + money(r.paid) + ' ກີບ (' + r.id + ')'); }
         log(j.id, c, 'receipt', FD_IC[r.kind] + ' ອອກ' + FD_T[r.kind] + ' ' + r.id);
       }
       return all(c);
