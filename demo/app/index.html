@@ -884,7 +884,7 @@ function vSettings() {
   }).join('') + '</div><p class="muted" style="margin-top:8px">ມີຜົນກັບວຽກທີ່ບັນທຶກ/ອັບເດດຫຼັງຈາກນີ້</p></div>';
   h += '<div class="card"><h3>💵 ອັດຕາຄ່າຕິດຕັ້ງ & ຄ່າແຮງຊ່າງ</h3>' +
     '<label class="f">ຄ່າຕິດຕັ້ງເກັບລູກຄ້າ / ຈຸດ</label><input class="inp" id="setInst" inputmode="numeric" value="' + money(S.instRate || 0) + '" oninput="fmtNum(this)">' +
-    '<div class="row"><div><label class="f">ຄ່າແຮງຊ່າງ ເຕັມວັນ</label><input class="inp" id="setDay" inputmode="numeric" value="' + money(S.dayRate || 350000) + '" oninput="fmtNum(this)"></div>' +
+    '<div class="row"><div><label class="f">ຄ່າແຮງຊ່າງ ເຕັມວັນ</label><input class="inp" id="setDay" inputmode="numeric" value="' + money(S.dayRate || 300000) + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ຄ່າແຮງຊ່າງ ເຄິ່ງວັນ</label><input class="inp" id="setHalf" inputmode="numeric" value="' + money(S.halfRate || 150000) + '" oninput="fmtNum(this)"></div></div>' +
     '<p class="muted" style="margin-top:6px">ປ່ຽນອັດຕາແລ້ວ ມີຜົນກັບວຽກທີ່ບັນທຶກຫຼັງຈາກນີ້ — ວຽກເກົ່າໃຊ້ອັດຕາຕອນບັນທຶກ</p></div>';
   h += '<div class="card"><h3>💬 ຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າ</h3><p class="muted">ຊ່ອງທີ່ແອບໃສ່ໃຫ້ເອງ: ' + WA_KEYS.join(' ') + ' · ປ່ອຍວ່າງ = ໃຊ້ຂໍ້ຄວາມຕົ້ນແບບ</p>' +
@@ -969,7 +969,7 @@ function detailHtml(j, page) {
       '<span class="k">🏷️</span><span>ມູນຄ່າວຽກ: <b>' + money(j.price) + '</b> ກີບ</span>' +
       '<span class="k">💵</span><span>ມັດຈຳ: <b>' + money(j.deposit) + '</b> · ເກັບໜ້າງານແລ້ວ: <b>' + money(j.collected) + '</b></span>' +
       '<span class="k">⏳</span><span>ຄ້າງເກັບ: <b style="color:' + (j.due > 0 ? '#dc2626' : '#12a150') + '">' + money(j.due) + ' ກີບ</b></span>' +
-      (j.points || j.instFee || j.techPay ? '<span class="k">🔧</span><span>ຕິດຕັ້ງ <b>' + (j.points || 0) + '</b> ຈຸດ · ຄ່າຕິດຕັ້ງ <b>' + money(j.instFee) + '</b><br>ຄ່າແຮງຊ່າງ <b>' + money(j.techPay) + '</b>' +
+      (j.points || j.instFee || jobPay(j) ? '<span class="k">🔧</span><span>ຕິດຕັ້ງ <b>' + (j.points || 0) + '</b> ຈຸດ · ຄ່າຕິດຕັ້ງ <b>' + money(j.instFee) + '</b><br>ຄ່າແຮງຊ່າງ (ຫຼັງຕັດຕໍ່ວັນ) <b>' + money(jobPay(j)) + '</b>' +
         ((j.labor || []).length ? ' <span class="muted">(' + j.labor.map(function (l) { return techName(l.tid) + ' ' + (l.full ? l.full + ' ວັນ' : '') + (l.half ? (l.full ? ' + ' : '') + l.half + ' ເຄິ່ງວັນ' : ''); }).join(', ') + ')</span>' : '') + '</span>' : '') +
       '</div>' +
       (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') +
@@ -1422,31 +1422,18 @@ function dInstall() {
   var done = S.jobs.filter(function (j) { return inPer(j) && j.status === 'done'; });
   var plan = S.jobs.filter(function (j) { return inPer(j) && isOpen(j); });
   var sum = function (arr, k) { return arr.reduce(function (a, j) { return a + (Number(j[k]) || 0); }, 0); };
-  var pts = sum(done, 'points'), fee = sum(done, 'instFee'), pay = sum(done, 'techPay');
+  var pts = sum(done, 'points'), fee = sum(done, 'instFee'), pay = done.reduce(function (a, j) { return a + jobPay(j); }, 0);
   var h = '<div class="sec">🔧 ການຕິດຕັ້ງ <span class="sp"></span>' + [['week', 'ທິດນີ້'], ['month', 'ເດືອນນີ້']].map(function (x) {
     return '<span class="fchip' + (UI.dPer === x[0] ? ' on' : '') + '" style="font-weight:600" onclick="UI.dPer=\'' + x[0] + '\';render()">' + x[1] + '</span>';
   }).join('') + '</div>';
   h += '<p class="muted" style="margin:-4px 2px 8px">' + lbl + ' · ນັບວຽກທີ່ສະຖານະ «ສຳເລັດ» ' + done.length + ' ວຽກ</p>';
   h += '<div class="kpis">' + dTile(pts, 'ຈຸດທີ່ຕິດຕັ້ງແລ້ວ', 'blue') + dTile(money(fee), 'ລາຍຮັບຄ່າຕິດຕັ້ງ', '') + dTile(money(pay), 'ຄ່າແຮງຊ່າງ', 'amber') +
     dTile(money(fee - pay), 'ກຳໄລຄ່າຕິດຕັ້ງ', fee - pay < 0 ? 'red' : '') + '</div>';
-  // ຊ່າງແຕ່ລະຄົນ: ວັນເຮັດວຽກ + ຄ່າແຮງ (ຄິດຕາມອັດຕາປັດຈຸບັນ)
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, per = {};
-  done.forEach(function (j) {
-    (j.labor || []).forEach(function (l) {
-      var p = per[l.tid] = per[l.tid] || { jobs: 0, full: 0, half: 0, pts: 0 };
-      p.jobs++; p.full += l.full || 0; p.half += l.half || 0; p.pts += j.points || 0;
-    });
-  });
-  var rows = Object.keys(per).map(function (id) { var p = per[id]; return { id: id, p: p, pay: p.full * dr + p.half * hr }; }).sort(function (a, b) { return b.pay - a.pay; });
-  h += '<div class="card"><h3>👷 ຄ່າແຮງຊ່າງ ' + lbl + '</h3>' + (rows.length ? '<table><tr><th>ຊ່າງ</th><th class="num">ວຽກ</th><th class="num">ວັນ</th><th class="num">ຄ່າແຮງ</th></tr>' + rows.map(function (r) {
-    var days = [r.p.full ? r.p.full + ' ວັນ' : '', r.p.half ? r.p.half + ' ເຄິ່ງ' : ''].filter(Boolean).join(' + ') || '0';
-    return '<tr><td>' + esc(techName(r.id)) + '</td><td class="num">' + r.p.jobs + '</td><td class="num">' + days + '</td><td class="num"><b>' + money(r.pay) + '</b></td></tr>';
-  }).join('') + '<tr><td><b>ລວມ</b></td><td></td><td></td><td class="num"><b>' + money(rows.reduce(function (a, r) { return a + r.pay; }, 0)) + '</b></td></tr></table>' +
-    '<p class="muted" style="font-size:12px;margin-top:4px">ເຕັມວັນ ' + money(dr) + ' / ເຄິ່ງວັນ ' + money(hr) + '</p>' : '<div class="muted">ຍັງບໍ່ມີວຽກສຳເລັດທີ່ບັນທຶກວັນເຮັດວຽກຂອງຊ່າງ</div>') + '</div>';
+  h += laborCard();
   var missing = done.filter(function (j) { return !j.points; }).length;
   h += '<div class="card" style="background:#f6f9ff"><h3>📅 ແຜນທີ່ນັດໄວ້ ' + lbl + ' (ຍັງບໍ່ສຳເລັດ)</h3><div class="info" style="grid-template-columns:1fr auto;font-size:14px">' +
     '<span>ວຽກທີ່ນັດໄວ້</span><b>' + plan.length + '</b><span>ຈຸດທີ່ຈະຕິດຕັ້ງ</span><b>' + sum(plan, 'points') + '</b>' +
-    '<span>ຄ່າຕິດຕັ້ງທີ່ຈະໄດ້</span><b>' + money(sum(plan, 'instFee')) + '</b><span>ຄ່າແຮງຊ່າງທີ່ຈະຈ່າຍ</span><b>' + money(sum(plan, 'techPay')) + '</b></div>' +
+    '<span>ຄ່າຕິດຕັ້ງທີ່ຈະໄດ້</span><b>' + money(sum(plan, 'instFee')) + '</b><span>ຄ່າແຮງຊ່າງທີ່ຈະຈ່າຍ</span><b>' + money(plan.reduce(function (a, j) { return a + jobPay(j); }, 0)) + '</b></div>' +
     (plan.filter(function (j) { return !j.points; }).length ? '<p class="muted" style="font-size:12px;margin-top:4px">' + plan.filter(function (j) { return !j.points; }).length + ' ວຽກຍັງບໍ່ໄດ້ໃສ່ຈຳນວນຈຸດ</p>' : '') + '</div>';
   if (missing) h += '<p style="color:#a15c00;font-size:13px;margin:-4px 2px 10px">⚠️ ' + missing + ' ວຽກສຳເລັດແລ້ວ ຍັງບໍ່ໄດ້ໃສ່ຈຳນວນຈຸດ/ຄ່າແຮງ — ຕົວເລກຂ້າງເທິງອາດຕ່ຳກວ່າຈິງ</p>';
   return h;
@@ -1555,7 +1542,7 @@ function vDash() {
     [over.length, 'ວຽກເລີຍກຳນົດ', '#dc2626', "go('today')"], [codLate.length, 'COD ຄ້າງເກີນ 7 ມື້', '#dc2626', "UI.salesTab='orders';UI.of='cod';go('sales')"],
     [clW, 'ລໍປ່ຽນຮັບປະກັນ', '#dc2626', "UI.salesTab='claims';go('sales')"], [noteDueN, 'ໂນດຮອດກຳນົດ', '#d97706', "UI.nf='due';go('notes')"],
     [drafts.length, 'ບິນຮ່າງຄ້າງ', '#d97706', "UI.salesTab='orders';UI.of='draft';go('sales')"], [noTech, 'ວຽກຍັງບໍ່ມອບຊ່າງ', '#d97706', "go('week')"],
-    [low.length, 'ສິນຄ້າໃກ້ໝົດ', '#2563eb', "UI.salesTab='stock';UI.sf='low';go('sales')"]].filter(function (a) { return a[0] > 0; });
+    [low.length, 'ສິນຄ້າໃກ້ໝົດ', '#2563eb', "UI.salesTab='stock';UI.sf='low';go('sales')"], [lbUnpaidSummary().n, 'ມື້ຄ່າແຮງຊ່າງຍັງບໍ່ຈ່າຍ', '#d97706', "laborPaySheet()"]].filter(function (a) { return a[0] > 0; });
   h += '<div class="sec" style="margin-top:4px">ຕ້ອງເຮັດດຽວນີ້</div><div class="achips">' + (act.length ? act.map(function (a) {
     return '<button class="achip" style="--c:' + a[2] + '" onclick="' + a[3] + '"><b>' + a[0] + '</b> ' + a[1] + '</button>'; }).join('') : '<span class="achip" style="--c:#12a150">✓ ບໍ່ມີອັນຄ້າງ</span>') + '</div>';
   // ຕົວເລກຫຼັກ 4 ອັນ
@@ -1586,6 +1573,7 @@ function vDash() {
     h += '<div class="money3">' + dTile(money(ordDueN), 'ບິນຂາຍຄ້າງ / COD', ordDueN ? 'amber' : '', "UI.salesTab='orders';UI.of='due';go('sales')") + dTile(money(rcM.reduce(function (a, r) { return a + r.total; }, 0)), 'ຍອດໃບເກັບເງິນເດືອນນີ້', '') +
       dTile(money(payable), 'ເຮົາຄ້າງຈ່າຍຜູ້ສະໜອງ', 'amber', "UI.pf='due';go('po')") + '</div>';
     h += dProfit();
+  h += laborCard();
   } else if (tab === 'cust') {
     h += '<div class="sec">📞 ລູກຄ້າທີ່ກຳລັງຕິດຕາມ</div><div class="kpis">' + dTile(fol.length, 'ກຳລັງ follow', 'amber', "UI.nf='follow';go('notes')") +
       dTile(noteDueN, 'ໂນດຮອດກຳນົດ', 'red', "UI.nf='due';go('notes')") + dTile(short(fol.reduce(function (a, n) { return a + (n.value || 0); }, 0)), 'ມູນຄ່າຄາດ', '', "go('notes')") +
@@ -2164,9 +2152,173 @@ function srcReportPrint() {
 
 /* ================= 💸 ລາຍຈ່າຍ & ກຳໄລຂອງແຕ່ລະວຽກ (ເຈົ້າຂອງ) =================
    ກຳໄລ = ມູນຄ່າວຽກ − ລາຍຈ່າຍທີ່ບັນທຶກ − ຄ່າແຮງຊ່າງ (ຈາກບັນທຶກວັນເຮັດວຽກ) */
+
+/* ================= 👷 ຄ່າແຮງຊ່າງ v2: ຄິດ «ຕໍ່ຄົນ ຕໍ່ວັນ» + ບັນຊີເບີກ/ຈ່າຍ + ຫຼັກຖານໂອນ =================
+   ຊ່າງ 1 ຄົນ ເຮັດຫຼາຍວຽກໃນມື້ດຽວກັນ = ລວມກັນແລ້ວ ບໍ່ເກີນ 1 ມື້ເຕັມ (ເຕັມວັນ/ເຄິ່ງວັນ ຕາມທີ່ບັນທຶກໃນແຕ່ລະວຽກ)
+   ຄ່າແຮງຂອງແຕ່ລະວຽກ (ສຳລັບກຳໄລຕໍ່ວຽກ) = ແບ່ງຄ່າແຮງຂອງມື້ນັ້ນ ຕາມສັດສ່ວນ ເພື່ອໃຫ້ຜົນລວມຕົງກັບເງິນທີ່ຈ່າຍຈິງ */
+function lbRates() { return { dr: S.dayRate || 300000, hr: S.halfRate || 150000 }; }
+function lbRaw(l) { var q = lbRates(); return (l.full || 0) * q.dr + (l.half || 0) * q.hr; }
+function laborCalc(list) {
+  var cap = lbRates().dr, days = {}, perJob = {};
+  (list || []).forEach(function (j) {
+    if (!j.date || j.status === 'cancelled') return;
+    (j.labor || []).forEach(function (l) {
+      var raw = lbRaw(l); if (!raw) return;
+      var k = l.tid + '|' + j.date, d = days[k] = days[k] || { tid: l.tid, date: j.date, raw: 0, items: [] };
+      d.raw += raw; d.items.push({ jobId: j.id, raw: raw, full: l.full || 0, half: l.half || 0 });
+    });
+  });
+  Object.keys(days).forEach(function (k) {
+    var d = days[k]; d.pay = Math.min(d.raw, cap); d.capped = d.raw > cap;
+    d.items.forEach(function (it) {
+      it.alloc = d.raw ? Math.round(d.pay * it.raw / d.raw) : 0;
+      var p = perJob[it.jobId] = perJob[it.jobId] || { total: 0, by: {} };
+      p.total += it.alloc; p.by[d.tid] = (p.by[d.tid] || 0) + it.alloc;
+    });
+  });
+  return { days: days, perJob: perJob };
+}
+function laborAllCalc() { return laborCalc((S.jobs || []).filter(function (j) { return j.status !== 'cancelled'; })); }
+function jobPay(j) { if (!(j.labor && j.labor.length)) return j.techPay || 0; var p = laborAllCalc().perJob[j.id]; return p ? p.total : 0; }
+function laborLedger() { // ບັນຊີມື້ທີ່ຈ່າຍໄດ້ = ວຽກສຳເລັດແລ້ວ ເທົ່ານັ້ນ
+  var c = laborCalc((S.jobs || []).filter(function (j) { return j.status === 'done'; })), paid = {};
+  (S.laborPays || []).forEach(function (p) { (p.days || []).forEach(function (x) { var k = p.tid + '|' + x.d; paid[k] = (paid[k] || 0) + (Number(x.a) || 0); }); });
+  var rows = Object.keys(c.days).map(function (k) { var d = c.days[k]; d.paid = paid[k] || 0; d.due = Math.max(0, d.pay - d.paid); return d; });
+  rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.tid < b.tid ? -1 : 1); });
+  return rows;
+}
+function lbRange(per) {
+  var d = new Date();
+  if (per === 'week') { var ws = weekStart(d); return [ymd(ws), ymd(addDays(ws, 6)), 'ທິດນີ້']; }
+  if (per === 'all') return ['0000-00-00', '9999-99-99', 'ທັງໝົດ'];
+  return [ymd(new Date(d.getFullYear(), d.getMonth(), 1)), ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0)), 'ເດືອນ' + MON[d.getMonth()]];
+}
+function lbDaysTxt(units) { var f = Math.floor(units + 1e-9), h = (units - f) >= 0.49 ? 1 : 0; return [f ? f + ' ວັນ' : '', h ? '½ ວັນ' : ''].filter(Boolean).join(' + ') || '0'; }
+function laborCard() {
+  UI.lbPer = UI.lbPer || 'month';
+  var rg = lbRange(UI.lbPer), rows = laborLedger().filter(function (d) { return d.date >= rg[0] && d.date <= rg[1]; });
+  var tot = rows.reduce(function (a, d) { return a + d.pay; }, 0), paid = rows.reduce(function (a, d) { return a + Math.min(d.paid, d.pay); }, 0), due = rows.reduce(function (a, d) { return a + d.due; }, 0);
+  var per = {}; rows.forEach(function (d) { var p = per[d.tid] = per[d.tid] || { days: 0, units: 0, pay: 0, paid: 0, due: 0, jobs: {} }; p.days++; p.units += d.pay / lbRates().dr; p.pay += d.pay; p.paid += Math.min(d.paid, d.pay); p.due += d.due; d.items.forEach(function (it) { p.jobs[it.jobId] = 1; }); });
+  var ids = Object.keys(per).sort(function (a, b) { return per[b].due - per[a].due || per[b].pay - per[a].pay; });
+  var h = '<div class="card" id="lbCard"><h3>👷 ຄ່າແຮງຊ່າງ (ຄິດອັດຕະໂນມັດ)</h3><div class="filters" style="margin:0 0 8px">' + [['week', 'ທິດນີ້'], ['month', 'ເດືອນນີ້'], ['all', 'ທັງໝົດ']].map(function (x) {
+    return '<button class="fchip' + (UI.lbPer === x[0] ? ' on' : '') + '" onclick="UI.lbPer=\'' + x[0] + '\';render()">' + x[1] + '</button>'; }).join('') + '</div>';
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(money(tot), 'ຄ່າແຮງລວມ', 'blue') + dTile(money(paid), 'ຈ່າຍແລ້ວ', '') + dTile(money(due), 'ຄ້າງຈ່າຍ', due > 0 ? 'red' : '') + '</div>';
+  h += ids.length ? '<table style="margin-top:8px"><tr><th>ຊ່າງ</th><th class="num">ມື້</th><th class="num">ຄ່າແຮງ</th><th class="num">ຄ້າງ</th></tr>' + ids.map(function (id) { var p = per[id];
+    return '<tr style="cursor:pointer" onclick="laborDetail(\'' + esc(id) + '\')"><td>' + esc(techName(id)) + ' <span class="muted">›</span></td><td class="num">' + lbDaysTxt(p.units) + '</td><td class="num"><b>' + money(p.pay) + '</b></td><td class="num" style="color:' + (p.due ? '#dc2626' : '#12a150') + '"><b>' + (p.due ? money(p.due) : '✓') + '</b></td></tr>'; }).join('') + '</table>' :
+    '<div class="muted" style="margin-top:8px">ຍັງບໍ່ມີວຽກສຳເລັດທີ່ບັນທຶກຊ່າງ/ວັນເຮັດວຽກ ໃນຊ່ວງ ' + rg[2] + '</div>';
+  h += '<div class="row" style="margin-top:10px;gap:8px"><button class="btn gold" style="flex:1.2" onclick="laborPaySheet()">💸 ເບີກຄ່າແຮງ</button><button class="btn ghost" style="flex:1" onclick="laborHistory()">📜 ປະຫວັດ + ຫຼັກຖານ</button></div>';
+  h += '<p class="muted" style="font-size:12px;margin-top:6px">ເຕັມວັນ ' + money(lbRates().dr) + ' · ເຄິ່ງວັນ ' + money(lbRates().hr) + ' ຕໍ່ຄົນ · ຊ່າງ 1 ຄົນ ເຮັດຫຼາຍວຽກໃນມື້ດຽວ ຄິດລວມບໍ່ເກີນ 1 ມື້ເຕັມ · ກົດຊື່ຊ່າງເພື່ອເບິ່ງລາຍລະອຽດ</p></div>';
+  return h;
+}
+function lbUnpaidSummary() { var rows = laborLedger().filter(function (d) { return d.due > 0; }); return { n: rows.length, amt: rows.reduce(function (a, d) { return a + d.due; }, 0) }; }
+function dayLabel(dt) { var x = parseYmd(dt); return DOW[x.getDay()] + ' ' + x.getDate() + ' ' + MON[x.getMonth()]; }
+function laborDetail(tid) {
+  var rows = laborLedger().filter(function (d) { return d.tid === tid; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var pays = (S.laborPays || []).filter(function (p) { return p.tid === tid; }).sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var tot = rows.reduce(function (a, d) { return a + d.pay; }, 0), due = rows.reduce(function (a, d) { return a + d.due; }, 0);
+  var h = '<div class="shd"><b>👷 ' + esc(techName(tid)) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(money(tot), 'ຄ່າແຮງທັງໝົດ', 'blue') + dTile(money(tot - due), 'ຈ່າຍແລ້ວ', '') + dTile(money(due), 'ຄ້າງຈ່າຍ', due > 0 ? 'red' : '') + '</div>';
+  if (due > 0) h += '<button class="btn gold full" style="margin:8px 0" onclick="laborPaySheet(\'' + esc(tid) + '\')">💸 ເບີກຄ່າແຮງໃຫ້ ' + esc(techName(tid)) + ' (' + money(due) + ')</button>';
+  h += '<div class="sec">📅 ລາຍວັນ (ໃໝ່ → ເກົ່າ)</div>';
+  h += rows.length ? rows.map(function (d) {
+    var jobs = d.items.map(function (it) { var j = jobById(it.jobId) || {}; return '<div style="font-size:13px;margin-left:2px"><a href="javascript:void 0" onclick="closeSheet();setTimeout(function(){openJob(\'' + esc(it.jobId) + '\')},330)">' + esc((j.customer || '?') + (j.title ? ' · ' + j.title : '')) + '</a> · ' + (it.full ? it.full + ' ເຕັມ' : '') + (it.half ? (it.full ? ' + ' : '') + it.half + ' ເຄິ່ງ' : '') + ' <span class="muted">(' + money(it.raw) + ')</span></div>'; }).join('');
+    var st = d.due <= 0 ? '<span class="badge" style="background:#d1fadf;color:#067647">✓ ຈ່າຍແລ້ວ</span>' : d.paid > 0 ? '<span class="badge" style="background:#fdecc8;color:#a15c00">ຈ່າຍບາງສ່ວນ · ຄ້າງ ' + money(d.due) + '</span>' : '<span class="badge" style="background:#fee4e2;color:#b42318">⏳ ຍັງບໍ່ຈ່າຍ</span>';
+    return '<div class="card" style="padding:9px 12px;margin-bottom:8px"><div style="display:flex;gap:8px;align-items:center"><b style="flex:1">' + dayLabel(d.date) + '</b><b>' + money(d.pay) + '</b></div>' + jobs +
+      (d.capped ? '<div style="font-size:12px;color:#a15c00;margin:3px 0">⚠️ ເຮັດ ' + d.items.length + ' ວຽກ ລວມ ' + money(d.raw) + ' → ຄິດສູງສຸດ 1 ມື້ ' + money(d.pay) + '</div>' : '') + '<div style="margin-top:4px">' + st + '</div></div>';
+  }).join('') : '<div class="empty">ຍັງບໍ່ມີວັນເຮັດວຽກທີ່ສຳເລັດ</div>';
+  h += '<div class="sec" style="margin-top:12px">💸 ປະຫວັດການເບີກ</div>' + (pays.length ? pays.map(lbPayRow).join('') : '<div class="muted">ຍັງບໍ່ເຄີຍເບີກ</div>');
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h + '</div>'; openSheet(); $('sheet').scrollTop = 0;
+}
+function lbPayRow(p) {
+  var th = (p.proof || []).map(function (src, i) { return '<img src="' + src + '" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer" onclick="showProof(\'' + esc(p.id) + '\',' + i + ')">'; }).join('');
+  return '<div class="card" style="padding:9px 12px;margin-bottom:8px"><div style="display:flex;gap:8px;align-items:center"><b style="flex:1">' + esc(techName(p.tid)) + ' · ' + esc(p.date) + '</b><b style="color:#12a150">' + money(p.amount) + '</b></div>' +
+    '<div class="muted" style="font-size:12.5px">' + (p.days || []).length + ' ມື້: ' + (p.days || []).map(function (x) { return x.d.slice(8) + '/' + x.d.slice(5, 7); }).join(', ') + ' · ' + esc(p.method || '') + (p.note ? ' · ' + esc(p.note) : '') + '</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">' + (th || '<span class="muted" style="font-size:12px">ບໍ່ມີຫຼັກຖານແນບ</span>') + '<span style="flex:1"></span><button class="btn ghost" style="padding:4px 10px;font-size:12px;color:#dc2626" onclick="delLaborPay(\'' + esc(p.id) + '\')">🗑️ ຍົກເລີກ</button></div></div>';
+}
+function showProof(pid, i) {
+  var p = (S.laborPays || []).filter(function (x) { return x.id === pid; })[0]; if (!p || !p.proof || !p.proof[i]) return;
+  var o = document.createElement('div'); o.id = 'proofView'; o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:10px';
+  o.innerHTML = '<img src="' + p.proof[i] + '" style="max-width:100%;max-height:100%;border-radius:10px"><button style="position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:0;font-size:22px;background:#fff">✕</button>';
+  o.onclick = function () { o.remove(); }; document.body.appendChild(o);
+}
+function delLaborPay(id) {
+  ask({ title: '🗑️ ຍົກເລີກການເບີກນີ້?', msg: 'ມື້ທີ່ຢູ່ໃນການເບີກນີ້ຈະກັບເປັນ «ຍັງບໍ່ຈ່າຍ» ແລະຫຼັກຖານທີ່ແນບຈະຖືກລຶບ', ok: 'ຍົກເລີກການເບີກ' }).then(function (y) {
+    if (y) act('api_delLaborPay', id).then(function () { toast('ຍົກເລີກການເບີກແລ້ວ'); if (UI.lbSheet === 'hist') laborHistory(); else if (UI.lbTid) laborDetail(UI.lbTid); });
+  });
+}
+function laborHistory() {
+  UI.lbSheet = 'hist'; UI.lbTid = '';
+  var pays = (S.laborPays || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var tot = pays.reduce(function (a, p) { return a + (Number(p.amount) || 0); }, 0);
+  var h = '<div class="shd"><b>📜 ປະຫວັດການເບີກຄ່າແຮງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody"><div class="muted" style="margin-bottom:8px">ລວມທີ່ເບີກແລ້ວ <b>' + money(tot) + '</b> ກີບ · ' + pays.length + ' ຄັ້ງ</div>' + (pays.length ? pays.map(lbPayRow).join('') : '<div class="empty">ຍັງບໍ່ເຄີຍເບີກ — ກົດ «💸 ເບີກຄ່າແຮງ»</div>') + '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+// ===== ເບີກຄ່າແຮງ: ເລືອກຊ່າງ → ຕິກມື້ທີ່ຍັງບໍ່ຈ່າຍ (ຄ່າເລີ່ມ = 3 ມື້ເກົ່າສຸດ) → ແນບຫຼັກຖານ → ບັນທຶກ =====
+function laborPaySheet(tid) {
+  var rows = laborLedger().filter(function (d) { return d.due > 0; });
+  var techIds = []; rows.forEach(function (d) { if (techIds.indexOf(d.tid) < 0) techIds.push(d.tid); });
+  if (!techIds.length) { toast('ບໍ່ມີຄ່າແຮງຄ້າງຈ່າຍ 🎉'); return; }
+  UI.lbPay = { tid: tid && techIds.indexOf(tid) >= 0 ? tid : techIds[0], sel: null, proof: [], method: 'ໂອນ', date: today(), note: '' };
+  lbPayRender(true);
+}
+function lbPayDays() { return laborLedger().filter(function (d) { return d.tid === UI.lbPay.tid && d.due > 0; }); }
+function lbPayRender(first) {
+  var p = UI.lbPay, rows = laborLedger().filter(function (d) { return d.due > 0; }), techIds = [];
+  rows.forEach(function (d) { if (techIds.indexOf(d.tid) < 0) techIds.push(d.tid); });
+  var days = lbPayDays(); if (!p.sel) { p.sel = {}; days.slice(0, 3).forEach(function (d) { p.sel[d.date] = 1; }); }
+  var amt = days.reduce(function (a, d) { return a + (p.sel[d.date] ? d.due : 0); }, 0), n = days.filter(function (d) { return p.sel[d.date]; }).length;
+  var h = '<div class="shd"><b>💸 ເບີກຄ່າແຮງຊ່າງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<label class="f">ຊ່າງ</label><div class="filters" style="margin:0">' + techIds.map(function (id) { var dd = rows.filter(function (d) { return d.tid === id; }).reduce(function (a, d) { return a + d.due; }, 0);
+    return '<button class="fchip' + (p.tid === id ? ' on' : '') + '" onclick="UI.lbPay.tid=\'' + esc(id) + '\';UI.lbPay.sel=null;lbPayRender()">' + esc(techName(id)) + ' · ' + short(dd) + '</button>'; }).join('') + '</div>';
+  h += '<label class="f">ເລືອກມື້ທີ່ຈະເບີກ <span class="muted">(ຕິກ 3 ມື້ເກົ່າສຸດໃຫ້ແລ້ວ)</span></label>' + days.map(function (d) {
+    return '<label class="eq" style="cursor:pointer"><input type="checkbox" ' + (p.sel[d.date] ? 'checked' : '') + ' onchange="UI.lbPay.sel[\'' + d.date + '\']=this.checked?1:0;lbPayRender()"><span style="flex:1">' + dayLabel(d.date) + '<br><span class="muted" style="font-size:12px">' + d.items.length + ' ວຽກ' + (d.capped ? ' · ຕັດເຫຼືອ 1 ມື້' : '') + (d.paid ? ' · ຈ່າຍແລ້ວ ' + money(d.paid) : '') + '</span></span><b>' + money(d.due) + '</b></label>'; }).join('');
+  h += '<div class="card" style="margin-top:10px;background:#0A1322;color:#fff;border:0"><div class="info" style="grid-template-columns:1fr auto;font-size:14px"><span>ເບີກ ' + n + ' ມື້</span><b style="font-size:19px;color:#F6C453">' + money(amt) + ' ກີບ</b></div></div>';
+  h += '<div class="row"><div><label class="f">ວັນທີ່ໂອນ/ຈ່າຍ</label><input class="inp" type="date" value="' + esc(p.date) + '" onchange="UI.lbPay.date=this.value"></div><div><label class="f">ວິທີຈ່າຍ</label><select class="inp" onchange="UI.lbPay.method=this.value">' + ['ໂອນ', 'ເງິນສົດ'].map(function (m) { return '<option' + (p.method === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div></div>';
+  h += '<label class="f">ໝາຍເຫດ</label><input class="inp" value="' + esc(p.note) + '" placeholder="ເຊັ່ນ ໂອນ BCEL ເລກ... ເບີກ 3 ມື້" oninput="UI.lbPay.note=this.value">';
+  h += '<label class="f">📎 ຫຼັກຖານການໂອນ (ຮູບສະລິບ) <span class="muted">ແນບໄດ້ຫຼາຍຮູບ</span></label><div style="display:flex;gap:8px;flex-wrap:wrap">' + p.proof.map(function (src, i) {
+    return '<div style="position:relative"><img src="' + src + '" style="width:76px;height:76px;object-fit:cover;border-radius:12px;border:1px solid var(--line)"><button style="position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#dc2626;color:#fff;font-size:13px" onclick="UI.lbPay.proof.splice(' + i + ',1);lbPayRender()">✕</button></div>'; }).join('') +
+    '<label style="width:76px;height:76px;border:2px dashed var(--line2);border-radius:12px;display:grid;place-items:center;font-size:30px;color:var(--muted);cursor:pointer">＋<input type="file" accept="image/*" multiple style="display:none" onchange="lbProofAdd(this)"></label></div>';
+  h += '<div class="btns"><button class="btn ghost" onclick="closeSheet()">ຍົກເລີກ</button><button class="btn gold" onclick="lbPaySave()">✅ ບັນທຶກການເບີກ</button></div></div>';
+  var keep = first ? 0 : $('sheet').scrollTop;
+  UI.openId = null; UI.openNote = null; UI.openPO = null; $('sheet').innerHTML = h; if (first) openSheet(); $('sheet').scrollTop = keep;
+}
+function lbProofAdd(inp) {
+  var files = Array.prototype.slice.call(inp.files || []); if (!files.length) return;
+  Promise.all(files.map(function (f) { return lbCompress(f); })).then(function (arr) { UI.lbPay.proof = UI.lbPay.proof.concat(arr); lbPayRender(); }).catch(function (e) { toast('⚠️ ' + (e.message || e), true); });
+}
+function lbCompress(file) { // ຫຍໍ້ຮູບໃຫ້ເບົາ (≤1000px) ເກັບເປັນ dataURL
+  return new Promise(function (res, rej) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () { var k = Math.min(1, 1000 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.7)); };
+    img.onerror = function () { rej(new Error('ອ່ານຮູບບໍ່ໄດ້')); }; img.src = url;
+  });
+}
+function lbPaySave() {
+  var p = UI.lbPay, days = lbPayDays().filter(function (d) { return p.sel[d.date]; });
+  if (!days.length) return toast('ຕິກມື້ທີ່ຈະເບີກຢ່າງໜ້ອຍ 1 ມື້', true);
+  var amt = days.reduce(function (a, d) { return a + d.due; }, 0);
+  var go = function () {
+    act('api_saveLaborPay', { tid: p.tid, date: p.date || today(), method: p.method, note: p.note, amount: amt, days: days.map(function (d) { return { d: d.date, a: d.due }; }), proof: p.proof }).then(function () {
+      toast('ບັນທຶກການເບີກ ' + money(amt) + ' ກີບ ແລ້ວ ✓'); laborDetail(p.tid);
+    });
+  };
+  if (p.method === 'ໂອນ' && !p.proof.length) ask({ title: 'ຍັງບໍ່ໄດ້ແນບຫຼັກຖານການໂອນ', msg: 'ບັນທຶກຕໍ່ໂດຍບໍ່ມີຮູບສະລິບ? (ແນບເພີ່ມພາຍຫຼັງບໍ່ໄດ້ — ຕ້ອງຍົກເລີກແລ້ວເບີກໃໝ່)', ok: 'ບັນທຶກເລີຍ' }).then(function (y) { if (y) go(); }); else go();
+}
+// ຄ່າແຮງຈິງຂອງວຽກນີ້ ໃນຟອມວຽກ (ຫຼັງຕັດຕໍ່ວັນ)
+function laborEffForm() {
+  var el = $('lpEff'); if (!el) return;
+  var date = $('fDate') ? $('fDate').value : '', lab = laborData();
+  if (!date || !lab.length) { el.innerHTML = ''; return; }
+  var tmp = (S.jobs || []).filter(function (j) { return j.id !== UI.lbEditId; }).concat([{ id: '__form', date: date, status: 'scheduled', labor: lab }]);
+  var c = laborCalc(tmp), me = c.perJob.__form || { total: 0, by: {} }, notes = [];
+  lab.forEach(function (l) { var d = c.days[l.tid + '|' + date]; if (d && d.items.length > 1) notes.push('👷 ' + esc(techName(l.tid)) + ': ມື້ນີ້ມີ ' + d.items.length + ' ວຽກ ລວມ ' + money(d.raw) + (d.capped ? ' → ຄິດສູງສຸດ 1 ມື້ ' + money(d.pay) : ' (ບໍ່ເກີນ 1 ມື້)') + ' · ວຽກນີ້ໄດ້ ' + money(me.by[l.tid] || 0)); });
+  el.innerHTML = '<div style="margin-top:6px;font-size:13px;background:#fff8e6;border:1px dashed #e0c060;border-radius:10px;padding:6px 9px"><b>ຄ່າແຮງຈິງຂອງວຽກນີ້: ' + money(me.total) + ' ກີບ</b>' + (notes.length ? '<br>' + notes.join('<br>') : '') + '<div class="muted" style="font-size:11.5px">ຊ່າງ 1 ຄົນ ຄິດລວມທຸກວຽກໃນມື້ດຽວກັນ ບໍ່ເກີນ 1 ມື້ເຕັມ</div></div>';
+}
 var EXP_CATS = ['🧱 ວັດສະດຸ/ເຄື່ອງ', '🚚 ຂົນສົ່ງ/ນ້ຳມັນ', '👷 ຈ້າງແຮງງານເພີ່ມ', '🔧 ເຊົ່າເຄື່ອງມື', '🍚 ອາຫານ/ເບ້ຍລ້ຽງ', '📌 ອື່ນໆ'];
 function jobProfit(j) {
-  var exp = (j.expenses || []).reduce(function (a, e) { return a + (Number(e.amount) || 0); }, 0), pay = j.techPay || 0, rev = j.price || 0;
+  var exp = (j.expenses || []).reduce(function (a, e) { return a + (Number(e.amount) || 0); }, 0), pay = jobPay(j), rev = j.price || 0;
   return { rev: rev, exp: exp, pay: pay, cost: exp + pay, profit: rev - exp - pay, got: (j.deposit || 0) + (j.collected || 0) };
 }
 function expCard(j) {
@@ -3161,13 +3313,13 @@ function openForm(id, copyFrom, prefill) {
     '<div id="fEqList" style="max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>' +
     '<div class="row" style="margin-top:6px"><input class="inp" id="fEqFree" placeholder="ພິມເພີ່ມເອງ ເຊັ່ນ ລົດ, ສາຍໄຟ 50 ແມັດ"><button class="btn ghost" style="flex:none" onclick="jobEqFree()">＋ ເພີ່ມ</button></div>';
   // 🔧 ການຕິດຕັ້ງ: ຈຳນວນຈຸດ → ຄ່າຕິດຕັ້ງ (ຈຸດ × ອັດຕາ, ແກ້ໄດ້) · ຄ່າແຮງຊ່າງ = ວັນເຮັດວຽກຂອງຊ່າງແຕ່ລະຄົນ
-  UI.labor = {}; (src && src.labor ? src.labor : []).forEach(function (l) { UI.labor[l.tid] = { full: l.full, half: l.half }; });
+  UI.lbEditId = j ? j.id : ''; UI.labor = {}; (src && src.labor ? src.labor : []).forEach(function (l) { UI.labor[l.tid] = { full: l.full, half: l.half }; });
   h += '<div class="card" style="padding:10px 12px;margin:12px 0 0;background:#f6f9ff"><h3>🔧 ການຕິດຕັ້ງ & ຄ່າແຮງ</h3>' +
     '<div class="row" style="align-items:flex-end"><div><label class="f" style="margin-top:0">ຈຳນວນຈຸດ / ດອກ ທີ່ຕິດຕັ້ງ</label><input class="inp" id="fPoints" inputmode="numeric" value="' + (src && src.points ? src.points : '') + '" oninput="this.value=this.value.replace(/[^\\d]/g,\'\');instAuto()"></div>' +
     '<button class="btn ghost" style="flex:none;padding:10px 12px" onclick="instCount()">ນັບຈາກລາຍການ</button></div>' +
     '<label class="f">ຄ່າຕິດຕັ້ງ (ເກັບລູກຄ້າ) · ' + money(S.instRate || 0) + '/ຈຸດ</label><input class="inp" id="fInstFee" data-auto="' + (src && src.instFee ? 0 : 1) + '" inputmode="numeric" value="' + (src && src.instFee ? money(src.instFee) : '') + '" oninput="fmtNum(this);this.dataset.auto=0">' +
-    '<label class="f">ຄ່າແຮງຊ່າງ · ເຕັມວັນ ' + money(S.dayRate || 350000) + ' / ເຄິ່ງວັນ ' + money(S.halfRate || 150000) + '</label><div id="fLabor"></div>' +
-    '<p class="muted" style="font-size:12px;margin-top:4px">ປ່ຽນອັດຕາໄດ້ທີ່ ⚙️ ຕັ້ງຄ່າ · ຊ່າງບໍ່ເຫັນເງິນ</p></div>';
+    '<label class="f">ຄ່າແຮງຊ່າງ · ເຕັມວັນ ' + money(S.dayRate || 300000) + ' / ເຄິ່ງວັນ ' + money(S.halfRate || 150000) + '</label><div id="fLabor"></div><div id="lpEff"></div>' +
+    '<p class="muted" style="font-size:12px;margin-top:4px">ບັນທຶກວ່າຊ່າງຄົນໃດໄປ ເຕັມວັນ ຫຼື ເຄິ່ງວັນ · ປ່ຽນອັດຕາໄດ້ທີ່ ⚙️ ຕັ້ງຄ່າ · ຊ່າງບໍ່ເຫັນເງິນ</p></div>';
   h += '<div class="row"><div><label class="f">ມູນຄ່າວຽກ (ກີບ)</label><input class="inp" id="fPrice" inputmode="numeric" value="' + (src && src.price ? money(src.price) : '') + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ມັດຈຳແລ້ວ (ກີບ)</label><input class="inp" id="fDeposit" inputmode="numeric" value="' + (j && j.deposit ? money(j.deposit) : '') + '" oninput="fmtNum(this)"></div></div>';
   if (j) h += '<label class="f">ເກັບໜ້າງານແລ້ວ (ກີບ)</label><input class="inp" id="fCollected" inputmode="numeric" value="' + (j.collected ? money(j.collected) : '') + '" oninput="fmtNum(this)">';
@@ -3196,23 +3348,25 @@ function laborRender() {
   var box = $('fLabor'); if (!box) return;
   var ids = Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
   ids.forEach(function (id) { if (!UI.labor[id]) UI.labor[id] = laborDefault(); });
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, total = 0;
+  var dr = S.dayRate || 300000, hr = S.halfRate || 150000, total = 0;
   box.innerHTML = ids.length ? ids.map(function (id) {
     var l = UI.labor[id], pay = (l.full || 0) * dr + (l.half || 0) * hr; total += pay;
     var inp = function (k) { return '<input class="inp" style="width:52px;padding:6px;text-align:center" inputmode="decimal" value="' + (l[k] || 0) + '" oninput="UI.labor[\'' + esc(id) + '\'].' + k + '=Number(this.value.replace(/[^\\d.]/g,\'\'))||0;laborTotal()">'; };
     return '<div class="eq" style="cursor:default;gap:6px;flex-wrap:wrap"><span style="flex:1;min-width:90px">👷 ' + esc(techName(id)) + '</span>' +
       '<span class="muted" style="font-size:12px">ເຕັມວັນ</span>' + inp('full') + '<span class="muted" style="font-size:12px">ເຄິ່ງວັນ</span>' + inp('half') +
       '<b class="num" style="min-width:76px" id="lp_' + esc(id) + '">' + money(pay) + '</b></div>';
-  }).join('') + '<div style="text-align:right;margin-top:4px">ລວມຄ່າແຮງ: <b id="lpTotal">' + money(total) + '</b> ກີບ</div>' :
+  }).join('') + '<div style="text-align:right;margin-top:4px">ລວມ (ຖ້າຄິດແຍກວຽກ): <b id="lpTotal">' + money(total) + '</b> ກີບ</div>' :
     '<div class="muted">ຕິກເລືອກຊ່າງດ້ານເທິງກ່ອນ</div>';
+  laborEffForm();
 }
 function laborTotal() {
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, total = 0;
+  var dr = S.dayRate || 300000, hr = S.halfRate || 150000, total = 0;
   Object.keys(UI.labor).forEach(function (id) {
     var el = $('lp_' + id); if (!el) return;
     var l = UI.labor[id], pay = (l.full || 0) * dr + (l.half || 0) * hr; total += pay; el.textContent = money(pay);
   });
   if ($('lpTotal')) $('lpTotal').textContent = money(total);
+  laborEffForm();
 }
 function laborData() {
   var ids = Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
@@ -4189,7 +4343,7 @@ function stockAdjust(vid) {
 
 /* ================= ໂໝດທົດລອງ (ເປີດໄຟລ໌ນອກ Google) ================= */
 var MOCK = (function () {
-  var KEY = 'js_demo_db_v1';
+  var KEY = 'js_demo_db_v2';
   function seed() {
     var t = new Date(), d = function (n) { return ymd(addDays(t, n)); };
     var types = ['💡 ຕິດຕັ້ງດອກໄຟ', '🔆 ເຊົ່າດອກໄຟ (ງານ)', '🧱 ຕິດຕັ້ງຮົ້ວ', '🔍 ສຳຫຼວດໜ້າງານ', '🔧 ສ້ອມແປງ/ຮັບປະກັນ', '📦 ສົ່ງເຄື່ອງ', '📌 ອື່ນໆ'];
@@ -4210,8 +4364,14 @@ var MOCK = (function () {
         J({ id: 'J-DEMO4', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 4', title: 'ໄຟຖະໜົນ 800W × 3', location: 'ບ້ານນາໄຊ, ນາຊາຍທອງ', date: d(3), techIds: ['t1'], price: 5400000, deposit: 2000000 }),
         J({ id: 'J-DEMO5', type: types[3], customer: 'ລູກຄ້າຕົວຢ່າງ 5', title: 'ໄຟບໍ່ຕິດ 1 ດວງ (ຮັບປະກັນ)', location: 'ບ້ານໜອງບົງ', date: d(-2), techIds: ['t2'] }),
         J({ id: 'J-DEMO6', type: types[1], customer: 'ລູກຄ້າຕົວຢ່າງ 6', title: 'ຮົ້ວລວດໜາມ 120 ແມັດ (ລໍຖ້າລູກຄ້າເລືອກມື້)', location: 'ເມືອງປາກງື່ມ', date: '', status: 'pending', techIds: [], price: 9000000 }),
+        J({ id: 'J-LB1', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 8', title: 'ຕິດໄຟ 2 ຈຸດ (ເຊົ້າ)', location: 'ບ້ານ ກ', date: d(-3), start: '08:00', end: '10:30', status: 'done', price: 1500000, deposit: 1500000, techIds: ['t1', 't2'], labor: [{ tid: 't1', full: 1, half: 0 }, { tid: 't2', full: 0, half: 1 }] }),
+        J({ id: 'J-LB2', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 9', title: 'ຕິດໄຟ 3 ຈຸດ (ສວຍ)', location: 'ບ້ານ ຂ', date: d(-3), start: '10:30', end: '13:00', status: 'done', price: 2200000, deposit: 2200000, techIds: ['t1'], labor: [{ tid: 't1', full: 1, half: 0 }] }),
+        J({ id: 'J-LB3', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 10', title: 'ຕິດໄຟ 2 ຈຸດ (ບ່າຍ)', location: 'ບ້ານ ຄ', date: d(-3), start: '14:00', end: '16:30', status: 'done', price: 1800000, deposit: 1800000, techIds: ['t1'], labor: [{ tid: 't1', full: 1, half: 0 }] }),
+        J({ id: 'J-LB4', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 11', title: 'ຕິດໄຟຖະໜົນ 2 ຕົ້ນ', location: 'ບ້ານ ງ', date: d(-2), start: '08:00', end: '11:00', status: 'done', price: 3000000, deposit: 3000000, techIds: ['t1', 't2'], labor: [{ tid: 't1', full: 1, half: 0 }, { tid: 't2', full: 1, half: 0 }] }),
+        J({ id: 'J-LB5', type: types[3], customer: 'ລູກຄ້າຕົວຢ່າງ 12', title: 'ເຊັກໄຟ (ເຄິ່ງວັນ)', location: 'ບ້ານ ຈ', date: d(-1), start: '08:00', end: '11:00', status: 'done', price: 500000, deposit: 500000, techIds: ['t2'], labor: [{ tid: 't2', full: 0, half: 1 }] }),
         J({ id: 'J-DEMO7', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 7', title: 'All-in-One 300W × 2', location: 'ບ້ານໂພນສະອາດ', date: d(-4), status: 'done', price: 1980000, deposit: 1000000, collected: 500000 })
       ],
+      laborPays: [],
       logs: { 'J-DEMO1': [{ time: d(-1) + ' 17:00', who: 'ເຈົ້າຂອງ', action: 'note', detail: 'ລູກຄ້າຂໍໃຫ້ໂທກ່ອນໄປ 30 ນາທີ' }] }
     };
   }
@@ -4288,8 +4448,8 @@ var MOCK = (function () {
     return JSON.stringify({
       owner: !!o, notes: notes, claims: claims, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
-      receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
-      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      laborPays: o ? (db.laborPays = db.laborPays || []) : [], receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
+      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 300000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
       techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
@@ -4309,7 +4469,7 @@ var MOCK = (function () {
       ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment', 'source', 'geo'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
       if (j.phone) j.customerId = mockCust(j.customer, j.phone, j.source, j.geo, j.location);
       ['price', 'deposit', 'collected', 'points', 'instFee'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
-      if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 350000) + l.half * (db.halfRate || 150000); }, 0); }
+      if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 300000) + l.half * (db.halfRate || 150000); }, 0); }
       if (j.status === 'pending' && j.date) j.status = 'scheduled';
       j.updatedAt = nowF(); if (isNew) db.jobs.push(j);
       log(j.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງວຽກໃໝ່' : 'ແກ້ໄຂຂໍ້ມູນວຽກ');
@@ -4410,6 +4570,8 @@ var MOCK = (function () {
     api_stockAdjust: function (c, vid, q, note) { need(c); if (!(vid in stockAppMap())) throw new Error('ສິນຄ້ານີ້ຍັງບໍ່ໄດ້ຕັ້ງຍອດເປີດ'); mvAdd(vid, Math.round(q), 'adjust', '', note, c); return all(c); },
     api_getMoves: function (c, vid) { need(c); ordInit(); return JSON.stringify({ moves: db.moves.filter(function (m) { return m.vid === vid; }).slice(-80).reverse() }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
+    api_saveLaborPay: function (c, d) { need(c); db.laborPays = db.laborPays || []; db.laborPays.push({ id: 'LP' + Date.now().toString(36), tid: d.tid, date: d.date, amount: d.amount, days: d.days, method: d.method, note: d.note || '', proof: d.proof || [], createdAt: nowF(), by: 'ເຈົ້າຂອງ' }); return all(c); },
+    api_delLaborPay: function (c, id) { need(c); db.laborPays = (db.laborPays || []).filter(function (p) { return p.id !== id; }); return all(c); },
     api_delExpense: function (c, id, eid) { need(c); var j = find(id); j.expenses = (j.expenses || []).filter(function (e) { return e.id !== eid; }); return all(c); },
     api_issueReceipt: function (c, d) {
       need(c);
