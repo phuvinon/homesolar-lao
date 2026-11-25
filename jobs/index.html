@@ -252,6 +252,101 @@ html[data-theme=dark] .loading{background:rgba(10,19,34,.6)}
 html[data-theme=dark] .demo{background:#2a2410;color:#F6C453;border-color:#3a3216}
 html[data-theme=dark] .chip{background:#16223a}
 html[data-theme=dark] .eq,html[data-theme=dark] th,html[data-theme=dark] td{border-color:var(--line)}
+
+/* ============ v2 SKIN ============ ແບບ A (ສະຫວ່າງ ແສງຕາເວັນ) = ຄ່າເລີ່ມ · ແບບ B (ກາງຄືນ ທອງແດງ) = ປຸ່ມ 🌙 */
+:root{--bg:#FFF7E8;--card:#fff;--soft:#FFF1D6;--line:#F0E6D2;--line2:#E6D8BC;--muted:#8B8793;--ink:#2B2A33;--pri:#F5921E;--on-pri:#fff;--act:#F5921E;--acc:#F5921E;--navy:#2B2A33;--gold:#F5921E;--sh:0 4px 14px rgba(80,60,20,.09)}
+body{background:var(--bg);color:var(--ink)}
+header{background:var(--bg);color:var(--ink);border-bottom:0;box-shadow:none}
+.brand b{color:var(--ink)}.brand small{color:var(--muted)}
+.chip{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(80,60,20,.12)}.chip.gold{background:#F5921E;color:#fff}
+.demo{border-radius:0}
+nav.tabs{left:10px;right:10px;bottom:10px;border:0;border-radius:28px;box-shadow:0 10px 30px rgba(80,60,20,.2);overflow:hidden;padding:5px 4px}
+nav.tabs button.on{color:#F5921E;background:#FFF1DC;border-radius:20px}nav.tabs button.on:before{display:none}
+.fab{bottom:92px;background:#F5921E;color:#fff;box-shadow:0 8px 20px rgba(245,146,30,.4)}
+.seg{background:transparent;border:0;gap:8px;padding:0}.seg button{border-radius:18px;background:#fff;box-shadow:0 2px 8px rgba(80,60,20,.08);color:var(--muted);font-weight:700}.seg button.on{background:#2F6BFF;color:#fff;box-shadow:0 8px 16px rgba(47,107,255,.35)}
+.job,.card,.kpi,.tile2{border-radius:24px}
+/* ໜ້າຫຼັກ */
+.hhd{display:flex;align-items:center;gap:10px;margin:4px 0 14px}.hav{width:46px;height:46px;border-radius:16px;background:#fff;display:grid;place-items:center;font-size:24px;box-shadow:0 3px 10px rgba(245,146,30,.25)}
+.hg1{font-size:21px;font-weight:800}.hg2{font-size:13px;color:var(--muted)}
+.nextj{background:#2B2A33;color:#fff;border-radius:24px;padding:11px 15px;display:flex;align-items:center;gap:12px;margin:4px 0 10px;cursor:pointer}.nextj .e{font-size:36px}.nextj small{display:block;font-size:12px;opacity:.72}.nextj b{display:block;font-size:17px;line-height:1.3}.nextj .tm{margin-left:auto;font-size:24px;font-weight:800;color:#FFC857;white-space:nowrap}
+.ovb{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:22px;padding:9px 15px;margin-bottom:10px;color:#fff;text-align:left;cursor:pointer;background:linear-gradient(135deg,#2B2A33,#4a4660);box-shadow:0 8px 18px rgba(80,60,20,.2);font-family:inherit}
+.ovb .e{font-size:32px}.ovb b{display:block;font-size:18px}.ovb small{font-size:12px;opacity:.85}.ovb i{margin-left:auto;font-style:normal;font-size:22px;opacity:.7}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{border:0;border-radius:26px;padding:12px 14px;height:122px;color:#fff;position:relative;box-shadow:0 10px 20px rgba(80,60,20,.18);display:flex;flex-direction:column;justify-content:flex-end;text-align:left;cursor:pointer;font-family:inherit;transition:transform .12s}.tile:active{transform:scale(.96)}
+.tile .e{position:absolute;left:14px;top:6px;font-size:42px;line-height:1.2;filter:drop-shadow(0 4px 6px rgba(0,0,0,.2))}.tile b{font-size:23px;font-weight:800;line-height:1.1;display:block}.tile small{font-size:12px;opacity:.93;margin-top:2px;display:block}
+.tile i{position:absolute;right:12px;top:12px;background:#fff;color:#2B2A33;font-style:normal;font-weight:800;font-size:15px;border-radius:99px;min-width:30px;height:30px;display:grid;place-items:center;padding:0 8px}.tile i.al{background:#E5484D;color:#fff}
+.t-bl{background:linear-gradient(160deg,#4F86FF,#2F6BFF)}.t-gr{background:linear-gradient(160deg,#2FC98A,#14A86B)}.t-or{background:linear-gradient(160deg,#FFA94D,#FF8A1F)}.t-pu{background:linear-gradient(160deg,#9C7BFF,#7A4DFF)}.t-pk{background:linear-gradient(160deg,#FF7BAE,#FF4D8D)}.t-ye{background:linear-gradient(160deg,#FFD24D,#F5B800);color:#2B2A33}.t-ye small{opacity:.8}
+.quick{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 6px}.quick button{border:0;background:#fff;border-radius:99px;padding:9px 14px;font:700 13px inherit;font-family:inherit;color:var(--ink);box-shadow:0 2px 8px rgba(80,60,20,.1);cursor:pointer}
+/* ແບບ B: ກາງຄືນ ທອງແດງ */
+html[data-theme=dark]{--bg:#0B0B0D;--card:#151517;--soft:#1C1C1F;--ink:#F5F2ED;--muted:#8A8580;--line:#26262A;--line2:#303034;--pri:#E8935F;--on-pri:#0B0B0D;--act:#E8935F;--acc:#E8935F;--navy:#0B0B0D;--gold:#E8935F;--sh:none}
+html[data-theme=dark] body{background:radial-gradient(420px 260px at 85% -40px,rgba(232,147,95,.18),transparent 70%),#0B0B0D}
+html[data-theme=dark] header{background:transparent}
+html[data-theme=dark] .chip{background:#1C1C1F;color:#F5F2ED;box-shadow:none}html[data-theme=dark] .chip.gold{background:#E8935F;color:#0B0B0D}
+html[data-theme=dark] nav.tabs{left:0;right:0;bottom:0;border-radius:0;border-top:1px solid #26262A;box-shadow:none;background:rgba(21,21,23,.97)}
+html[data-theme=dark] nav.tabs button.on{background:none;color:#E8935F}html[data-theme=dark] nav.tabs button.on:before{display:block;background:#E8935F;box-shadow:0 0 10px #E8935F}
+html[data-theme=dark] .fab{background:#E8935F;color:#0B0B0D;box-shadow:0 0 22px rgba(232,147,95,.45);bottom:84px}
+html[data-theme=dark] .seg button{background:transparent;box-shadow:none;border-radius:0;border-bottom:3px solid transparent;color:#8A8580}html[data-theme=dark] .seg button.on{background:transparent;color:#F5F2ED;border-bottom-color:#E8935F;box-shadow:none}
+html[data-theme=dark] .tile{box-shadow:none;border:1px solid #26262A}html[data-theme=dark] .t-bl,html[data-theme=dark] .t-gr,html[data-theme=dark] .t-or,html[data-theme=dark] .t-pu,html[data-theme=dark] .t-pk,html[data-theme=dark] .t-ye{background:#151517;color:#F5F2ED}
+html[data-theme=dark] .t-ye small{opacity:.93}html[data-theme=dark] .tile .e{filter:none}html[data-theme=dark] .tile b{color:#F5F2ED}html[data-theme=dark] .tile small{color:#8A8580}html[data-theme=dark] .tile i{background:#E8935F;color:#0B0B0D}html[data-theme=dark] .tile i.al{background:#ff7a6b;color:#0B0B0D}
+html[data-theme=dark] .nextj,html[data-theme=dark] .ovb{background:#151517;border:1px solid #26262A;box-shadow:none}html[data-theme=dark] .hav,html[data-theme=dark] .quick button{background:#151517;color:#F5F2ED;box-shadow:none;border:1px solid #26262A}
+html[data-theme=dark] .t-bl::after{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 4px 4px 0;background:#2F6BFF}
+
+/* ============ v2 FX CSS ============ */
+html.pganim,html.pganim body{overflow-x:hidden}
+.pgwrap{z-index:3}
+#app.in-fwd,#app.in-back,#app.in-side{position:relative;z-index:2;background:var(--bg)}
+#app.in-fwd{animation:inFwd .38s cubic-bezier(.22,.9,.3,1) both;box-shadow:-14px 0 30px rgba(0,0,0,.18)}
+#app.in-back{animation:inBack .38s cubic-bezier(.22,.9,.3,1) both}
+#app.in-side{animation:inSide .28s ease-out both}
+.pgwrap.out-fwd{z-index:1;animation:outFwd .38s cubic-bezier(.22,.9,.3,1) both}
+.pgwrap.out-back{z-index:4;animation:outBack .38s cubic-bezier(.22,.9,.3,1) both;box-shadow:14px 0 30px rgba(0,0,0,.2)}
+.pgwrap.out-side{z-index:1;animation:outSide .2s ease-in both}
+@keyframes inFwd{from{transform:translateX(100%)}to{transform:none}}
+@keyframes outFwd{from{transform:none;opacity:1}to{transform:translateX(-26%);opacity:.35}}
+@keyframes inBack{from{transform:translateX(-26%);opacity:.4}to{transform:none;opacity:1}}
+@keyframes outBack{from{transform:none}to{transform:translateX(100%)}}
+@keyframes inSide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes outSide{from{opacity:1}to{opacity:0}}
+/* ແຜ່ນລາຍລະອຽດ/ຟອມ: ເລື່ອນເຂົ້າຈາກຂວາ */
+.ov{display:block;opacity:0;pointer-events:none;transition:opacity .3s}.ov.on{opacity:1;pointer-events:auto}
+.sheet{transform:translateX(104%);transition:transform .36s cubic-bezier(.22,.9,.3,1);border-radius:24px 0 0 0;box-shadow:-14px 0 34px rgba(0,0,0,.28)}.sheet.on{transform:none}
+/* ຕົວຊີ້ການປັດກັບຄືນ */
+#swInd{position:fixed;left:0;top:50%;width:46px;height:46px;border-radius:50%;background:rgba(43,42,51,.88);color:#fff;font-size:30px;line-height:42px;text-align:center;z-index:200;opacity:0;pointer-events:none;transform:translate(-46px,-50%);transition:opacity .15s}
+#swInd.ready{background:#F5921E;box-shadow:0 0 18px rgba(245,146,30,.7)}
+/* ກະເບື້ອງ 3 ມິຕິ */
+.tile{height:128px;margin-bottom:7px;box-shadow:0 7px 0 var(--edge,#0003),0 16px 20px rgba(80,60,20,.25),inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.12);transition:transform .09s,box-shadow .09s}
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 50%);pointer-events:none}
+.tile:active{transform:translateY(6px);box-shadow:0 1px 0 var(--edge,#0003),0 4px 8px rgba(80,60,20,.2),inset 0 2px 6px rgba(0,0,0,.18)}
+.tile .e{left:12px;top:10px;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-size:32px;line-height:1;filter:none;
+ background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.78),rgba(255,255,255,.2) 58%,rgba(0,0,0,.1));box-shadow:inset 0 -5px 8px rgba(0,0,0,.2),inset 0 2px 3px rgba(255,255,255,.75),0 5px 9px rgba(0,0,0,.24);text-shadow:0 2px 3px rgba(0,0,0,.25)}
+.tile b{text-shadow:0 2px 3px rgba(0,0,0,.18)}.t-ye b,.t-ye small{text-shadow:none}
+.t-bl{--edge:#1b45b5}.t-gr{--edge:#0a7a4b}.t-or{--edge:#bd5a06}.t-pu{--edge:#4b29bd}.t-pk{--edge:#bd2763}.t-ye{--edge:#b38000}
+.tiles.pop .tile{animation:tpop .55s cubic-bezier(.34,1.56,.64,1) both}
+.tiles.pop .tile:nth-child(1){animation-delay:.02s}.tiles.pop .tile:nth-child(2){animation-delay:.08s}.tiles.pop .tile:nth-child(3){animation-delay:.14s}.tiles.pop .tile:nth-child(4){animation-delay:.2s}.tiles.pop .tile:nth-child(5){animation-delay:.26s}.tiles.pop .tile:nth-child(6){animation-delay:.32s}
+@keyframes tpop{from{opacity:0;transform:translateY(24px) scale(.8)}to{opacity:1;transform:none}}
+.tile i.al{animation:bdg 1.8s ease-in-out infinite}@keyframes bdg{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+/* ປຸ່ມອື່ນໆ ມີມິຕິ */
+.ovb{box-shadow:0 5px 0 #15141a,0 12px 16px rgba(80,60,20,.25),inset 0 2px 0 rgba(255,255,255,.18);transition:transform .09s,box-shadow .09s}.ovb:active{transform:translateY(4px);box-shadow:0 1px 0 #15141a,0 3px 6px rgba(80,60,20,.2)}
+.nextj{box-shadow:0 5px 0 #15141a,0 12px 16px rgba(80,60,20,.2),inset 0 2px 0 rgba(255,255,255,.12)}
+.quick button{box-shadow:0 4px 0 #E8DCC2,0 8px 12px rgba(80,60,20,.12);transition:transform .09s,box-shadow .09s}.quick button:active{transform:translateY(3px);box-shadow:0 1px 0 #E8DCC2}
+.chip{box-shadow:0 3px 0 #E8DCC2,0 6px 10px rgba(80,60,20,.12);transition:transform .09s,box-shadow .09s}.chip:active{transform:translateY(2px);box-shadow:0 1px 0 #E8DCC2}.chip.gold{box-shadow:0 3px 0 #c2700a,0 6px 10px rgba(245,146,30,.3)}
+.fab{box-shadow:0 6px 0 #c2700a,0 14px 18px rgba(245,146,30,.4),inset 0 2px 0 rgba(255,255,255,.4);transition:transform .09s,box-shadow .09s}.fab:active{transform:translateY(5px);box-shadow:0 1px 0 #c2700a,0 3px 6px rgba(245,146,30,.3)}
+.seg button{box-shadow:0 3px 0 #E8DCC2,0 5px 8px rgba(80,60,20,.08);transition:transform .09s,box-shadow .09s}.seg button:active{transform:translateY(2px);box-shadow:0 1px 0 #E8DCC2}.seg button.on{box-shadow:0 4px 0 #1f4fd1,0 8px 12px rgba(47,107,255,.35)}
+nav.tabs button.on{box-shadow:inset 0 -3px 0 rgba(245,146,30,.35),inset 0 2px 5px rgba(245,146,30,.18)}
+nav.tabs button svg{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}nav.tabs button.on svg{transform:translateY(-2px) scale(1.15)}
+.btn{transition:transform .08s,box-shadow .08s}.btn:active{transform:translateY(2px)}
+/* ແບບ B: ກາງຄືນ 3 ມິຕິ */
+html[data-theme=dark] .tile{box-shadow:0 6px 0 #000,0 14px 18px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+html[data-theme=dark] .tile::before{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,0) 45%)}
+html[data-theme=dark] .tile:active{box-shadow:0 1px 0 #000,0 3px 6px rgba(0,0,0,.5),inset 0 2px 6px rgba(0,0,0,.5)}
+html[data-theme=dark] .tile .e{background:radial-gradient(circle at 32% 24%,#f9c29c,#E8935F 55%,#a85a34);box-shadow:inset 0 -5px 8px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.55),0 0 16px rgba(232,147,95,.4),0 5px 9px rgba(0,0,0,.5)}
+html[data-theme=dark] .ovb,html[data-theme=dark] .nextj{box-shadow:0 5px 0 #000,0 12px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+html[data-theme=dark] .quick button{box-shadow:0 4px 0 #000,0 8px 12px rgba(0,0,0,.4)}html[data-theme=dark] .quick button:active{box-shadow:0 1px 0 #000}
+html[data-theme=dark] .chip{box-shadow:0 3px 0 #000}html[data-theme=dark] .chip.gold{box-shadow:0 3px 0 #8a4b27,0 0 12px rgba(232,147,95,.3)}
+html[data-theme=dark] .fab{box-shadow:0 6px 0 #8a4b27,0 0 24px rgba(232,147,95,.5),inset 0 2px 0 rgba(255,255,255,.4)}html[data-theme=dark] .fab:active{box-shadow:0 1px 0 #8a4b27}
+html[data-theme=dark] .seg button{box-shadow:none}html[data-theme=dark] .seg button.on{box-shadow:none}
+html[data-theme=dark] nav.tabs button.on{box-shadow:none}
+html[data-theme=dark] #app.in-fwd{box-shadow:-14px 0 30px rgba(0,0,0,.6)}
 </style>
 </head>
 <body>
@@ -298,7 +393,7 @@ function toggleTheme() { LS.set('js_theme', LS.get('js_theme') === 'dark' ? 'lig
 applyTheme();
 var ME = null; try { ME = JSON.parse(LS.get('js_me') || 'null'); } catch (e) { ME = null; }
 var S = { owner: false, jobs: [], techs: [], types: [], logs: {}, reminders: [] };
-var UI = { view: 'today', cursor: new Date(), mine: true, openId: null, sel: null, q: '', fs: '', ft: '', moneyCur: new Date(), loaded: false };
+var UI = { view: 'home', pop: true, cursor: new Date(), mine: true, openId: null, sel: null, q: '', fs: '', ft: '', moneyCur: new Date(), loaded: false };
 
 var STATUS = {
   pending:   { l: 'ລໍຖ້ານັດ', c: '#475467', bg: '#eaecf0' },
@@ -389,6 +484,12 @@ function apply(d) {
   render();
   if (S.owner && !S.products) loadProducts();
   if (S.owner) loadCRM();
+  if (S.owner && !LS.get('js_rate_mig') && (S.dayRate !== 300000 || S.halfRate !== 150000)) { LS.set('js_rate_mig', '1'); setTimeout(rateMigAsk, 1200); }
+}
+function rateMigAsk() {
+  ask({ title: '👷 ຕັ້ງອັດຕາຄ່າແຮງຊ່າງໃໝ່?', msg: 'ຕອນນີ້ອັດຕາໃນແອບ: ເຕັມວັນ ' + money(S.dayRate || 0) + ' / ເຄິ່ງວັນ ' + money(S.halfRate || 0) + ' ກີບ. ຕັ້ງເປັນ 300,000 / 150,000 ຕໍ່ຄົນ ຕໍ່ວັນ ບໍ?', ok: 'ຕັ້ງເປັນ 300,000 / 150,000' }).then(function (y) {
+    if (y) act('api_saveSettings', { dayRate: 300000, halfRate: 150000 }).then(function () { toast('ຕັ້ງອັດຕາແລ້ວ ✓'); });
+  });
 }
 /* ⚡ v12: ຫຼັງບັນທຶກ ເຊີບເວີສົ່ງຄືນສະເພາະວຽກທີ່ປ່ຽນ (delta) → ລວມເຂົ້າກັບຂໍ້ມູນທີ່ມີ ບໍ່ຕ້ອງໂຫຼດທັງໝົດ */
 function mergeDelta(d) {
@@ -486,7 +587,7 @@ function doOwnerLogin(pin) {
 function logout() {
   ask({ title: 'ປ່ຽນຜູ້ໃຊ້?', msg: 'ຕອນນີ້ເຂົ້າເປັນ: ' + ME.name, ok: 'ປ່ຽນຜູ້ໃຊ້' }).then(function (y) {
     if (!y) return;
-    closeSheet(); ME = null; LS.del('js_me'); UI.view = 'today'; LINK = null; refresh();
+    closeSheet(); ME = null; LS.del('js_me'); UI.view = 'home'; LINK = null; refresh();
   });
 }
 
@@ -516,24 +617,97 @@ function render() {
   var chip = $('meChip'); chip.style.display = '';
   chip.className = 'chip' + (S.owner ? ' gold' : ''); chip.textContent = (S.owner ? '👑 ' : '👷 ') + ME.name; chip.setAttribute('data-i', S.owner ? '👑' : '👷'); chip.title = ME.name + ' · ກົດເພື່ອອອກຈາກລະບົບ';
   // ເຈົ້າຂອງ: 5 ແຖບ — 📅 ວຽກ (ມື້ນີ້/ອາທິດ/ເດືອນ/ທັງໝົດ ສະຫຼັບຢູ່ເທິງໜ້າ) · ພາບລວມ · ໂນດ · ສັ່ງເຄື່ອງ · ລູກຄ້າ · 💰 ເງິນ ເຂົ້າຈາກໜ້າພາບລວມ · ⚙️ ຢູ່ເທິງຫົວ
-  if (!S.owner && ['money', 'settings', 'notes', 'po', 'dash', 'cust', 'sales'].indexOf(UI.view) >= 0) UI.view = 'today';
+  if (!S.owner && ['home', 'money', 'settings', 'notes', 'po', 'dash', 'cust', 'sales'].indexOf(UI.view) >= 0) UI.view = 'today';
   var isJobView = JOB_VIEWS.indexOf(UI.view) >= 0;
   if (isJobView) UI.jobView = UI.view;
-  var tabs = S.owner ? [['jobs', 'cal', 'ວຽກ', (S.jobs || []).filter(isOverdue).length], ['dash', 'pie', 'ພາບລວມ'], ['sales', 'cart', 'ຂາຍ'], ['notes', 'note', 'ໂນດ', (S.notes || []).filter(noteDue).length], ['po', 'truck', 'ສັ່ງເຄື່ອງ'], ['cust', 'users', 'ລູກຄ້າ']]
+  var hub = hubOf(), lowN = lowStockN();
+  var tabs = S.owner ? [['home', 'home', 'ມື້ນີ້', (S.notes || []).filter(noteDue).length], ['jobs', 'cal', 'ວຽກ', (S.jobs || []).filter(isOverdue).length], ['sell', 'cart', 'ຂາຍ'], ['stock', 'box', 'ຂອງ', lowN], ['money', 'coin', 'ເງິນ']]
     : [['today', 'cal', 'ມື້ນີ້'], ['week', 'cal', 'ອາທິດ'], ['month', 'cal', 'ເດືອນ'], ['list', 'search', 'ທັງໝົດ']];
   $('setChip').style.display = S.owner ? '' : 'none';
   $('tabs').innerHTML = tabs.map(function (t) {
-    var on = UI.view === t[0] || (t[0] === 'jobs' && isJobView) || (t[0] === 'dash' && UI.view === 'money');
-    return '<button class="' + (on ? 'on' : '') + '" onclick="go(\'' + (t[0] === 'jobs' ? (UI.jobView || 'today') : t[0]) + '\')">' + NAV_ICON[t[1]] + t[2] + (t[3] ? '<span class="dotn">' + t[3] + '</span>' : '') + '</button>';
+    var on = S.owner ? (t[0] === 'home' ? (UI.view === 'home' || UI.view === 'notes') : t[0] === 'jobs' ? isJobView : t[0] === 'sell' ? hub === 'sell' : t[0] === 'stock' ? hub === 'stock' : (UI.view === 'dash' || UI.view === 'money')) : UI.view === t[0];
+    var act = !S.owner ? 'go(\'' + t[0] + '\')' : t[0] === 'jobs' ? 'go(\'' + (UI.jobView || 'today') + '\')' : t[0] === 'sell' ? 'UI.salesTab=\'orders\';go(\'sales\')' : t[0] === 'stock' ? 'UI.salesTab=\'stock\';go(\'sales\')' : t[0] === 'money' ? 'UI.dtab=\'money\';LS.set(\'js_dtab\',\'money\');go(\'dash\')' : 'go(\'' + t[0] + '\')';
+    return '<button class="' + (on ? 'on' : '') + '" onclick="' + act + '">' + NAV_ICON[t[1]] + t[2] + (t[3] ? '<span class="dotn">' + t[3] + '</span>' : '') + '</button>';
   }).join('');
   $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
-  var v = { dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings, cust: vCust, sales: vSales }[UI.view] || vToday;
-  $('app').innerHTML = (S.owner && isJobView ? jobSeg() : '') + v();
+  var v = { home: vHome, dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings, cust: vCust, sales: vSales }[UI.view] || vToday;
+  $('app').innerHTML = (S.owner ? hubSeg() : '') + (S.owner && isJobView ? jobSeg() : '') + v(); if (UI.anim) playAnim();
   if (UI.openId) { if (isClaimId(UI.openId)) { if (claimById(UI.openId)) renderClaimDetail(); else closeSheet(); } else if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
   else if (UI.openNote) { if (noteById(UI.openNote)) renderNoteDetail(); else closeSheet(); }
   else if (UI.openPO) { if (poById(UI.openPO)) renderPODetail(); else closeSheet(); }
 }
-function go(v) { UI.view = v; window.scrollTo(0, 0); render(); }
+function go(v) { var from = UI.view, dir = v === from ? '' : (v === 'home' ? 'back' : (from === 'home' ? 'fwd' : 'side')); if (dir && UI.loaded) UI.anim = { dir: dir, snap: snapApp() }; UI.pop = (v === 'home'); UI.view = v; window.scrollTo(0, 0); render(); }
+/* ===== v2 FX: ໜ້າໃໝ່ເລື່ອນເຂົ້າຈາກຂວາ · ປັດຈາກຂອບຊ້າຍເພື່ອກັບຄືນ · ປຸ່ມສັ່ນນ້ອຍໆ ===== */
+function snapApp() {
+  try {
+    var a = $('app'), r = a.getBoundingClientRect(), hd = document.querySelector('header').getBoundingClientRect(), nv = $('tabs').getBoundingClientRect();
+    var w = document.createElement('div'); w.className = 'pgwrap';
+    w.style.cssText = 'position:fixed;left:0;right:0;top:' + hd.bottom + 'px;height:' + Math.max(0, nv.top - hd.bottom) + 'px;overflow:hidden;pointer-events:none';
+    var c = a.cloneNode(true); c.removeAttribute('id'); c.style.cssText = 'position:absolute;left:' + r.left + 'px;top:' + (r.top - hd.bottom) + 'px;width:' + r.width + 'px;margin:0';
+    w.appendChild(c); return w;
+  } catch (e) { return null; }
+}
+function playAnim() {
+  var an = UI.anim; UI.anim = null; if (!an || !an.snap) return;
+  try {
+    var a = $('app'), w = an.snap, dir = an.dir, root = document.documentElement;
+    if (playAnim._w) { try { playAnim._w.remove(); } catch (e) {} }
+    playAnim._w = w; document.body.appendChild(w); root.classList.add('pganim');
+    a.classList.remove('in-fwd', 'in-back', 'in-side'); w.classList.add('out-' + dir); void a.offsetWidth; a.classList.add('in-' + dir);
+    clearTimeout(playAnim._t);
+    playAnim._t = setTimeout(function () { a.classList.remove('in-fwd', 'in-back', 'in-side'); try { w.remove(); } catch (e) {} root.classList.remove('pganim'); }, 480);
+  } catch (e) { document.documentElement.classList.remove('pganim'); }
+}
+function swipeBack() {
+  if ($('sheet').classList.contains('on')) { closeSheet(); return true; }
+  if (S.owner && UI.view !== 'home') { go('home'); return true; }
+  return false;
+}
+(function () {
+  var sx = 0, sy = 0, tr = false, ind = null;
+  function mk() { if (!ind) { ind = document.createElement('div'); ind.id = 'swInd'; ind.innerHTML = '‹'; document.body.appendChild(ind); } return ind; }
+  function show(p) { var e = mk(); e.style.opacity = p > 0 ? 1 : 0; e.style.transform = 'translate(' + (-46 + p * 64) + 'px,-50%) scale(' + (0.7 + p * 0.5) + ')'; e.className = p >= 1 ? 'ready' : ''; }
+  function hide() { if (ind) { ind.style.opacity = 0; ind.style.transform = 'translate(-46px,-50%)'; } }
+  document.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (e.touches.length === 1 && t.clientX <= 28) { sx = t.clientX; sy = t.clientY; tr = true; show(0.01); } }, { passive: true });
+  document.addEventListener('touchmove', function (e) { if (!tr) return; var t = e.touches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy); if (dy > Math.max(30, dx * 1.3)) { tr = false; hide(); return; } show(Math.max(0.01, Math.min(1, dx / 90))); }, { passive: true });
+  document.addEventListener('touchend', function (e) { if (!tr) return; tr = false; var t = e.changedTouches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy); hide(); if (dx > 80 && dy < 70) { if (navigator.vibrate) try { navigator.vibrate(12); } catch (x) {} swipeBack(); } }, { passive: true });
+  document.addEventListener('touchcancel', function () { tr = false; hide(); }, { passive: true });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.tile,nav.tabs button,.quick button,.ovb,.fab'); if (b && navigator.vibrate) try { navigator.vibrate(9); } catch (x) {} }, true);
+})();
+
+/* ===== v2: ໂຄງເມນູ 5 ໝວດ (ມື້ນີ້ · ວຽກ · ຂາຍ · ຂອງ · ເງິນ) + ໜ້າຫຼັກກະເບື້ອງ ===== */
+function lowStockN() { return (S.products || []).filter(function (p) { var a = stockNow(p); return (a === null ? p.stock : a) <= LOW_STOCK && (a !== null || !p.appOnly); }).length; }
+function hubOf() { var v = UI.view; if (v === 'cust') return 'sell'; if (v === 'po') return 'stock'; if (v === 'sales') return ['stock', 'cmp', 'claims'].indexOf(UI.salesTab || 'orders') >= 0 ? 'stock' : 'sell'; return ''; }
+function hubSeg() {
+  var h = hubOf(); if (!h) return '';
+  var items = h === 'sell' ? [['orders', '🛒 ບິນຂາຍ'], ['cust', '👥 ລູກຄ້າ']] : [['stock', '📦 ສະຕ໊ອກ'], ['po', '🚚 ສັ່ງເຄື່ອງ'], ['cmp', '⚖️ ປຽບທຽບ']].concat(Array.isArray(S.claims) ? [['claims', '🛡️ ຮັບປະກັນ']] : []);
+  var cur = UI.view === 'cust' ? 'cust' : UI.view === 'po' ? 'po' : (UI.salesTab || 'orders');
+  return '<div class="seg">' + items.map(function (o) { return '<button class="' + (cur === o[0] ? 'on' : '') + '" onclick="hubGo(\'' + o[0] + '\')">' + o[1] + '</button>'; }).join('') + '</div>';
+}
+function hubGo(k) { if (k === 'cust') go('cust'); else if (k === 'po') go('po'); else { UI.salesTab = k; go('sales'); } }
+function vHome() {
+  var t = today(), d = new Date(), js = (S.jobs || []).filter(function (j) { return j.status !== 'cancelled'; });
+  var tj = js.filter(function (j) { return j.date === t; }), open = tj.filter(function (j) { return j.status !== 'done'; }), late = js.filter(isOverdue);
+  var nx = open.concat(js.filter(function (j) { return j.date > t && j.status !== 'done'; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }))[0];
+  var nd = (S.notes || []).filter(noteDue).length, low = lowStockN();
+  var jobDue = js.reduce(function (a, j) { return a + (j.due || 0); }, 0), ordDueN = (S.orders || []).filter(function (o) { return !o.jobId || !jobById(o.jobId); }).reduce(function (a, o) { return a + ordDue(o); }, 0), due = jobDue + ordDueN;
+  var drafts = (S.orders || []).filter(function (o) { return o.status === 'draft'; }).length, cod = codOpen().length;
+  function T(c, e, title, sub, badge, alert, act) { return '<button class="tile ' + c + '" onclick="' + act + '">' + (badge !== '' && badge !== 0 ? '<i class="' + (alert ? 'al' : '') + '">' + badge + '</i>' : '') + '<span class="e">' + e + '</span><b>' + title + '</b><small>' + sub + '</small></button>'; }
+  var h = '';
+  h += nx ? '<div class="nextj" onclick="openJob(\'' + esc(nx.id) + '\')"><span class="e">⏰</span><div><small>ວຽກຕໍ່ໄປ' + (nx.date === t ? ' · ມື້ນີ້' : ' · ' + dLabel(nx.date)) + '</small><b>' + esc(nx.title || nx.type) + '</b><small>' + esc(nx.customer) + (nx.location ? ' · ' + esc(nx.location) : '') + '</small></div><span class="tm">' + esc(nx.start || '') + '</span></div>' : '<div class="nextj"><span class="e">🎉</span><div><small>ມື້ນີ້</small><b>ບໍ່ມີວຽກຄ້າງ</b></div></div>';
+  h += '<button class="ovb" onclick="UI.dtab=\'job\';LS.set(\'js_dtab\',\'job\');go(\'dash\')"><span class="e">📊</span><div><b>ພາບລວມ</b><small>ວຽກມື້ນີ້ ' + tj.length + ' · ຄ້າງເກັບ ' + short(due) + (late.length ? ' · ⚠️ ເລີຍກຳນົດ ' + late.length : '') + '</small></div><i>›</i></button>';
+  if (UI.pop) setTimeout(function () { UI.pop = false; }, 1200);
+  h += '<div class="tiles' + (UI.pop ? ' pop' : '') + '">' +
+    T('t-bl', '🔧', 'ວຽກ', 'ຕິດຕັ້ງ · ຮົ້ວ · ເຊົ່າໄຟ', open.length + late.length, late.length > 0, "go('today')") +
+    T('t-gr', '🛒', 'ຂາຍ', 'ບິນ · ໃບສະເໜີ · ລູກຄ້າ', drafts + cod, false, "UI.salesTab='orders';go('sales')") +
+    T('t-or', '📦', 'ຂອງ', 'ສະຕ໊ອກ · ສັ່ງເຄື່ອງ', low, true, "UI.salesTab='stock';go('sales')") +
+    T('t-pu', '💰', 'ເງິນ', 'ຄ້າງເກັບ ' + short(due), due > 0 ? '!' : '', true, "UI.dtab='money';LS.set('js_dtab','money');go('dash')") +
+    T('t-pk', '👥', 'ລູກຄ້າ', 'ຖານລູກຄ້າ · ແຫຼ່ງ', '', false, "go('cust')") +
+    T('t-ye', '📝', 'ຈົດໄວ້', 'ໂນດ · ເຕືອນຕິດຕາມ', nd, false, "go('notes')") + '</div>';
+  h += '<div class="quick"><button onclick="openFenceList()">🧱 ເອກະສານຮົ້ວ</button><button onclick="openRentList()">🔆 ເອກະສານເຊົ່າໄຟ</button><button onclick="openLoadSheet()">📦 ກຽມເຄື່ອງ</button><button onclick="openSqList()">📋 ໃບສະເໜີ VAT</button><button onclick="go(\'settings\')">⚙️ ຕັ້ງຄ່າ</button></div>';
+  return h;
+}
+
 var JOB_VIEWS = ['today', 'week', 'month', 'list'];
 var NAV_ICON = (function (p) { var o = {}; Object.keys(p).forEach(function (k) { o[k] = '<svg viewBox="0 0 24 24" aria-hidden="true">' + p[k] + '</svg>'; }); return o; })({
   cal: '<rect x="4" y="5" width="16" height="16" rx="2"/><path d="M16 3v4M8 3v4M4 11h16M8 15h2"/>',
@@ -542,7 +716,10 @@ var NAV_ICON = (function (p) { var o = {}; Object.keys(p).forEach(function (k) {
   note: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',
   truck: '<circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/><path d="M5 17H3V6a1 1 0 0 1 1-1h9v12M9 17h6M13 9h5l3 4v4h-2"/>',
   users: '<circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2M16 3.1a4 4 0 0 1 0 7.8M21 21v-2a4 4 0 0 0-3-3.9"/>',
-  search: '<circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/>'
+  search: '<circle cx="10" cy="10" r="7"/><path d="M21 21l-6-6"/>',
+  home: '<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+  box: '<path d="M3 7l9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>',
+  coin: '<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5c0-1 1-1.7 2.5-1.7s2.5.7 2.5 1.7-1 1.5-2.5 2-2.5 1-2.5 2 1 1.7 2.5 1.7 2.5-.7 2.5-1.7"/>'
 });
 function jobSeg() {
   return '<div class="seg">' + [['today', 'ມື້ນີ້'], ['week', 'ອາທິດ'], ['month', 'ເດືອນ'], ['list', 'ທັງໝົດ']].map(function (o) {
@@ -713,7 +890,7 @@ function vSettings() {
   }).join('') + '</div><p class="muted" style="margin-top:8px">ມີຜົນກັບວຽກທີ່ບັນທຶກ/ອັບເດດຫຼັງຈາກນີ້</p></div>';
   h += '<div class="card"><h3>💵 ອັດຕາຄ່າຕິດຕັ້ງ & ຄ່າແຮງຊ່າງ</h3>' +
     '<label class="f">ຄ່າຕິດຕັ້ງເກັບລູກຄ້າ / ຈຸດ</label><input class="inp" id="setInst" inputmode="numeric" value="' + money(S.instRate || 0) + '" oninput="fmtNum(this)">' +
-    '<div class="row"><div><label class="f">ຄ່າແຮງຊ່າງ ເຕັມວັນ</label><input class="inp" id="setDay" inputmode="numeric" value="' + money(S.dayRate || 350000) + '" oninput="fmtNum(this)"></div>' +
+    '<div class="row"><div><label class="f">ຄ່າແຮງຊ່າງ ເຕັມວັນ</label><input class="inp" id="setDay" inputmode="numeric" value="' + money(S.dayRate || 300000) + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ຄ່າແຮງຊ່າງ ເຄິ່ງວັນ</label><input class="inp" id="setHalf" inputmode="numeric" value="' + money(S.halfRate || 150000) + '" oninput="fmtNum(this)"></div></div>' +
     '<p class="muted" style="margin-top:6px">ປ່ຽນອັດຕາແລ້ວ ມີຜົນກັບວຽກທີ່ບັນທຶກຫຼັງຈາກນີ້ — ວຽກເກົ່າໃຊ້ອັດຕາຕອນບັນທຶກ</p></div>';
   h += '<div class="card"><h3>💬 ຂໍ້ຄວາມ WhatsApp ຫາລູກຄ້າ</h3><p class="muted">ຊ່ອງທີ່ແອບໃສ່ໃຫ້ເອງ: ' + WA_KEYS.join(' ') + ' · ປ່ອຍວ່າງ = ໃຊ້ຂໍ້ຄວາມຕົ້ນແບບ</p>' +
@@ -798,7 +975,7 @@ function detailHtml(j, page) {
       '<span class="k">🏷️</span><span>ມູນຄ່າວຽກ: <b>' + money(j.price) + '</b> ກີບ</span>' +
       '<span class="k">💵</span><span>ມັດຈຳ: <b>' + money(j.deposit) + '</b> · ເກັບໜ້າງານແລ້ວ: <b>' + money(j.collected) + '</b></span>' +
       '<span class="k">⏳</span><span>ຄ້າງເກັບ: <b style="color:' + (j.due > 0 ? '#dc2626' : '#12a150') + '">' + money(j.due) + ' ກີບ</b></span>' +
-      (j.points || j.instFee || j.techPay ? '<span class="k">🔧</span><span>ຕິດຕັ້ງ <b>' + (j.points || 0) + '</b> ຈຸດ · ຄ່າຕິດຕັ້ງ <b>' + money(j.instFee) + '</b><br>ຄ່າແຮງຊ່າງ <b>' + money(j.techPay) + '</b>' +
+      (j.points || j.instFee || jobPay(j) ? '<span class="k">🔧</span><span>ຕິດຕັ້ງ <b>' + (j.points || 0) + '</b> ຈຸດ · ຄ່າຕິດຕັ້ງ <b>' + money(j.instFee) + '</b><br>ຄ່າແຮງຊ່າງ (ຫຼັງຕັດຕໍ່ວັນ) <b>' + money(jobPay(j)) + '</b>' +
         ((j.labor || []).length ? ' <span class="muted">(' + j.labor.map(function (l) { return techName(l.tid) + ' ' + (l.full ? l.full + ' ວັນ' : '') + (l.half ? (l.full ? ' + ' : '') + l.half + ' ເຄິ່ງວັນ' : ''); }).join(', ') + ')</span>' : '') + '</span>' : '') +
       '</div>' +
       (j.due > 0 ? '<button class="btn gold full" style="margin-top:10px" onclick="recordPay(\'' + esc(j.id) + '\')">＋ ບັນທຶກເງິນທີ່ເກັບໄດ້</button>' : '') +
@@ -1251,31 +1428,18 @@ function dInstall() {
   var done = S.jobs.filter(function (j) { return inPer(j) && j.status === 'done'; });
   var plan = S.jobs.filter(function (j) { return inPer(j) && isOpen(j); });
   var sum = function (arr, k) { return arr.reduce(function (a, j) { return a + (Number(j[k]) || 0); }, 0); };
-  var pts = sum(done, 'points'), fee = sum(done, 'instFee'), pay = sum(done, 'techPay');
+  var pts = sum(done, 'points'), fee = sum(done, 'instFee'), pay = done.reduce(function (a, j) { return a + jobPay(j); }, 0);
   var h = '<div class="sec">🔧 ການຕິດຕັ້ງ <span class="sp"></span>' + [['week', 'ທິດນີ້'], ['month', 'ເດືອນນີ້']].map(function (x) {
     return '<span class="fchip' + (UI.dPer === x[0] ? ' on' : '') + '" style="font-weight:600" onclick="UI.dPer=\'' + x[0] + '\';render()">' + x[1] + '</span>';
   }).join('') + '</div>';
   h += '<p class="muted" style="margin:-4px 2px 8px">' + lbl + ' · ນັບວຽກທີ່ສະຖານະ «ສຳເລັດ» ' + done.length + ' ວຽກ</p>';
   h += '<div class="kpis">' + dTile(pts, 'ຈຸດທີ່ຕິດຕັ້ງແລ້ວ', 'blue') + dTile(money(fee), 'ລາຍຮັບຄ່າຕິດຕັ້ງ', '') + dTile(money(pay), 'ຄ່າແຮງຊ່າງ', 'amber') +
     dTile(money(fee - pay), 'ກຳໄລຄ່າຕິດຕັ້ງ', fee - pay < 0 ? 'red' : '') + '</div>';
-  // ຊ່າງແຕ່ລະຄົນ: ວັນເຮັດວຽກ + ຄ່າແຮງ (ຄິດຕາມອັດຕາປັດຈຸບັນ)
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, per = {};
-  done.forEach(function (j) {
-    (j.labor || []).forEach(function (l) {
-      var p = per[l.tid] = per[l.tid] || { jobs: 0, full: 0, half: 0, pts: 0 };
-      p.jobs++; p.full += l.full || 0; p.half += l.half || 0; p.pts += j.points || 0;
-    });
-  });
-  var rows = Object.keys(per).map(function (id) { var p = per[id]; return { id: id, p: p, pay: p.full * dr + p.half * hr }; }).sort(function (a, b) { return b.pay - a.pay; });
-  h += '<div class="card"><h3>👷 ຄ່າແຮງຊ່າງ ' + lbl + '</h3>' + (rows.length ? '<table><tr><th>ຊ່າງ</th><th class="num">ວຽກ</th><th class="num">ວັນ</th><th class="num">ຄ່າແຮງ</th></tr>' + rows.map(function (r) {
-    var days = [r.p.full ? r.p.full + ' ວັນ' : '', r.p.half ? r.p.half + ' ເຄິ່ງ' : ''].filter(Boolean).join(' + ') || '0';
-    return '<tr><td>' + esc(techName(r.id)) + '</td><td class="num">' + r.p.jobs + '</td><td class="num">' + days + '</td><td class="num"><b>' + money(r.pay) + '</b></td></tr>';
-  }).join('') + '<tr><td><b>ລວມ</b></td><td></td><td></td><td class="num"><b>' + money(rows.reduce(function (a, r) { return a + r.pay; }, 0)) + '</b></td></tr></table>' +
-    '<p class="muted" style="font-size:12px;margin-top:4px">ເຕັມວັນ ' + money(dr) + ' / ເຄິ່ງວັນ ' + money(hr) + '</p>' : '<div class="muted">ຍັງບໍ່ມີວຽກສຳເລັດທີ່ບັນທຶກວັນເຮັດວຽກຂອງຊ່າງ</div>') + '</div>';
+  h += laborCard();
   var missing = done.filter(function (j) { return !j.points; }).length;
   h += '<div class="card" style="background:#f6f9ff"><h3>📅 ແຜນທີ່ນັດໄວ້ ' + lbl + ' (ຍັງບໍ່ສຳເລັດ)</h3><div class="info" style="grid-template-columns:1fr auto;font-size:14px">' +
     '<span>ວຽກທີ່ນັດໄວ້</span><b>' + plan.length + '</b><span>ຈຸດທີ່ຈະຕິດຕັ້ງ</span><b>' + sum(plan, 'points') + '</b>' +
-    '<span>ຄ່າຕິດຕັ້ງທີ່ຈະໄດ້</span><b>' + money(sum(plan, 'instFee')) + '</b><span>ຄ່າແຮງຊ່າງທີ່ຈະຈ່າຍ</span><b>' + money(sum(plan, 'techPay')) + '</b></div>' +
+    '<span>ຄ່າຕິດຕັ້ງທີ່ຈະໄດ້</span><b>' + money(sum(plan, 'instFee')) + '</b><span>ຄ່າແຮງຊ່າງທີ່ຈະຈ່າຍ</span><b>' + money(plan.reduce(function (a, j) { return a + jobPay(j); }, 0)) + '</b></div>' +
     (plan.filter(function (j) { return !j.points; }).length ? '<p class="muted" style="font-size:12px;margin-top:4px">' + plan.filter(function (j) { return !j.points; }).length + ' ວຽກຍັງບໍ່ໄດ້ໃສ່ຈຳນວນຈຸດ</p>' : '') + '</div>';
   if (missing) h += '<p style="color:#a15c00;font-size:13px;margin:-4px 2px 10px">⚠️ ' + missing + ' ວຽກສຳເລັດແລ້ວ ຍັງບໍ່ໄດ້ໃສ່ຈຳນວນຈຸດ/ຄ່າແຮງ — ຕົວເລກຂ້າງເທິງອາດຕ່ຳກວ່າຈິງ</p>';
   return h;
@@ -1384,7 +1548,7 @@ function vDash() {
     [over.length, 'ວຽກເລີຍກຳນົດ', '#dc2626', "go('today')"], [codLate.length, 'COD ຄ້າງເກີນ 7 ມື້', '#dc2626', "UI.salesTab='orders';UI.of='cod';go('sales')"],
     [clW, 'ລໍປ່ຽນຮັບປະກັນ', '#dc2626', "UI.salesTab='claims';go('sales')"], [noteDueN, 'ໂນດຮອດກຳນົດ', '#d97706', "UI.nf='due';go('notes')"],
     [drafts.length, 'ບິນຮ່າງຄ້າງ', '#d97706', "UI.salesTab='orders';UI.of='draft';go('sales')"], [noTech, 'ວຽກຍັງບໍ່ມອບຊ່າງ', '#d97706', "go('week')"],
-    [low.length, 'ສິນຄ້າໃກ້ໝົດ', '#2563eb', "UI.salesTab='stock';UI.sf='low';go('sales')"]].filter(function (a) { return a[0] > 0; });
+    [low.length, 'ສິນຄ້າໃກ້ໝົດ', '#2563eb', "UI.salesTab='stock';UI.sf='low';go('sales')"], [lbUnpaidSummary().n, 'ມື້ຄ່າແຮງຊ່າງຍັງບໍ່ຈ່າຍ', '#d97706', "laborPaySheet()"]].filter(function (a) { return a[0] > 0; });
   h += '<div class="sec" style="margin-top:4px">ຕ້ອງເຮັດດຽວນີ້</div><div class="achips">' + (act.length ? act.map(function (a) {
     return '<button class="achip" style="--c:' + a[2] + '" onclick="' + a[3] + '"><b>' + a[0] + '</b> ' + a[1] + '</button>'; }).join('') : '<span class="achip" style="--c:#12a150">✓ ບໍ່ມີອັນຄ້າງ</span>') + '</div>';
   // ຕົວເລກຫຼັກ 4 ອັນ
@@ -1415,6 +1579,7 @@ function vDash() {
     h += '<div class="money3">' + dTile(money(ordDueN), 'ບິນຂາຍຄ້າງ / COD', ordDueN ? 'amber' : '', "UI.salesTab='orders';UI.of='due';go('sales')") + dTile(money(rcM.reduce(function (a, r) { return a + r.total; }, 0)), 'ຍອດໃບເກັບເງິນເດືອນນີ້', '') +
       dTile(money(payable), 'ເຮົາຄ້າງຈ່າຍຜູ້ສະໜອງ', 'amber', "UI.pf='due';go('po')") + '</div>';
     h += dProfit();
+  h += laborCard();
   } else if (tab === 'cust') {
     h += '<div class="sec">📞 ລູກຄ້າທີ່ກຳລັງຕິດຕາມ</div><div class="kpis">' + dTile(fol.length, 'ກຳລັງ follow', 'amber', "UI.nf='follow';go('notes')") +
       dTile(noteDueN, 'ໂນດຮອດກຳນົດ', 'red', "UI.nf='due';go('notes')") + dTile(short(fol.reduce(function (a, n) { return a + (n.value || 0); }, 0)), 'ມູນຄ່າຄາດ', '', "go('notes')") +
@@ -1632,7 +1797,7 @@ function loadGeo(cb) {
   if (GEO) return cb && cb();
   if (cb) GEO_WAIT.push(cb);
   if (GEO_WAIT.length > 1 || loadGeo._busy) return; loadGeo._busy = true;
-  var url = MODE === 'demo' ? 'icons/lao-geo.json' : RC_ASSET + 'lao-geo.json';
+  var url = RC_ASSET + 'lao-geo.json';
   fetch(url).then(function (r) { return r.json(); }).then(function (g) {
     var byId = {};
     g.p.forEach(function (p) { byId[p[0]] = { n: p[1], t: 'p' }; });
@@ -1993,9 +2158,173 @@ function srcReportPrint() {
 
 /* ================= 💸 ລາຍຈ່າຍ & ກຳໄລຂອງແຕ່ລະວຽກ (ເຈົ້າຂອງ) =================
    ກຳໄລ = ມູນຄ່າວຽກ − ລາຍຈ່າຍທີ່ບັນທຶກ − ຄ່າແຮງຊ່າງ (ຈາກບັນທຶກວັນເຮັດວຽກ) */
+
+/* ================= 👷 ຄ່າແຮງຊ່າງ v2: ຄິດ «ຕໍ່ຄົນ ຕໍ່ວັນ» + ບັນຊີເບີກ/ຈ່າຍ + ຫຼັກຖານໂອນ =================
+   ຊ່າງ 1 ຄົນ ເຮັດຫຼາຍວຽກໃນມື້ດຽວກັນ = ລວມກັນແລ້ວ ບໍ່ເກີນ 1 ມື້ເຕັມ (ເຕັມວັນ/ເຄິ່ງວັນ ຕາມທີ່ບັນທຶກໃນແຕ່ລະວຽກ)
+   ຄ່າແຮງຂອງແຕ່ລະວຽກ (ສຳລັບກຳໄລຕໍ່ວຽກ) = ແບ່ງຄ່າແຮງຂອງມື້ນັ້ນ ຕາມສັດສ່ວນ ເພື່ອໃຫ້ຜົນລວມຕົງກັບເງິນທີ່ຈ່າຍຈິງ */
+function lbRates() { return { dr: S.dayRate || 300000, hr: S.halfRate || 150000 }; }
+function lbRaw(l) { var q = lbRates(); return (l.full || 0) * q.dr + (l.half || 0) * q.hr; }
+function laborCalc(list) {
+  var cap = lbRates().dr, days = {}, perJob = {};
+  (list || []).forEach(function (j) {
+    if (!j.date || j.status === 'cancelled') return;
+    (j.labor || []).forEach(function (l) {
+      var raw = lbRaw(l); if (!raw) return;
+      var k = l.tid + '|' + j.date, d = days[k] = days[k] || { tid: l.tid, date: j.date, raw: 0, items: [] };
+      d.raw += raw; d.items.push({ jobId: j.id, raw: raw, full: l.full || 0, half: l.half || 0 });
+    });
+  });
+  Object.keys(days).forEach(function (k) {
+    var d = days[k]; d.pay = Math.min(d.raw, cap); d.capped = d.raw > cap;
+    d.items.forEach(function (it) {
+      it.alloc = d.raw ? Math.round(d.pay * it.raw / d.raw) : 0;
+      var p = perJob[it.jobId] = perJob[it.jobId] || { total: 0, by: {} };
+      p.total += it.alloc; p.by[d.tid] = (p.by[d.tid] || 0) + it.alloc;
+    });
+  });
+  return { days: days, perJob: perJob };
+}
+function laborAllCalc() { return laborCalc((S.jobs || []).filter(function (j) { return j.status !== 'cancelled'; })); }
+function jobPay(j) { if (!(j.labor && j.labor.length)) return j.techPay || 0; var p = laborAllCalc().perJob[j.id]; return p ? p.total : 0; }
+function laborLedger() { // ບັນຊີມື້ທີ່ຈ່າຍໄດ້ = ວຽກສຳເລັດແລ້ວ ເທົ່ານັ້ນ
+  var c = laborCalc((S.jobs || []).filter(function (j) { return j.status === 'done'; })), paid = {};
+  (S.laborPays || []).forEach(function (p) { (p.days || []).forEach(function (x) { var k = p.tid + '|' + x.d; paid[k] = (paid[k] || 0) + (Number(x.a) || 0); }); });
+  var rows = Object.keys(c.days).map(function (k) { var d = c.days[k]; d.paid = paid[k] || 0; d.due = Math.max(0, d.pay - d.paid); return d; });
+  rows.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : (a.tid < b.tid ? -1 : 1); });
+  return rows;
+}
+function lbRange(per) {
+  var d = new Date();
+  if (per === 'week') { var ws = weekStart(d); return [ymd(ws), ymd(addDays(ws, 6)), 'ທິດນີ້']; }
+  if (per === 'all') return ['0000-00-00', '9999-99-99', 'ທັງໝົດ'];
+  return [ymd(new Date(d.getFullYear(), d.getMonth(), 1)), ymd(new Date(d.getFullYear(), d.getMonth() + 1, 0)), 'ເດືອນ' + MON[d.getMonth()]];
+}
+function lbDaysTxt(units) { var f = Math.floor(units + 1e-9), h = (units - f) >= 0.49 ? 1 : 0; return [f ? f + ' ວັນ' : '', h ? '½ ວັນ' : ''].filter(Boolean).join(' + ') || '0'; }
+function laborCard() {
+  UI.lbPer = UI.lbPer || 'month';
+  var rg = lbRange(UI.lbPer), rows = laborLedger().filter(function (d) { return d.date >= rg[0] && d.date <= rg[1]; });
+  var tot = rows.reduce(function (a, d) { return a + d.pay; }, 0), paid = rows.reduce(function (a, d) { return a + Math.min(d.paid, d.pay); }, 0), due = rows.reduce(function (a, d) { return a + d.due; }, 0);
+  var per = {}; rows.forEach(function (d) { var p = per[d.tid] = per[d.tid] || { days: 0, units: 0, pay: 0, paid: 0, due: 0, jobs: {} }; p.days++; p.units += d.pay / lbRates().dr; p.pay += d.pay; p.paid += Math.min(d.paid, d.pay); p.due += d.due; d.items.forEach(function (it) { p.jobs[it.jobId] = 1; }); });
+  var ids = Object.keys(per).sort(function (a, b) { return per[b].due - per[a].due || per[b].pay - per[a].pay; });
+  var h = '<div class="card" id="lbCard"><h3>👷 ຄ່າແຮງຊ່າງ (ຄິດອັດຕະໂນມັດ)</h3><div class="filters" style="margin:0 0 8px">' + [['week', 'ທິດນີ້'], ['month', 'ເດືອນນີ້'], ['all', 'ທັງໝົດ']].map(function (x) {
+    return '<button class="fchip' + (UI.lbPer === x[0] ? ' on' : '') + '" onclick="UI.lbPer=\'' + x[0] + '\';render()">' + x[1] + '</button>'; }).join('') + '</div>';
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(money(tot), 'ຄ່າແຮງລວມ', 'blue') + dTile(money(paid), 'ຈ່າຍແລ້ວ', '') + dTile(money(due), 'ຄ້າງຈ່າຍ', due > 0 ? 'red' : '') + '</div>';
+  h += ids.length ? '<table style="margin-top:8px"><tr><th>ຊ່າງ</th><th class="num">ມື້</th><th class="num">ຄ່າແຮງ</th><th class="num">ຄ້າງ</th></tr>' + ids.map(function (id) { var p = per[id];
+    return '<tr style="cursor:pointer" onclick="laborDetail(\'' + esc(id) + '\')"><td>' + esc(techName(id)) + ' <span class="muted">›</span></td><td class="num">' + lbDaysTxt(p.units) + '</td><td class="num"><b>' + money(p.pay) + '</b></td><td class="num" style="color:' + (p.due ? '#dc2626' : '#12a150') + '"><b>' + (p.due ? money(p.due) : '✓') + '</b></td></tr>'; }).join('') + '</table>' :
+    '<div class="muted" style="margin-top:8px">ຍັງບໍ່ມີວຽກສຳເລັດທີ່ບັນທຶກຊ່າງ/ວັນເຮັດວຽກ ໃນຊ່ວງ ' + rg[2] + '</div>';
+  h += '<div class="row" style="margin-top:10px;gap:8px"><button class="btn gold" style="flex:1.2" onclick="laborPaySheet()">💸 ເບີກຄ່າແຮງ</button><button class="btn ghost" style="flex:1" onclick="laborHistory()">📜 ປະຫວັດ + ຫຼັກຖານ</button></div>';
+  h += '<p class="muted" style="font-size:12px;margin-top:6px">ເຕັມວັນ ' + money(lbRates().dr) + ' · ເຄິ່ງວັນ ' + money(lbRates().hr) + ' ຕໍ່ຄົນ · ຊ່າງ 1 ຄົນ ເຮັດຫຼາຍວຽກໃນມື້ດຽວ ຄິດລວມບໍ່ເກີນ 1 ມື້ເຕັມ · ກົດຊື່ຊ່າງເພື່ອເບິ່ງລາຍລະອຽດ</p></div>';
+  return h;
+}
+function lbUnpaidSummary() { var rows = laborLedger().filter(function (d) { return d.due > 0; }); return { n: rows.length, amt: rows.reduce(function (a, d) { return a + d.due; }, 0) }; }
+function dayLabel(dt) { var x = parseYmd(dt); return DOW[x.getDay()] + ' ' + x.getDate() + ' ' + MON[x.getMonth()]; }
+function laborDetail(tid) {
+  var rows = laborLedger().filter(function (d) { return d.tid === tid; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var pays = (S.laborPays || []).filter(function (p) { return p.tid === tid; }).sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var tot = rows.reduce(function (a, d) { return a + d.pay; }, 0), due = rows.reduce(function (a, d) { return a + d.due; }, 0);
+  var h = '<div class="shd"><b>👷 ' + esc(techName(tid)) + '</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<div class="kpis" style="grid-template-columns:repeat(3,1fr)">' + dTile(money(tot), 'ຄ່າແຮງທັງໝົດ', 'blue') + dTile(money(tot - due), 'ຈ່າຍແລ້ວ', '') + dTile(money(due), 'ຄ້າງຈ່າຍ', due > 0 ? 'red' : '') + '</div>';
+  if (due > 0) h += '<button class="btn gold full" style="margin:8px 0" onclick="laborPaySheet(\'' + esc(tid) + '\')">💸 ເບີກຄ່າແຮງໃຫ້ ' + esc(techName(tid)) + ' (' + money(due) + ')</button>';
+  h += '<div class="sec">📅 ລາຍວັນ (ໃໝ່ → ເກົ່າ)</div>';
+  h += rows.length ? rows.map(function (d) {
+    var jobs = d.items.map(function (it) { var j = jobById(it.jobId) || {}; return '<div style="font-size:13px;margin-left:2px"><a href="javascript:void 0" onclick="closeSheet();setTimeout(function(){openJob(\'' + esc(it.jobId) + '\')},330)">' + esc((j.customer || '?') + (j.title ? ' · ' + j.title : '')) + '</a> · ' + (it.full ? it.full + ' ເຕັມ' : '') + (it.half ? (it.full ? ' + ' : '') + it.half + ' ເຄິ່ງ' : '') + ' <span class="muted">(' + money(it.raw) + ')</span></div>'; }).join('');
+    var st = d.due <= 0 ? '<span class="badge" style="background:#d1fadf;color:#067647">✓ ຈ່າຍແລ້ວ</span>' : d.paid > 0 ? '<span class="badge" style="background:#fdecc8;color:#a15c00">ຈ່າຍບາງສ່ວນ · ຄ້າງ ' + money(d.due) + '</span>' : '<span class="badge" style="background:#fee4e2;color:#b42318">⏳ ຍັງບໍ່ຈ່າຍ</span>';
+    return '<div class="card" style="padding:9px 12px;margin-bottom:8px"><div style="display:flex;gap:8px;align-items:center"><b style="flex:1">' + dayLabel(d.date) + '</b><b>' + money(d.pay) + '</b></div>' + jobs +
+      (d.capped ? '<div style="font-size:12px;color:#a15c00;margin:3px 0">⚠️ ເຮັດ ' + d.items.length + ' ວຽກ ລວມ ' + money(d.raw) + ' → ຄິດສູງສຸດ 1 ມື້ ' + money(d.pay) + '</div>' : '') + '<div style="margin-top:4px">' + st + '</div></div>';
+  }).join('') : '<div class="empty">ຍັງບໍ່ມີວັນເຮັດວຽກທີ່ສຳເລັດ</div>';
+  h += '<div class="sec" style="margin-top:12px">💸 ປະຫວັດການເບີກ</div>' + (pays.length ? pays.map(lbPayRow).join('') : '<div class="muted">ຍັງບໍ່ເຄີຍເບີກ</div>');
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h + '</div>'; openSheet(); $('sheet').scrollTop = 0;
+}
+function lbPayRow(p) {
+  var th = (p.proof || []).map(function (src, i) { return '<img src="' + photoUrl(src) + '" style="width:54px;height:54px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer" onclick="showProof(\'' + esc(p.id) + '\',' + i + ')">'; }).join('');
+  return '<div class="card" style="padding:9px 12px;margin-bottom:8px"><div style="display:flex;gap:8px;align-items:center"><b style="flex:1">' + esc(techName(p.tid)) + ' · ' + esc(p.date) + '</b><b style="color:#12a150">' + money(p.amount) + '</b></div>' +
+    '<div class="muted" style="font-size:12.5px">' + (p.days || []).length + ' ມື້: ' + (p.days || []).map(function (x) { return x.d.slice(8) + '/' + x.d.slice(5, 7); }).join(', ') + ' · ' + esc(p.method || '') + (p.note ? ' · ' + esc(p.note) : '') + '</div>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px">' + (th || '<span class="muted" style="font-size:12px">ບໍ່ມີຫຼັກຖານແນບ</span>') + '<span style="flex:1"></span><button class="btn ghost" style="padding:4px 10px;font-size:12px;color:#dc2626" onclick="delLaborPay(\'' + esc(p.id) + '\')">🗑️ ຍົກເລີກ</button></div></div>';
+}
+function showProof(pid, i) {
+  var p = (S.laborPays || []).filter(function (x) { return x.id === pid; })[0]; if (!p || !p.proof || !p.proof[i]) return;
+  var o = document.createElement('div'); o.id = 'proofView'; o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:300;display:flex;align-items:center;justify-content:center;padding:10px';
+  o.innerHTML = '<img src="' + photoUrl(p.proof[i], true) + '" style="max-width:100%;max-height:100%;border-radius:10px"><button style="position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:0;font-size:22px;background:#fff">✕</button>';
+  o.onclick = function () { o.remove(); }; document.body.appendChild(o);
+}
+function delLaborPay(id) {
+  ask({ title: '🗑️ ຍົກເລີກການເບີກນີ້?', msg: 'ມື້ທີ່ຢູ່ໃນການເບີກນີ້ຈະກັບເປັນ «ຍັງບໍ່ຈ່າຍ» ແລະຫຼັກຖານທີ່ແນບຈະຖືກລຶບ', ok: 'ຍົກເລີກການເບີກ' }).then(function (y) {
+    if (y) act('api_delLaborPay', id).then(function () { toast('ຍົກເລີກການເບີກແລ້ວ'); if (UI.lbSheet === 'hist') laborHistory(); else if (UI.lbTid) laborDetail(UI.lbTid); });
+  });
+}
+function laborHistory() {
+  UI.lbSheet = 'hist'; UI.lbTid = '';
+  var pays = (S.laborPays || []).slice().sort(function (a, b) { return (b.date || '').localeCompare(a.date || '') || (b.createdAt || '').localeCompare(a.createdAt || ''); });
+  var tot = pays.reduce(function (a, p) { return a + (Number(p.amount) || 0); }, 0);
+  var h = '<div class="shd"><b>📜 ປະຫວັດການເບີກຄ່າແຮງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody"><div class="muted" style="margin-bottom:8px">ລວມທີ່ເບີກແລ້ວ <b>' + money(tot) + '</b> ກີບ · ' + pays.length + ' ຄັ້ງ</div>' + (pays.length ? pays.map(lbPayRow).join('') : '<div class="empty">ຍັງບໍ່ເຄີຍເບີກ — ກົດ «💸 ເບີກຄ່າແຮງ»</div>') + '</div>';
+  UI.openId = null; UI.openNote = null; UI.openPO = null;
+  $('sheet').innerHTML = h; openSheet(); $('sheet').scrollTop = 0;
+}
+// ===== ເບີກຄ່າແຮງ: ເລືອກຊ່າງ → ຕິກມື້ທີ່ຍັງບໍ່ຈ່າຍ (ຄ່າເລີ່ມ = 3 ມື້ເກົ່າສຸດ) → ແນບຫຼັກຖານ → ບັນທຶກ =====
+function laborPaySheet(tid) {
+  var rows = laborLedger().filter(function (d) { return d.due > 0; });
+  var techIds = []; rows.forEach(function (d) { if (techIds.indexOf(d.tid) < 0) techIds.push(d.tid); });
+  if (!techIds.length) { toast('ບໍ່ມີຄ່າແຮງຄ້າງຈ່າຍ 🎉'); return; }
+  UI.lbPay = { tid: tid && techIds.indexOf(tid) >= 0 ? tid : techIds[0], sel: null, proof: [], method: 'ໂອນ', date: today(), note: '' };
+  lbPayRender(true);
+}
+function lbPayDays() { return laborLedger().filter(function (d) { return d.tid === UI.lbPay.tid && d.due > 0; }); }
+function lbPayRender(first) {
+  var p = UI.lbPay, rows = laborLedger().filter(function (d) { return d.due > 0; }), techIds = [];
+  rows.forEach(function (d) { if (techIds.indexOf(d.tid) < 0) techIds.push(d.tid); });
+  var days = lbPayDays(); if (!p.sel) { p.sel = {}; days.slice(0, 3).forEach(function (d) { p.sel[d.date] = 1; }); }
+  var amt = days.reduce(function (a, d) { return a + (p.sel[d.date] ? d.due : 0); }, 0), n = days.filter(function (d) { return p.sel[d.date]; }).length;
+  var h = '<div class="shd"><b>💸 ເບີກຄ່າແຮງຊ່າງ</b><button class="x" onclick="closeSheet()">✕</button></div><div class="sbody">';
+  h += '<label class="f">ຊ່າງ</label><div class="filters" style="margin:0">' + techIds.map(function (id) { var dd = rows.filter(function (d) { return d.tid === id; }).reduce(function (a, d) { return a + d.due; }, 0);
+    return '<button class="fchip' + (p.tid === id ? ' on' : '') + '" onclick="UI.lbPay.tid=\'' + esc(id) + '\';UI.lbPay.sel=null;lbPayRender()">' + esc(techName(id)) + ' · ' + short(dd) + '</button>'; }).join('') + '</div>';
+  h += '<label class="f">ເລືອກມື້ທີ່ຈະເບີກ <span class="muted">(ຕິກ 3 ມື້ເກົ່າສຸດໃຫ້ແລ້ວ)</span></label>' + days.map(function (d) {
+    return '<label class="eq" style="cursor:pointer"><input type="checkbox" ' + (p.sel[d.date] ? 'checked' : '') + ' onchange="UI.lbPay.sel[\'' + d.date + '\']=this.checked?1:0;lbPayRender()"><span style="flex:1">' + dayLabel(d.date) + '<br><span class="muted" style="font-size:12px">' + d.items.length + ' ວຽກ' + (d.capped ? ' · ຕັດເຫຼືອ 1 ມື້' : '') + (d.paid ? ' · ຈ່າຍແລ້ວ ' + money(d.paid) : '') + '</span></span><b>' + money(d.due) + '</b></label>'; }).join('');
+  h += '<div class="card" style="margin-top:10px;background:#0A1322;color:#fff;border:0"><div class="info" style="grid-template-columns:1fr auto;font-size:14px"><span>ເບີກ ' + n + ' ມື້</span><b style="font-size:19px;color:#F6C453">' + money(amt) + ' ກີບ</b></div></div>';
+  h += '<div class="row"><div><label class="f">ວັນທີ່ໂອນ/ຈ່າຍ</label><input class="inp" type="date" value="' + esc(p.date) + '" onchange="UI.lbPay.date=this.value"></div><div><label class="f">ວິທີຈ່າຍ</label><select class="inp" onchange="UI.lbPay.method=this.value">' + ['ໂອນ', 'ເງິນສົດ'].map(function (m) { return '<option' + (p.method === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></div></div>';
+  h += '<label class="f">ໝາຍເຫດ</label><input class="inp" value="' + esc(p.note) + '" placeholder="ເຊັ່ນ ໂອນ BCEL ເລກ... ເບີກ 3 ມື້" oninput="UI.lbPay.note=this.value">';
+  h += '<label class="f">📎 ຫຼັກຖານການໂອນ (ຮູບສະລິບ) <span class="muted">ແນບໄດ້ຫຼາຍຮູບ</span></label><div style="display:flex;gap:8px;flex-wrap:wrap">' + p.proof.map(function (src, i) {
+    return '<div style="position:relative"><img src="' + src + '" style="width:76px;height:76px;object-fit:cover;border-radius:12px;border:1px solid var(--line)"><button style="position:absolute;top:-6px;right:-6px;width:24px;height:24px;border-radius:50%;border:0;background:#dc2626;color:#fff;font-size:13px" onclick="UI.lbPay.proof.splice(' + i + ',1);lbPayRender()">✕</button></div>'; }).join('') +
+    '<label style="width:76px;height:76px;border:2px dashed var(--line2);border-radius:12px;display:grid;place-items:center;font-size:30px;color:var(--muted);cursor:pointer">＋<input type="file" accept="image/*" multiple style="display:none" onchange="lbProofAdd(this)"></label></div>';
+  h += '<div class="btns"><button class="btn ghost" onclick="closeSheet()">ຍົກເລີກ</button><button class="btn gold" onclick="lbPaySave()">✅ ບັນທຶກການເບີກ</button></div></div>';
+  var keep = first ? 0 : $('sheet').scrollTop;
+  UI.openId = null; UI.openNote = null; UI.openPO = null; $('sheet').innerHTML = h; if (first) openSheet(); $('sheet').scrollTop = keep;
+}
+function lbProofAdd(inp) {
+  var files = Array.prototype.slice.call(inp.files || []); if (!files.length) return;
+  Promise.all(files.map(function (f) { return lbCompress(f); })).then(function (arr) { UI.lbPay.proof = UI.lbPay.proof.concat(arr); lbPayRender(); }).catch(function (e) { toast('⚠️ ' + (e.message || e), true); });
+}
+function lbCompress(file) { // ຫຍໍ້ຮູບໃຫ້ເບົາ (≤1000px) ເກັບເປັນ dataURL
+  return new Promise(function (res, rej) {
+    var img = new Image(), url = URL.createObjectURL(file);
+    img.onload = function () { var k = Math.min(1, 1000 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', 0.7)); };
+    img.onerror = function () { rej(new Error('ອ່ານຮູບບໍ່ໄດ້')); }; img.src = url;
+  });
+}
+function lbPaySave() {
+  var p = UI.lbPay, days = lbPayDays().filter(function (d) { return p.sel[d.date]; });
+  if (!days.length) return toast('ຕິກມື້ທີ່ຈະເບີກຢ່າງໜ້ອຍ 1 ມື້', true);
+  var amt = days.reduce(function (a, d) { return a + d.due; }, 0);
+  var go = function () {
+    act('api_saveLaborPay', { tid: p.tid, date: p.date || today(), method: p.method, note: p.note, amount: amt, days: days.map(function (d) { return { d: d.date, a: d.due }; }), proof: p.proof }).then(function () {
+      toast('ບັນທຶກການເບີກ ' + money(amt) + ' ກີບ ແລ້ວ ✓'); laborDetail(p.tid);
+    });
+  };
+  if (p.method === 'ໂອນ' && !p.proof.length) ask({ title: 'ຍັງບໍ່ໄດ້ແນບຫຼັກຖານການໂອນ', msg: 'ບັນທຶກຕໍ່ໂດຍບໍ່ມີຮູບສະລິບ? (ແນບເພີ່ມພາຍຫຼັງບໍ່ໄດ້ — ຕ້ອງຍົກເລີກແລ້ວເບີກໃໝ່)', ok: 'ບັນທຶກເລີຍ' }).then(function (y) { if (y) go(); }); else go();
+}
+// ຄ່າແຮງຈິງຂອງວຽກນີ້ ໃນຟອມວຽກ (ຫຼັງຕັດຕໍ່ວັນ)
+function laborEffForm() {
+  var el = $('lpEff'); if (!el) return;
+  var date = $('fDate') ? $('fDate').value : '', lab = laborData();
+  if (!date || !lab.length) { el.innerHTML = ''; return; }
+  var tmp = (S.jobs || []).filter(function (j) { return j.id !== UI.lbEditId; }).concat([{ id: '__form', date: date, status: 'scheduled', labor: lab }]);
+  var c = laborCalc(tmp), me = c.perJob.__form || { total: 0, by: {} }, notes = [];
+  lab.forEach(function (l) { var d = c.days[l.tid + '|' + date]; if (d && d.items.length > 1) notes.push('👷 ' + esc(techName(l.tid)) + ': ມື້ນີ້ມີ ' + d.items.length + ' ວຽກ ລວມ ' + money(d.raw) + (d.capped ? ' → ຄິດສູງສຸດ 1 ມື້ ' + money(d.pay) : ' (ບໍ່ເກີນ 1 ມື້)') + ' · ວຽກນີ້ໄດ້ ' + money(me.by[l.tid] || 0)); });
+  el.innerHTML = '<div style="margin-top:6px;font-size:13px;background:#fff8e6;border:1px dashed #e0c060;border-radius:10px;padding:6px 9px"><b>ຄ່າແຮງຈິງຂອງວຽກນີ້: ' + money(me.total) + ' ກີບ</b>' + (notes.length ? '<br>' + notes.join('<br>') : '') + '<div class="muted" style="font-size:11.5px">ຊ່າງ 1 ຄົນ ຄິດລວມທຸກວຽກໃນມື້ດຽວກັນ ບໍ່ເກີນ 1 ມື້ເຕັມ</div></div>';
+}
 var EXP_CATS = ['🧱 ວັດສະດຸ/ເຄື່ອງ', '🚚 ຂົນສົ່ງ/ນ້ຳມັນ', '👷 ຈ້າງແຮງງານເພີ່ມ', '🔧 ເຊົ່າເຄື່ອງມື', '🍚 ອາຫານ/ເບ້ຍລ້ຽງ', '📌 ອື່ນໆ'];
 function jobProfit(j) {
-  var exp = (j.expenses || []).reduce(function (a, e) { return a + (Number(e.amount) || 0); }, 0), pay = j.techPay || 0, rev = j.price || 0;
+  var exp = (j.expenses || []).reduce(function (a, e) { return a + (Number(e.amount) || 0); }, 0), pay = jobPay(j), rev = j.price || 0;
   return { rev: rev, exp: exp, pay: pay, cost: exp + pay, profit: rev - exp - pay, got: (j.deposit || 0) + (j.collected || 0) };
 }
 function expCard(j) {
@@ -2990,13 +3319,13 @@ function openForm(id, copyFrom, prefill) {
     '<div id="fEqList" style="max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin-top:4px"></div>' +
     '<div class="row" style="margin-top:6px"><input class="inp" id="fEqFree" placeholder="ພິມເພີ່ມເອງ ເຊັ່ນ ລົດ, ສາຍໄຟ 50 ແມັດ"><button class="btn ghost" style="flex:none" onclick="jobEqFree()">＋ ເພີ່ມ</button></div>';
   // 🔧 ການຕິດຕັ້ງ: ຈຳນວນຈຸດ → ຄ່າຕິດຕັ້ງ (ຈຸດ × ອັດຕາ, ແກ້ໄດ້) · ຄ່າແຮງຊ່າງ = ວັນເຮັດວຽກຂອງຊ່າງແຕ່ລະຄົນ
-  UI.labor = {}; (src && src.labor ? src.labor : []).forEach(function (l) { UI.labor[l.tid] = { full: l.full, half: l.half }; });
+  UI.lbEditId = j ? j.id : ''; UI.labor = {}; (src && src.labor ? src.labor : []).forEach(function (l) { UI.labor[l.tid] = { full: l.full, half: l.half }; });
   h += '<div class="card" style="padding:10px 12px;margin:12px 0 0;background:#f6f9ff"><h3>🔧 ການຕິດຕັ້ງ & ຄ່າແຮງ</h3>' +
     '<div class="row" style="align-items:flex-end"><div><label class="f" style="margin-top:0">ຈຳນວນຈຸດ / ດອກ ທີ່ຕິດຕັ້ງ</label><input class="inp" id="fPoints" inputmode="numeric" value="' + (src && src.points ? src.points : '') + '" oninput="this.value=this.value.replace(/[^\\d]/g,\'\');instAuto()"></div>' +
     '<button class="btn ghost" style="flex:none;padding:10px 12px" onclick="instCount()">ນັບຈາກລາຍການ</button></div>' +
     '<label class="f">ຄ່າຕິດຕັ້ງ (ເກັບລູກຄ້າ) · ' + money(S.instRate || 0) + '/ຈຸດ</label><input class="inp" id="fInstFee" data-auto="' + (src && src.instFee ? 0 : 1) + '" inputmode="numeric" value="' + (src && src.instFee ? money(src.instFee) : '') + '" oninput="fmtNum(this);this.dataset.auto=0">' +
-    '<label class="f">ຄ່າແຮງຊ່າງ · ເຕັມວັນ ' + money(S.dayRate || 350000) + ' / ເຄິ່ງວັນ ' + money(S.halfRate || 150000) + '</label><div id="fLabor"></div>' +
-    '<p class="muted" style="font-size:12px;margin-top:4px">ປ່ຽນອັດຕາໄດ້ທີ່ ⚙️ ຕັ້ງຄ່າ · ຊ່າງບໍ່ເຫັນເງິນ</p></div>';
+    '<label class="f">ຄ່າແຮງຊ່າງ · ເຕັມວັນ ' + money(S.dayRate || 300000) + ' / ເຄິ່ງວັນ ' + money(S.halfRate || 150000) + '</label><div id="fLabor"></div><div id="lpEff"></div>' +
+    '<p class="muted" style="font-size:12px;margin-top:4px">ບັນທຶກວ່າຊ່າງຄົນໃດໄປ ເຕັມວັນ ຫຼື ເຄິ່ງວັນ · ປ່ຽນອັດຕາໄດ້ທີ່ ⚙️ ຕັ້ງຄ່າ · ຊ່າງບໍ່ເຫັນເງິນ</p></div>';
   h += '<div class="row"><div><label class="f">ມູນຄ່າວຽກ (ກີບ)</label><input class="inp" id="fPrice" inputmode="numeric" value="' + (src && src.price ? money(src.price) : '') + '" oninput="fmtNum(this)"></div>' +
     '<div><label class="f">ມັດຈຳແລ້ວ (ກີບ)</label><input class="inp" id="fDeposit" inputmode="numeric" value="' + (j && j.deposit ? money(j.deposit) : '') + '" oninput="fmtNum(this)"></div></div>';
   if (j) h += '<label class="f">ເກັບໜ້າງານແລ້ວ (ກີບ)</label><input class="inp" id="fCollected" inputmode="numeric" value="' + (j.collected ? money(j.collected) : '') + '" oninput="fmtNum(this)">';
@@ -3025,23 +3354,25 @@ function laborRender() {
   var box = $('fLabor'); if (!box) return;
   var ids = Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
   ids.forEach(function (id) { if (!UI.labor[id]) UI.labor[id] = laborDefault(); });
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, total = 0;
+  var dr = S.dayRate || 300000, hr = S.halfRate || 150000, total = 0;
   box.innerHTML = ids.length ? ids.map(function (id) {
     var l = UI.labor[id], pay = (l.full || 0) * dr + (l.half || 0) * hr; total += pay;
     var inp = function (k) { return '<input class="inp" style="width:52px;padding:6px;text-align:center" inputmode="decimal" value="' + (l[k] || 0) + '" oninput="UI.labor[\'' + esc(id) + '\'].' + k + '=Number(this.value.replace(/[^\\d.]/g,\'\'))||0;laborTotal()">'; };
     return '<div class="eq" style="cursor:default;gap:6px;flex-wrap:wrap"><span style="flex:1;min-width:90px">👷 ' + esc(techName(id)) + '</span>' +
       '<span class="muted" style="font-size:12px">ເຕັມວັນ</span>' + inp('full') + '<span class="muted" style="font-size:12px">ເຄິ່ງວັນ</span>' + inp('half') +
       '<b class="num" style="min-width:76px" id="lp_' + esc(id) + '">' + money(pay) + '</b></div>';
-  }).join('') + '<div style="text-align:right;margin-top:4px">ລວມຄ່າແຮງ: <b id="lpTotal">' + money(total) + '</b> ກີບ</div>' :
+  }).join('') + '<div style="text-align:right;margin-top:4px">ລວມ (ຖ້າຄິດແຍກວຽກ): <b id="lpTotal">' + money(total) + '</b> ກີບ</div>' :
     '<div class="muted">ຕິກເລືອກຊ່າງດ້ານເທິງກ່ອນ</div>';
+  laborEffForm();
 }
 function laborTotal() {
-  var dr = S.dayRate || 350000, hr = S.halfRate || 150000, total = 0;
+  var dr = S.dayRate || 300000, hr = S.halfRate || 150000, total = 0;
   Object.keys(UI.labor).forEach(function (id) {
     var el = $('lp_' + id); if (!el) return;
     var l = UI.labor[id], pay = (l.full || 0) * dr + (l.half || 0) * hr; total += pay; el.textContent = money(pay);
   });
   if ($('lpTotal')) $('lpTotal').textContent = money(total);
+  laborEffForm();
 }
 function laborData() {
   var ids = Array.prototype.slice.call(document.querySelectorAll('.fTech')).filter(function (c) { return c.checked; }).map(function (c) { return c.value; });
@@ -3228,7 +3559,7 @@ function vSales() {
   ensureProducts();
   var tab = UI.salesTab || 'orders';
   var h = '<div class="seg"><button class="' + (tab === 'orders' ? 'on' : '') + '" onclick="UI.salesTab=\'orders\';render()">🛒 ບິນຂາຍ</button><button class="' + (tab === 'stock' ? 'on' : '') + '" onclick="UI.salesTab=\'stock\';render()">📦 ສະຕ໊ອກ</button><button class="' + (tab === 'cmp' ? 'on' : '') + '" onclick="UI.salesTab=\'cmp\';render()">⚖️ ປຽບທຽບ</button>' + (Array.isArray(S.claims) ? '<button class="' + (tab === 'claims' ? 'on' : '') + '" onclick="UI.salesTab=\'claims\';render()">🛡️ ຮັບປະກັນ' + (function () { var n = S.claims.filter(function (c) { return c.status === 'broken' || c.status === 'requested'; }).length; return n ? ' (' + n + ')' : ''; })() + '</button>' : '') + '</div>';
-  return h + (tab === 'cmp' ? vCompare() : tab === 'stock' ? vStock() : tab === 'claims' && Array.isArray(S.claims) ? vClaims() : vOrders());
+  return (tab === 'cmp' ? vCompare() : tab === 'stock' ? vStock() : tab === 'claims' && Array.isArray(S.claims) ? vClaims() : vOrders());
 }
 function vOrders() {
   var os = (S.orders || []).slice().sort(function (a, b) { return a.date === b.date ? b.no - a.no : (a.date < b.date ? 1 : -1); });
@@ -4018,7 +4349,7 @@ function stockAdjust(vid) {
 
 /* ================= ໂໝດທົດລອງ (ເປີດໄຟລ໌ນອກ Google) ================= */
 var MOCK = (function () {
-  var KEY = 'js_demo_db_v1';
+  var KEY = 'js_demo_db';
   function seed() {
     var t = new Date(), d = function (n) { return ymd(addDays(t, n)); };
     var types = ['💡 ຕິດຕັ້ງດອກໄຟ', '🔆 ເຊົ່າດອກໄຟ (ງານ)', '🧱 ຕິດຕັ້ງຮົ້ວ', '🔍 ສຳຫຼວດໜ້າງານ', '🔧 ສ້ອມແປງ/ຮັບປະກັນ', '📦 ສົ່ງເຄື່ອງ', '📌 ອື່ນໆ'];
@@ -4039,8 +4370,14 @@ var MOCK = (function () {
         J({ id: 'J-DEMO4', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 4', title: 'ໄຟຖະໜົນ 800W × 3', location: 'ບ້ານນາໄຊ, ນາຊາຍທອງ', date: d(3), techIds: ['t1'], price: 5400000, deposit: 2000000 }),
         J({ id: 'J-DEMO5', type: types[3], customer: 'ລູກຄ້າຕົວຢ່າງ 5', title: 'ໄຟບໍ່ຕິດ 1 ດວງ (ຮັບປະກັນ)', location: 'ບ້ານໜອງບົງ', date: d(-2), techIds: ['t2'] }),
         J({ id: 'J-DEMO6', type: types[1], customer: 'ລູກຄ້າຕົວຢ່າງ 6', title: 'ຮົ້ວລວດໜາມ 120 ແມັດ (ລໍຖ້າລູກຄ້າເລືອກມື້)', location: 'ເມືອງປາກງື່ມ', date: '', status: 'pending', techIds: [], price: 9000000 }),
+        J({ id: 'J-LB1', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 8', title: 'ຕິດໄຟ 2 ຈຸດ (ເຊົ້າ)', location: 'ບ້ານ ກ', date: d(-3), start: '08:00', end: '10:30', status: 'done', price: 1500000, deposit: 1500000, techIds: ['t1', 't2'], labor: [{ tid: 't1', full: 1, half: 0 }, { tid: 't2', full: 0, half: 1 }] }),
+        J({ id: 'J-LB2', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 9', title: 'ຕິດໄຟ 3 ຈຸດ (ສວຍ)', location: 'ບ້ານ ຂ', date: d(-3), start: '10:30', end: '13:00', status: 'done', price: 2200000, deposit: 2200000, techIds: ['t1'], labor: [{ tid: 't1', full: 1, half: 0 }] }),
+        J({ id: 'J-LB3', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 10', title: 'ຕິດໄຟ 2 ຈຸດ (ບ່າຍ)', location: 'ບ້ານ ຄ', date: d(-3), start: '14:00', end: '16:30', status: 'done', price: 1800000, deposit: 1800000, techIds: ['t1'], labor: [{ tid: 't1', full: 1, half: 0 }] }),
+        J({ id: 'J-LB4', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 11', title: 'ຕິດໄຟຖະໜົນ 2 ຕົ້ນ', location: 'ບ້ານ ງ', date: d(-2), start: '08:00', end: '11:00', status: 'done', price: 3000000, deposit: 3000000, techIds: ['t1', 't2'], labor: [{ tid: 't1', full: 1, half: 0 }, { tid: 't2', full: 1, half: 0 }] }),
+        J({ id: 'J-LB5', type: types[3], customer: 'ລູກຄ້າຕົວຢ່າງ 12', title: 'ເຊັກໄຟ (ເຄິ່ງວັນ)', location: 'ບ້ານ ຈ', date: d(-1), start: '08:00', end: '11:00', status: 'done', price: 500000, deposit: 500000, techIds: ['t2'], labor: [{ tid: 't2', full: 0, half: 1 }] }),
         J({ id: 'J-DEMO7', type: types[0], customer: 'ລູກຄ້າຕົວຢ່າງ 7', title: 'All-in-One 300W × 2', location: 'ບ້ານໂພນສະອາດ', date: d(-4), status: 'done', price: 1980000, deposit: 1000000, collected: 500000 })
       ],
+      laborPays: [],
       logs: { 'J-DEMO1': [{ time: d(-1) + ' 17:00', who: 'ເຈົ້າຂອງ', action: 'note', detail: 'ລູກຄ້າຂໍໃຫ້ໂທກ່ອນໄປ 30 ນາທີ' }] }
     };
   }
@@ -4117,8 +4454,8 @@ var MOCK = (function () {
     return JSON.stringify({
       owner: !!o, notes: notes, claims: claims, types: db.types, sources: o ? (db.sources || MOCK_SRC) : [], reminders: db.reminders, logs: logs,
       pos: pos, products: o ? db.products : [], suppliers: o ? db.suppliers : [],
-      receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
-      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 350000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
+      laborPays: o ? (db.laborPays = db.laborPays || []) : [], receipts: o ? db.receipts : [], nextInvoice: o ? nextInv() : 0, fenceDocs: o ? db.fenceDocs : [], orders: o ? (ordInit(), db.orders) : [], stockApp: o ? stockAppMap() : {},
+      instRate: o ? (db.instRate == null ? 250000 : db.instRate) : 0, salesCutover: o ? db.salesCutover || '' : '', waIntro: o ? db.waIntro || '' : '', waDone: o ? db.waDone || '' : '', dayRate: o ? db.dayRate || 300000 : 0, halfRate: o ? db.halfRate || 150000 : 0, calendarId: o ? '(ໂໝດທົດລອງ — ບໍ່ມີ Calendar)' : '', appUrl: '',
       techs: o ? db.techs : db.techs.filter(function (t) { return ids[t.id]; }).map(function (t) { return { id: t.id, name: t.name }; }),
       jobs: jobs.map(function (j) {
         var x = JSON.parse(JSON.stringify(j));
@@ -4138,7 +4475,7 @@ var MOCK = (function () {
       ['type', 'title', 'customer', 'phone', 'location', 'mapUrl', 'date', 'start', 'end', 'status', 'note', 'techIds', 'equipment', 'source', 'geo'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k]; });
       if (j.phone) j.customerId = mockCust(j.customer, j.phone, j.source, j.geo, j.location);
       ['price', 'deposit', 'collected', 'points', 'instFee'].forEach(function (k) { if (d[k] !== undefined) j[k] = d[k] || 0; });
-      if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 350000) + l.half * (db.halfRate || 150000); }, 0); }
+      if (d.labor) { j.labor = d.labor; j.techPay = d.labor.reduce(function (a, l) { return a + l.full * (db.dayRate || 300000) + l.half * (db.halfRate || 150000); }, 0); }
       if (j.status === 'pending' && j.date) j.status = 'scheduled';
       j.updatedAt = nowF(); if (isNew) db.jobs.push(j);
       log(j.id, c, isNew ? 'create' : 'edit', isNew ? 'ສ້າງວຽກໃໝ່' : 'ແກ້ໄຂຂໍ້ມູນວຽກ');
@@ -4239,6 +4576,8 @@ var MOCK = (function () {
     api_stockAdjust: function (c, vid, q, note) { need(c); if (!(vid in stockAppMap())) throw new Error('ສິນຄ້ານີ້ຍັງບໍ່ໄດ້ຕັ້ງຍອດເປີດ'); mvAdd(vid, Math.round(q), 'adjust', '', note, c); return all(c); },
     api_getMoves: function (c, vid) { need(c); ordInit(); return JSON.stringify({ moves: db.moves.filter(function (m) { return m.vid === vid; }).slice(-80).reverse() }); },
     api_addExpense: function (c, id, e) { need(c); var j = find(id); j.expenses = (j.expenses || []).concat([{ id: 'e' + Date.now().toString(36), cat: e.cat, name: e.name, amount: e.amount, date: e.date }]); log(id, c, 'pay', '💸 ລາຍຈ່າຍ: ' + e.name); return all(c); },
+    api_saveLaborPay: function (c, d) { need(c); db.laborPays = db.laborPays || []; db.laborPays.push({ id: 'LP' + Date.now().toString(36), tid: d.tid, date: d.date, amount: d.amount, days: d.days, method: d.method, note: d.note || '', proof: d.proof || [], createdAt: nowF(), by: 'ເຈົ້າຂອງ' }); return all(c); },
+    api_delLaborPay: function (c, id) { need(c); db.laborPays = (db.laborPays || []).filter(function (p) { return p.id !== id; }); return all(c); },
     api_delExpense: function (c, id, eid) { need(c); var j = find(id); j.expenses = (j.expenses || []).filter(function (e) { return e.id !== eid; }); return all(c); },
     api_issueReceipt: function (c, d) {
       need(c);
