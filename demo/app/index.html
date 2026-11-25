@@ -290,6 +290,63 @@ html[data-theme=dark] .tile{box-shadow:none;border:1px solid #26262A}html[data-t
 html[data-theme=dark] .t-ye small{opacity:.93}html[data-theme=dark] .tile .e{filter:none}html[data-theme=dark] .tile b{color:#F5F2ED}html[data-theme=dark] .tile small{color:#8A8580}html[data-theme=dark] .tile i{background:#E8935F;color:#0B0B0D}html[data-theme=dark] .tile i.al{background:#ff7a6b;color:#0B0B0D}
 html[data-theme=dark] .nextj,html[data-theme=dark] .ovb{background:#151517;border:1px solid #26262A;box-shadow:none}html[data-theme=dark] .hav,html[data-theme=dark] .quick button{background:#151517;color:#F5F2ED;box-shadow:none;border:1px solid #26262A}
 html[data-theme=dark] .t-bl::after{content:"";position:absolute;left:0;top:18px;bottom:18px;width:4px;border-radius:0 4px 4px 0;background:#2F6BFF}
+
+/* ============ v2 FX CSS ============ */
+html.pganim,html.pganim body{overflow-x:hidden}
+.pgwrap{z-index:3}
+#app.in-fwd,#app.in-back,#app.in-side{position:relative;z-index:2;background:var(--bg)}
+#app.in-fwd{animation:inFwd .38s cubic-bezier(.22,.9,.3,1) both;box-shadow:-14px 0 30px rgba(0,0,0,.18)}
+#app.in-back{animation:inBack .38s cubic-bezier(.22,.9,.3,1) both}
+#app.in-side{animation:inSide .28s ease-out both}
+.pgwrap.out-fwd{z-index:1;animation:outFwd .38s cubic-bezier(.22,.9,.3,1) both}
+.pgwrap.out-back{z-index:4;animation:outBack .38s cubic-bezier(.22,.9,.3,1) both;box-shadow:14px 0 30px rgba(0,0,0,.2)}
+.pgwrap.out-side{z-index:1;animation:outSide .2s ease-in both}
+@keyframes inFwd{from{transform:translateX(100%)}to{transform:none}}
+@keyframes outFwd{from{transform:none;opacity:1}to{transform:translateX(-26%);opacity:.35}}
+@keyframes inBack{from{transform:translateX(-26%);opacity:.4}to{transform:none;opacity:1}}
+@keyframes outBack{from{transform:none}to{transform:translateX(100%)}}
+@keyframes inSide{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes outSide{from{opacity:1}to{opacity:0}}
+/* ແຜ່ນລາຍລະອຽດ/ຟອມ: ເລື່ອນເຂົ້າຈາກຂວາ */
+.ov{display:block;opacity:0;pointer-events:none;transition:opacity .3s}.ov.on{opacity:1;pointer-events:auto}
+.sheet{transform:translateX(104%);transition:transform .36s cubic-bezier(.22,.9,.3,1);border-radius:24px 0 0 0;box-shadow:-14px 0 34px rgba(0,0,0,.28)}.sheet.on{transform:none}
+/* ຕົວຊີ້ການປັດກັບຄືນ */
+#swInd{position:fixed;left:0;top:50%;width:46px;height:46px;border-radius:50%;background:rgba(43,42,51,.88);color:#fff;font-size:30px;line-height:42px;text-align:center;z-index:200;opacity:0;pointer-events:none;transform:translate(-46px,-50%);transition:opacity .15s}
+#swInd.ready{background:#F5921E;box-shadow:0 0 18px rgba(245,146,30,.7)}
+/* ກະເບື້ອງ 3 ມິຕິ */
+.tile{height:128px;margin-bottom:7px;box-shadow:0 7px 0 var(--edge,#0003),0 16px 20px rgba(80,60,20,.25),inset 0 2px 0 rgba(255,255,255,.4),inset 0 -3px 6px rgba(0,0,0,.12);transition:transform .09s,box-shadow .09s}
+.tile::before{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.34),rgba(255,255,255,0) 50%);pointer-events:none}
+.tile:active{transform:translateY(6px);box-shadow:0 1px 0 var(--edge,#0003),0 4px 8px rgba(80,60,20,.2),inset 0 2px 6px rgba(0,0,0,.18)}
+.tile .e{left:12px;top:10px;width:60px;height:60px;border-radius:50%;display:grid;place-items:center;font-size:32px;line-height:1;filter:none;
+ background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.78),rgba(255,255,255,.2) 58%,rgba(0,0,0,.1));box-shadow:inset 0 -5px 8px rgba(0,0,0,.2),inset 0 2px 3px rgba(255,255,255,.75),0 5px 9px rgba(0,0,0,.24);text-shadow:0 2px 3px rgba(0,0,0,.25)}
+.tile b{text-shadow:0 2px 3px rgba(0,0,0,.18)}.t-ye b,.t-ye small{text-shadow:none}
+.t-bl{--edge:#1b45b5}.t-gr{--edge:#0a7a4b}.t-or{--edge:#bd5a06}.t-pu{--edge:#4b29bd}.t-pk{--edge:#bd2763}.t-ye{--edge:#b38000}
+.tiles.pop .tile{animation:tpop .55s cubic-bezier(.34,1.56,.64,1) both}
+.tiles.pop .tile:nth-child(1){animation-delay:.02s}.tiles.pop .tile:nth-child(2){animation-delay:.08s}.tiles.pop .tile:nth-child(3){animation-delay:.14s}.tiles.pop .tile:nth-child(4){animation-delay:.2s}.tiles.pop .tile:nth-child(5){animation-delay:.26s}.tiles.pop .tile:nth-child(6){animation-delay:.32s}
+@keyframes tpop{from{opacity:0;transform:translateY(24px) scale(.8)}to{opacity:1;transform:none}}
+.tile i.al{animation:bdg 1.8s ease-in-out infinite}@keyframes bdg{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+/* ປຸ່ມອື່ນໆ ມີມິຕິ */
+.ovb{box-shadow:0 5px 0 #15141a,0 12px 16px rgba(80,60,20,.25),inset 0 2px 0 rgba(255,255,255,.18);transition:transform .09s,box-shadow .09s}.ovb:active{transform:translateY(4px);box-shadow:0 1px 0 #15141a,0 3px 6px rgba(80,60,20,.2)}
+.nextj{box-shadow:0 5px 0 #15141a,0 12px 16px rgba(80,60,20,.2),inset 0 2px 0 rgba(255,255,255,.12)}
+.quick button{box-shadow:0 4px 0 #E8DCC2,0 8px 12px rgba(80,60,20,.12);transition:transform .09s,box-shadow .09s}.quick button:active{transform:translateY(3px);box-shadow:0 1px 0 #E8DCC2}
+.chip{box-shadow:0 3px 0 #E8DCC2,0 6px 10px rgba(80,60,20,.12);transition:transform .09s,box-shadow .09s}.chip:active{transform:translateY(2px);box-shadow:0 1px 0 #E8DCC2}.chip.gold{box-shadow:0 3px 0 #c2700a,0 6px 10px rgba(245,146,30,.3)}
+.fab{box-shadow:0 6px 0 #c2700a,0 14px 18px rgba(245,146,30,.4),inset 0 2px 0 rgba(255,255,255,.4);transition:transform .09s,box-shadow .09s}.fab:active{transform:translateY(5px);box-shadow:0 1px 0 #c2700a,0 3px 6px rgba(245,146,30,.3)}
+.seg button{box-shadow:0 3px 0 #E8DCC2,0 5px 8px rgba(80,60,20,.08);transition:transform .09s,box-shadow .09s}.seg button:active{transform:translateY(2px);box-shadow:0 1px 0 #E8DCC2}.seg button.on{box-shadow:0 4px 0 #1f4fd1,0 8px 12px rgba(47,107,255,.35)}
+nav.tabs button.on{box-shadow:inset 0 -3px 0 rgba(245,146,30,.35),inset 0 2px 5px rgba(245,146,30,.18)}
+nav.tabs button svg{transition:transform .2s cubic-bezier(.34,1.56,.64,1)}nav.tabs button.on svg{transform:translateY(-2px) scale(1.15)}
+.btn{transition:transform .08s,box-shadow .08s}.btn:active{transform:translateY(2px)}
+/* ແບບ B: ກາງຄືນ 3 ມິຕິ */
+html[data-theme=dark] .tile{box-shadow:0 6px 0 #000,0 14px 18px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.1)}
+html[data-theme=dark] .tile::before{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,0) 45%)}
+html[data-theme=dark] .tile:active{box-shadow:0 1px 0 #000,0 3px 6px rgba(0,0,0,.5),inset 0 2px 6px rgba(0,0,0,.5)}
+html[data-theme=dark] .tile .e{background:radial-gradient(circle at 32% 24%,#f9c29c,#E8935F 55%,#a85a34);box-shadow:inset 0 -5px 8px rgba(0,0,0,.35),inset 0 2px 3px rgba(255,255,255,.55),0 0 16px rgba(232,147,95,.4),0 5px 9px rgba(0,0,0,.5)}
+html[data-theme=dark] .ovb,html[data-theme=dark] .nextj{box-shadow:0 5px 0 #000,0 12px 16px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08)}
+html[data-theme=dark] .quick button{box-shadow:0 4px 0 #000,0 8px 12px rgba(0,0,0,.4)}html[data-theme=dark] .quick button:active{box-shadow:0 1px 0 #000}
+html[data-theme=dark] .chip{box-shadow:0 3px 0 #000}html[data-theme=dark] .chip.gold{box-shadow:0 3px 0 #8a4b27,0 0 12px rgba(232,147,95,.3)}
+html[data-theme=dark] .fab{box-shadow:0 6px 0 #8a4b27,0 0 24px rgba(232,147,95,.5),inset 0 2px 0 rgba(255,255,255,.4)}html[data-theme=dark] .fab:active{box-shadow:0 1px 0 #8a4b27}
+html[data-theme=dark] .seg button{box-shadow:none}html[data-theme=dark] .seg button.on{box-shadow:none}
+html[data-theme=dark] nav.tabs button.on{box-shadow:none}
+html[data-theme=dark] #app.in-fwd{box-shadow:-14px 0 30px rgba(0,0,0,.6)}
 </style>
 </head>
 <body>
@@ -336,7 +393,7 @@ function toggleTheme() { LS.set('js_theme', LS.get('js_theme') === 'dark' ? 'lig
 applyTheme();
 var ME = null; try { ME = JSON.parse(LS.get('js_me') || 'null'); } catch (e) { ME = null; }
 var S = { owner: false, jobs: [], techs: [], types: [], logs: {}, reminders: [] };
-var UI = { view: 'home', cursor: new Date(), mine: true, openId: null, sel: null, q: '', fs: '', ft: '', moneyCur: new Date(), loaded: false };
+var UI = { view: 'home', pop: true, cursor: new Date(), mine: true, openId: null, sel: null, q: '', fs: '', ft: '', moneyCur: new Date(), loaded: false };
 
 var STATUS = {
   pending:   { l: 'ລໍຖ້ານັດ', c: '#475467', bg: '#eaecf0' },
@@ -568,12 +625,50 @@ function render() {
   }).join('');
   $('fab').style.display = S.owner && UI.view !== 'settings' ? '' : 'none';
   var v = { home: vHome, dash: vDash, today: vToday, week: vWeek, month: vMonth, list: vList, notes: vNotes, po: vPO, money: vMoney, settings: vSettings, cust: vCust, sales: vSales }[UI.view] || vToday;
-  $('app').innerHTML = (S.owner ? hubSeg() : '') + (S.owner && isJobView ? jobSeg() : '') + v();
+  $('app').innerHTML = (S.owner ? hubSeg() : '') + (S.owner && isJobView ? jobSeg() : '') + v(); if (UI.anim) playAnim();
   if (UI.openId) { if (isClaimId(UI.openId)) { if (claimById(UI.openId)) renderClaimDetail(); else closeSheet(); } else if (jobById(UI.openId)) renderDetail(); else closeSheet(); }
   else if (UI.openNote) { if (noteById(UI.openNote)) renderNoteDetail(); else closeSheet(); }
   else if (UI.openPO) { if (poById(UI.openPO)) renderPODetail(); else closeSheet(); }
 }
-function go(v) { UI.view = v; window.scrollTo(0, 0); render(); }
+function go(v) { var from = UI.view, dir = v === from ? '' : (v === 'home' ? 'back' : (from === 'home' ? 'fwd' : 'side')); if (dir && UI.loaded) UI.anim = { dir: dir, snap: snapApp() }; UI.pop = (v === 'home'); UI.view = v; window.scrollTo(0, 0); render(); }
+/* ===== v2 FX: ໜ້າໃໝ່ເລື່ອນເຂົ້າຈາກຂວາ · ປັດຈາກຂອບຊ້າຍເພື່ອກັບຄືນ · ປຸ່ມສັ່ນນ້ອຍໆ ===== */
+function snapApp() {
+  try {
+    var a = $('app'), r = a.getBoundingClientRect(), hd = document.querySelector('header').getBoundingClientRect(), nv = $('tabs').getBoundingClientRect();
+    var w = document.createElement('div'); w.className = 'pgwrap';
+    w.style.cssText = 'position:fixed;left:0;right:0;top:' + hd.bottom + 'px;height:' + Math.max(0, nv.top - hd.bottom) + 'px;overflow:hidden;pointer-events:none';
+    var c = a.cloneNode(true); c.removeAttribute('id'); c.style.cssText = 'position:absolute;left:' + r.left + 'px;top:' + (r.top - hd.bottom) + 'px;width:' + r.width + 'px;margin:0';
+    w.appendChild(c); return w;
+  } catch (e) { return null; }
+}
+function playAnim() {
+  var an = UI.anim; UI.anim = null; if (!an || !an.snap) return;
+  try {
+    var a = $('app'), w = an.snap, dir = an.dir, root = document.documentElement;
+    if (playAnim._w) { try { playAnim._w.remove(); } catch (e) {} }
+    playAnim._w = w; document.body.appendChild(w); root.classList.add('pganim');
+    a.classList.remove('in-fwd', 'in-back', 'in-side'); w.classList.add('out-' + dir); void a.offsetWidth; a.classList.add('in-' + dir);
+    clearTimeout(playAnim._t);
+    playAnim._t = setTimeout(function () { a.classList.remove('in-fwd', 'in-back', 'in-side'); try { w.remove(); } catch (e) {} root.classList.remove('pganim'); }, 480);
+  } catch (e) { document.documentElement.classList.remove('pganim'); }
+}
+function swipeBack() {
+  if ($('sheet').classList.contains('on')) { closeSheet(); return true; }
+  if (S.owner && UI.view !== 'home') { go('home'); return true; }
+  return false;
+}
+(function () {
+  var sx = 0, sy = 0, tr = false, ind = null;
+  function mk() { if (!ind) { ind = document.createElement('div'); ind.id = 'swInd'; ind.innerHTML = '‹'; document.body.appendChild(ind); } return ind; }
+  function show(p) { var e = mk(); e.style.opacity = p > 0 ? 1 : 0; e.style.transform = 'translate(' + (-46 + p * 64) + 'px,-50%) scale(' + (0.7 + p * 0.5) + ')'; e.className = p >= 1 ? 'ready' : ''; }
+  function hide() { if (ind) { ind.style.opacity = 0; ind.style.transform = 'translate(-46px,-50%)'; } }
+  document.addEventListener('touchstart', function (e) { var t = e.touches[0]; if (e.touches.length === 1 && t.clientX <= 28) { sx = t.clientX; sy = t.clientY; tr = true; show(0.01); } }, { passive: true });
+  document.addEventListener('touchmove', function (e) { if (!tr) return; var t = e.touches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy); if (dy > Math.max(30, dx * 1.3)) { tr = false; hide(); return; } show(Math.max(0.01, Math.min(1, dx / 90))); }, { passive: true });
+  document.addEventListener('touchend', function (e) { if (!tr) return; tr = false; var t = e.changedTouches[0], dx = t.clientX - sx, dy = Math.abs(t.clientY - sy); hide(); if (dx > 80 && dy < 70) { if (navigator.vibrate) try { navigator.vibrate(12); } catch (x) {} swipeBack(); } }, { passive: true });
+  document.addEventListener('touchcancel', function () { tr = false; hide(); }, { passive: true });
+  document.addEventListener('click', function (e) { var b = e.target.closest && e.target.closest('.tile,nav.tabs button,.quick button,.ovb,.fab'); if (b && navigator.vibrate) try { navigator.vibrate(9); } catch (x) {} }, true);
+})();
+
 /* ===== v2: ໂຄງເມນູ 5 ໝວດ (ມື້ນີ້ · ວຽກ · ຂາຍ · ຂອງ · ເງິນ) + ໜ້າຫຼັກກະເບື້ອງ ===== */
 function lowStockN() { return (S.products || []).filter(function (p) { var a = stockNow(p); return (a === null ? p.stock : a) <= LOW_STOCK && (a !== null || !p.appOnly); }).length; }
 function hubOf() { var v = UI.view; if (v === 'cust') return 'sell'; if (v === 'po') return 'stock'; if (v === 'sales') return ['stock', 'cmp', 'claims'].indexOf(UI.salesTab || 'orders') >= 0 ? 'stock' : 'sell'; return ''; }
@@ -595,7 +690,8 @@ function vHome() {
   var h = '';
   h += nx ? '<div class="nextj" onclick="openJob(\'' + esc(nx.id) + '\')"><span class="e">⏰</span><div><small>ວຽກຕໍ່ໄປ' + (nx.date === t ? ' · ມື້ນີ້' : ' · ' + dLabel(nx.date)) + '</small><b>' + esc(nx.title || nx.type) + '</b><small>' + esc(nx.customer) + (nx.location ? ' · ' + esc(nx.location) : '') + '</small></div><span class="tm">' + esc(nx.start || '') + '</span></div>' : '<div class="nextj"><span class="e">🎉</span><div><small>ມື້ນີ້</small><b>ບໍ່ມີວຽກຄ້າງ</b></div></div>';
   h += '<button class="ovb" onclick="UI.dtab=\'job\';LS.set(\'js_dtab\',\'job\');go(\'dash\')"><span class="e">📊</span><div><b>ພາບລວມ</b><small>ວຽກມື້ນີ້ ' + tj.length + ' · ຄ້າງເກັບ ' + short(due) + (late.length ? ' · ⚠️ ເລີຍກຳນົດ ' + late.length : '') + '</small></div><i>›</i></button>';
-  h += '<div class="tiles">' +
+  if (UI.pop) setTimeout(function () { UI.pop = false; }, 1200);
+  h += '<div class="tiles' + (UI.pop ? ' pop' : '') + '">' +
     T('t-bl', '🔧', 'ວຽກ', 'ຕິດຕັ້ງ · ຮົ້ວ · ເຊົ່າໄຟ', open.length + late.length, late.length > 0, "go('today')") +
     T('t-gr', '🛒', 'ຂາຍ', 'ບິນ · ໃບສະເໜີ · ລູກຄ້າ', drafts + cod, false, "UI.salesTab='orders';go('sales')") +
     T('t-or', '📦', 'ຂອງ', 'ສະຕ໊ອກ · ສັ່ງເຄື່ອງ', low, true, "UI.salesTab='stock';go('sales')") +
