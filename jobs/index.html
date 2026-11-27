@@ -1889,12 +1889,14 @@ function custHint(phone, selId, hintId) {
 }
 function custBadge(cid) { var c = custById(cid); if (!c) return ''; var k = custStat(c); return ' <span class="badge" style="background:#eef4ff;color:#1d4ed8;cursor:pointer" onclick="event.stopPropagation();openCust(\'' + esc(c.id) + '\')">👤 ຊື້ ' + k.buys + ' ຄັ້ງ</span>'; }
 function fenceDoneOf(cid) { return S.jobs.filter(function (j) { return j.customerId === cid && j.status === 'done' && /ຮົ້ວ/.test(j.type); }); }
+var SVY_RE = /ສຳຫລວດ|ສໍາຫລວດ|ສຳຫຼວດ|ສໍາຫຼວດ/;
+function isSvyRepair(j) { return /ສຳຫຼວດ|ສໍາຫຼວດ|ສ້ອມແປງ/.test(j.type || '') || SVY_RE.test(String(j.title || '').split('\n')[0]); } // ສຳຫຼວດໜ້າງານ/ສ້ອມແປງ ບໍ່ແມ່ນການຊື້
 function custStat(c) {
   var fj = fenceDoneOf(c.id), jobs = S.jobs.filter(function (j) { return j.customerId === c.id; });
   var withSrc = jobs.filter(function (j) { return j.source; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; })[0];
   // ວຽກອື່ນ (ດອກໄຟ…) ທີ່ສຳເລັດ: ປົກກະຕິມີບິນ Pancake ແລ້ວ → ນັບສະເພາະຕອນທີ່ຈັບຄູ່ບິນບໍ່ໄດ້ເລີຍ (ກັນນັບຊ້ຳ)
   var aos = liveOrders().filter(function (o) { return o.customerId === c.id; }), ordJobs = {}; aos.forEach(function (o) { if (o.jobId) ordJobs[o.jobId] = 1; }); // ບິນຂາຍໃນແອບ (ຫຼັງວັນຕັດຍອດ)
-  var lj = (c.okOrders || 0) ? [] : jobs.filter(function (j) { return j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !ordJobs[j.id]; });
+  var lj = (c.okOrders || 0) ? [] : jobs.filter(function (j) { return j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !isSvyRepair(j) && !ordJobs[j.id]; });
   var done = fj.concat(lj);
   var buys = (c.okOrders || 0) + done.length + aos.length, spent = (c.amount || 0) + done.reduce(function (a, j) { return a + (j.price || 0); }, 0) + aos.reduce(function (a, o) { return a + o.total; }, 0);
   var first = [c.firstOrder, String(c.createdAt || '').slice(0, 10)].concat(jobs.map(function (j) { return String(j.createdAt || '').slice(0, 10); })).filter(Boolean).sort()[0] || '';
@@ -2050,15 +2052,37 @@ function srcReportData() {
   var r = UI.rs, list = CRM.customers.map(function (c) { return { c: c, k: custStat(c) }; }).filter(function (x) { return x.k.src === r.src && (periodOk(x.k.first, r.per) || periodOk(x.k.last, r.per)); }); // ລວມລູກຄ້າເກົ່າທີ່ຊື້ຊ້ຳໃນຊ່ວງນັ້ນ (ຊື້ຄັ້ງທຳອິດຕ່າງເດືອນ)
   var leads = openLeads().filter(function (n) { return (n.source || NO_SRC) === r.src && periodOk(String(n.createdAt || '').slice(0, 10), r.per); });
   list.sort(function (a, b) { return (b.k.buys - a.k.buys) || (a.k.first < b.k.first ? 1 : -1); });
+  var solOnly = /solaro/i.test(r.src);
+  var SPOT = /ສະປອດໄລ|spot ?light|sport ?light/i;
+  var label = function (name, variant) { // ຊື່ສິນຄ້າອ່ານງ່າຍ · null = ບໍ່ເອົາ (ບໍ່ແມ່ນ Solaro ໃນລາຍງານ Solaro / ຄ່າບໍລິການ)
+    var n = String(name || '').replace(/\s*[—–]\s*/g, ' · ').trim(), v = String(variant || '').trim(), full = n + (v && n.indexOf(v) < 0 ? ' · ' + v : '');
+    if (!n || /^ຄ່າ/.test(n)) return null;
+    var isSpot = SPOT.test(full);
+    if (solOnly && !isSpot && !/solaro/i.test(full)) return null;
+    if (isSpot) { var w = full.match(/(\d{3,4})\s*w/i); return 'Solaro Sport Light' + (w ? ' ' + w[1] + 'W' : ''); }
+    return full.replace(/\s*·\s*\//, ' ').replace(/\s*·\s*$/, '').replace(/(\d)w\b/, '$1W').replace(/\s+/g, ' ');
+  };
   var models = function (c) {
-    var by = {}; CRM.sales.filter(function (s) { return isSale(s.status) && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); })
-      .forEach(function (s) { by[s.name] = (by[s.name] || 0) + s.qty; });
-    fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
-    if (!c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type); }).forEach(function (j) { by['🔧 ' + (j.title || j.type).split('\n')[0]] = 1; }); // ວຽກດອກໄຟທີ່ຈັບຄູ່ບິນບໍ່ໄດ້
+    var by = {}, add = function (nm, vr, q) { var l = label(nm, vr); if (l) by[l] = (by[l] || 0) + (Number(q) || 1); };
+    CRM.sales.filter(function (s) { return isSale(s.status) && ((c.pancakeId && s.pancakeCust === c.pancakeId) || (c.phone && s.phone === c.phone)); }).forEach(function (s) { add(s.name, '', s.qty); });
+    var ordJobs = {};
+    liveOrders().filter(function (o) { return o.customerId === c.id; }).forEach(function (o) { if (o.jobId) ordJobs[o.jobId] = 1; (o.items || []).forEach(function (it) { add(it.name, it.variant, it.qty); }); });
+    if (!solOnly) fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
+    if (!c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !isSvyRepair(j) && !ordJobs[j.id]; }).forEach(function (j) {
+      var eq = (j.equipment || []).filter(function (e) { return e.t; });
+      if (eq.length) eq.forEach(function (e) { add(e.t, '', e.qty); });
+      else if (!solOnly) { var k = '📦 ' + (j.title || j.type).split('\n')[0]; by[k] = (by[k] || 0) + 1; }
+    });
     return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
   };
   var tot = { n: list.length + leads.length, closed: list.filter(function (x) { return x.k.closed; }).length, repeat: list.filter(function (x) { return x.k.repeat; }).length, spent: list.reduce(function (a, x) { return a + x.k.spent; }, 0) };
   return { list: list, leads: leads, models: models, tot: tot };
+}
+function srcTotals(D) {
+  var mods = {}; D.list.forEach(function (x) { D.models(x.c).forEach(function (m) { var k = m.replace(/ ×\d+$/, ''), q = Number((m.match(/×(\d+)$/) || [0, 1])[1]); mods[k] = (mods[k] || 0) + q; }); });
+  var keys = Object.keys(mods).sort(function (a, b) { return mods[b] - mods[a]; }), isL = function (k) { return !/ເສົາ|pole|fan|^🧱|^📦/i.test(k); };
+  var lights = keys.filter(isL), others = keys.filter(function (k) { return !isL(k); });
+  return { mods: mods, lights: lights, others: others, nLights: lights.reduce(function (a, k) { return a + mods[k]; }, 0) };
 }
 function maskPhone(p) { p = String(p || ''); return p ? '0' + (p.length > 4 ? p.slice(0, p.length - 4).replace(/\d/g, '•') + p.slice(-4) : p) : ''; }
 function srcReportText() {
@@ -2071,6 +2095,12 @@ function srcReportText() {
       (k.last ? ' · ລ່າສຸດ ' + k.last : '') + (r.money && k.spent ? ' · ' + money(k.spent) + ' ກີບ' : '') + (m.length ? '\n   ' + m.join(', ') : '') + '\n';
   });
   D.leads.forEach(function (n, i) { s += (D.list.length + i + 1) + '. ' + (n.customer || n.title) + ' — ⏳ ກຳລັງຕິດຕາມ\n'; });
+  var TT = srcTotals(D);
+  if (TT.nLights || TT.others.length) {
+    s += '\n📦 ສະຫຼຸບສິນຄ້າທີ່ຂາຍ' + (/solaro/i.test(r.src) ? ' (ສະເພາະ Solaro)' : '') + '\n';
+    if (TT.nLights) { s += '💡 ດອກໄຟລວມ ' + TT.nLights + ' ດອກ\n'; TT.lights.forEach(function (k) { s += '   • ' + k + ' ×' + TT.mods[k] + '\n'; }); }
+    if (TT.others.length) s += '🔩 ອຸປະກອນອື່ນ: ' + TT.others.map(function (k) { return k + ' ×' + TT.mods[k]; }).join(', ') + '\n';
+  }
   return s + '\nຂອບໃຈທີ່ແນະນຳລູກຄ້າໃຫ້ພວກເຮົາ 🙏';
 }
 function srcReport() {
@@ -2095,9 +2125,8 @@ function srcReportPrint() {
   var srcName = String(r.src).replace(/^\S+\s/, '');
   var logo = /solaro/i.test(r.src) ? RC_ASSET + 'solaro-logo.png' : ''; // ໂລໂກ້ຄູ່ຮ່ວມ (ໄຟລ໌ຢູ່ repo jobs/)
   // ສິນຄ້າທີ່ລູກຄ້າກຸ່ມນີ້ຊື້ (ລວມ)
-  var mods = {};
-  D.list.forEach(function (x) { D.models(x.c).forEach(function (m) { var k = m.replace(/ ×\d+$/, ''), q = Number((m.match(/×(\d+)$/) || [0, 1])[1]); mods[k] = (mods[k] || 0) + q; }); });
-  var modRows = Object.keys(mods).filter(function (k) { return !/^ຄ່າ/.test(k); }).sort(function (a, b) { return mods[b] - mods[a]; });
+  var T = srcTotals(D), mods = T.mods;
+  var modRows = T.lights.concat(T.others);
   var mx = modRows.length ? mods[modRows[0]] : 1;
   var pill = function (k) {
     return k.repeat ? '<span class="pill rep">🔁 ຊື້ຊ້ຳ</span>' : k.closed ? '<span class="pill ok">✓ ຊື້ແລ້ວ</span>' : '<span class="pill wait">⏳ ຍັງບໍ່ຊື້</span>';
@@ -2148,7 +2177,7 @@ function srcReportPrint() {
     '<h3>ລາຍຊື່ລູກຄ້າ</h3><table><thead><tr><th class="c" style="width:36px;white-space:nowrap">ລ/ດ</th><th>ລູກຄ້າ</th><th class="c" style="width:72px">ເລີ່ມຕິດຕໍ່</th><th class="c" style="width:88px">ສະຖານະ</th>' +
     '<th class="c" style="width:44px">ຊື້ (ຄັ້ງ)</th><th>ສິນຄ້າທີ່ຊື້</th><th class="c" style="width:72px">ຊື້ລ່າສຸດ</th>' + (r.money ? '<th class="n" style="width:84px">ຍອດ (ກີບ)</th>' : '') + '</tr></thead><tbody>' +
     (rows || '<tr><td colspan="8" class="c mu">ບໍ່ມີລູກຄ້າໃນຊ່ວງນີ້</td></tr>') + '</tbody></table>' +
-    (modRows.length ? '<h3>ສິນຄ້າທີ່ລູກຄ້າກຸ່ມນີ້ຊື້</h3>' + modRows.slice(0, 8).map(function (k) {
+    (modRows.length ? '<h3>ສະຫຼຸບສິນຄ້າທີ່ຂາຍ' + (/solaro/i.test(r.src) ? ' (ສະເພາະ Solaro)' : '') + (T.nLights ? ' · 💡 ດອກໄຟລວມ <b>' + T.nLights + '</b> ດອກ' : '') + '</h3>' + modRows.map(function (k) {
       return '<div class="mrow"><span>' + esc(k) + '</span><span class="mbar"><i style="width:' + Math.max(4, mods[k] / mx * 100) + '%"></i></span><b class="n">' + mods[k] + '</b></div>'; }).join('') : '') +
     '<div class="thanks">ຂອບໃຈທີ່ແນະນຳລູກຄ້າໃຫ້ HOME SOLAR 🙏</div>' +
     '<div class="foot"><span>«ປິດການຂາຍ» = ລູກຄ້າຊື້ສຳເລັດຢ່າງໜ້ອຍ 1 ຄັ້ງ · «ຊື້ຊ້ຳ» = ຊື້ສຳເລັດ 2 ຄັ້ງຂຶ້ນໄປ</span><span>ຂໍ້ມູນຈາກລະບົບຂາຍ HOME SOLAR · ' + dmy(today()) + '</span></div>' +
