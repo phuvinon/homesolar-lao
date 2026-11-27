@@ -2047,7 +2047,7 @@ function openSrcReport(src) {
   srcReport();
 }
 function srcReportData() {
-  var r = UI.rs, list = CRM.customers.map(function (c) { return { c: c, k: custStat(c) }; }).filter(function (x) { return x.k.src === r.src && periodOk(x.k.first, r.per); });
+  var r = UI.rs, list = CRM.customers.map(function (c) { return { c: c, k: custStat(c) }; }).filter(function (x) { return x.k.src === r.src && (periodOk(x.k.first, r.per) || periodOk(x.k.last, r.per)); }); // ລວມລູກຄ້າເກົ່າທີ່ຊື້ຊ້ຳໃນຊ່ວງນັ້ນ (ຊື້ຄັ້ງທຳອິດຕ່າງເດືອນ)
   var leads = openLeads().filter(function (n) { return (n.source || NO_SRC) === r.src && periodOk(String(n.createdAt || '').slice(0, 10), r.per); });
   list.sort(function (a, b) { return (b.k.buys - a.k.buys) || (a.k.first < b.k.first ? 1 : -1); });
   var models = function (c) {
