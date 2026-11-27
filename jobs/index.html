@@ -2073,6 +2073,14 @@ function srcReportData() {
       if (eq.length) eq.forEach(function (e) { var t = String(e.t), q = e.qty, m = t.match(/[:\uff1a]\s*(\d+)/); if (q == null && m) { q = Number(m[1]); t = t.replace(/\s*[:\uff1a].*$/, ''); } add(t, '', q); });
       else if (!solOnly) { var k = '📦 ' + (j.title || j.type).split('\n')[0]; by[k] = (by[k] || 0) + 1; }
     });
+    var jb = {};
+    if (c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !isSvyRepair(j) && !ordJobs[j.id]; }).forEach(function (j) { // ລູກຄ້າມີບິນ Pancake: ເອົາສະເພາະ «ຖານຕີນເສົາ» ຈາກວຽກ (ບິນມັກບໍ່ມີຖານ) ແລະບໍ່ນັບຊ້ຳຖ້າບິນມີຖານປະເພດນັ້ນແລ້ວ
+      (j.equipment || []).filter(function (e) { return /^ຖານ/.test(String(e.t || '').trim()); }).forEach(function (e) {
+        var t = String(e.t), q = e.qty, m = t.match(/[:\uff1a]\s*(\d+)/); if (q == null && m) q = Number(m[1]);
+        var l = label(t.replace(/\s*[:\uff1a].*$/, ''), '');
+        if (l && (by[l] === undefined || jb[l])) { by[l] = (by[l] || 0) + (Number(q) || 1); jb[l] = 1; }
+      });
+    });
     return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
   };
   var tot = { n: list.length + leads.length, closed: list.filter(function (x) { return x.k.closed; }).length, repeat: list.filter(function (x) { return x.k.repeat; }).length, spent: list.reduce(function (a, x) { return a + x.k.spent; }, 0) };
