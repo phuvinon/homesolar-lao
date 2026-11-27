@@ -2056,7 +2056,7 @@ function srcReportData() {
   var label = function (name, variant) { // ຊື່ສິນຄ້າອ່ານງ່າຍ · null = ບໍ່ເອົາ (ບໍ່ແມ່ນ Solaro ໃນລາຍງານ Solaro / ຄ່າບໍລິການ)
     var n = String(name || '').replace(/\s*[—–]\s*/g, ' · ').trim(), v = String(variant || '').trim(), full = n + (v && n.indexOf(v) < 0 ? ' · ' + v : '');
     if (!n || /^ຄ່າ/.test(n)) return null;
-    if (/^ຖານ/.test(n)) return 'Solaro ຖານຕີນເສົາ' + (/ມົນ/.test(n) ? 'ມົນ' : /ຫລ່ຽມ|ຫຼ່ຽມ/.test(n) ? 'ສີ່ຫລ່ຽມ' : ''); // ຖານຕີນເສົາ = ຂອງ Solaro
+    if (/^(ຖານ|ຕີນເສົາ)/.test(n)) return 'Solaro ຖານຕີນເສົາ' + (/ມົນ/.test(n) ? 'ມົນ' : /ຫລ່ຽມ|ຫຼ່ຽມ/.test(n) ? 'ສີ່ຫລ່ຽມ' : ''); // ຖານຕີນເສົາ = ຂອງ Solaro
     var isSpot = SPOT.test(full), isSol = /solaro/i.test(full);
     if (solOnly && !isSol) return null;
     if (isSpot && isSol) { var w = full.match(/(\d{3,4})\s*w/i); return 'Solaro Sport Light' + (w ? ' ' + w[1] + 'W' : ''); }
@@ -2075,7 +2075,7 @@ function srcReportData() {
     });
     var jb = {};
     if (c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !isSvyRepair(j) && !ordJobs[j.id]; }).forEach(function (j) { // ລູກຄ້າມີບິນ Pancake: ເອົາສະເພາະ «ຖານຕີນເສົາ» ຈາກວຽກ (ບິນມັກບໍ່ມີຖານ) ແລະບໍ່ນັບຊ້ຳຖ້າບິນມີຖານປະເພດນັ້ນແລ້ວ
-      (j.equipment || []).filter(function (e) { return /^ຖານ/.test(String(e.t || '').trim()); }).forEach(function (e) {
+      (j.equipment || []).filter(function (e) { return /^(ຖານ|ຕີນເສົາ)/.test(String(e.t || '').trim()); }).forEach(function (e) {
         var t = String(e.t), q = e.qty, m = t.match(/[:\uff1a]\s*(\d+)/); if (q == null && m) q = Number(m[1]);
         var l = label(t.replace(/\s*[:\uff1a].*$/, ''), '');
         if (l && (by[l] === undefined || jb[l])) { by[l] = (by[l] || 0) + (Number(q) || 1); jb[l] = 1; }
