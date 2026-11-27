@@ -1889,8 +1889,7 @@ function custHint(phone, selId, hintId) {
 }
 function custBadge(cid) { var c = custById(cid); if (!c) return ''; var k = custStat(c); return ' <span class="badge" style="background:#eef4ff;color:#1d4ed8;cursor:pointer" onclick="event.stopPropagation();openCust(\'' + esc(c.id) + '\')">👤 ຊື້ ' + k.buys + ' ຄັ້ງ</span>'; }
 function fenceDoneOf(cid) { return S.jobs.filter(function (j) { return j.customerId === cid && j.status === 'done' && /ຮົ້ວ/.test(j.type); }); }
-var SVY_RE = /ສຳຫລວດ|ສໍາຫລວດ|ສຳຫຼວດ|ສໍາຫຼວດ/;
-function isSvyRepair(j) { return /ສຳຫຼວດ|ສໍາຫຼວດ|ສ້ອມແປງ/.test(j.type || '') || SVY_RE.test(String(j.title || '').split('\n')[0]); } // ສຳຫຼວດໜ້າງານ/ສ້ອມແປງ ບໍ່ແມ່ນການຊື້
+function isSvyRepair(j) { return /ສຳຫຼວດ|ສໍາຫຼວດ|ສ້ອມແປງ/.test(j.type || ''); } // ສຳຫຼວດໜ້າງານ/ສ້ອມແປງ ບໍ່ແມ່ນການຊື້
 function custStat(c) {
   var fj = fenceDoneOf(c.id), jobs = S.jobs.filter(function (j) { return j.customerId === c.id; });
   var withSrc = jobs.filter(function (j) { return j.source; }).sort(function (a, b) { return a.createdAt < b.createdAt ? -1 : 1; })[0];
@@ -2057,9 +2056,10 @@ function srcReportData() {
   var label = function (name, variant) { // ຊື່ສິນຄ້າອ່ານງ່າຍ · null = ບໍ່ເອົາ (ບໍ່ແມ່ນ Solaro ໃນລາຍງານ Solaro / ຄ່າບໍລິການ)
     var n = String(name || '').replace(/\s*[—–]\s*/g, ' · ').trim(), v = String(variant || '').trim(), full = n + (v && n.indexOf(v) < 0 ? ' · ' + v : '');
     if (!n || /^ຄ່າ/.test(n)) return null;
-    var isSpot = SPOT.test(full);
-    if (solOnly && !isSpot && !/solaro/i.test(full)) return null;
-    if (isSpot) { var w = full.match(/(\d{3,4})\s*w/i); return 'Solaro Sport Light' + (w ? ' ' + w[1] + 'W' : ''); }
+    if (/^ຖານ/.test(n)) return 'Solaro ຖານຕີນເສົາ' + (/ມົນ/.test(n) ? 'ມົນ' : /ຫລ່ຽມ|ຫຼ່ຽມ/.test(n) ? 'ສີ່ຫລ່ຽມ' : ''); // ຖານຕີນເສົາ = ຂອງ Solaro
+    var isSpot = SPOT.test(full), isSol = /solaro/i.test(full);
+    if (solOnly && !isSol) return null;
+    if (isSpot && isSol) { var w = full.match(/(\d{3,4})\s*w/i); return 'Solaro Sport Light' + (w ? ' ' + w[1] + 'W' : ''); }
     return full.replace(/\s*·\s*\//, ' ').replace(/\s*·\s*$/, '').replace(/(\d)w\b/, '$1W').replace(/\s+/g, ' ');
   };
   var models = function (c) {
@@ -2070,7 +2070,7 @@ function srcReportData() {
     if (!solOnly) fenceDoneOf(c.id).forEach(function (j) { by['🧱 ' + (j.title || 'ຮົ້ວ').split('\n')[0]] = 1; });
     if (!c.okOrders) S.jobs.filter(function (j) { return j.customerId === c.id && j.status === 'done' && !/ຮົ້ວ/.test(j.type) && !isSvyRepair(j) && !ordJobs[j.id]; }).forEach(function (j) {
       var eq = (j.equipment || []).filter(function (e) { return e.t; });
-      if (eq.length) eq.forEach(function (e) { add(e.t, '', e.qty); });
+      if (eq.length) eq.forEach(function (e) { var t = String(e.t), q = e.qty, m = t.match(/[:\uff1a]\s*(\d+)/); if (q == null && m) { q = Number(m[1]); t = t.replace(/\s*[:\uff1a].*$/, ''); } add(t, '', q); });
       else if (!solOnly) { var k = '📦 ' + (j.title || j.type).split('\n')[0]; by[k] = (by[k] || 0) + 1; }
     });
     return Object.keys(by).map(function (n) { return n + ' ×' + by[n]; });
